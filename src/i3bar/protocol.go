@@ -3,6 +3,8 @@ package i3bar
 import (
 	"encoding/json"
 	"regexp"
+	"bufio"
+	"os"
 //	"fmt"
 )
 
@@ -83,4 +85,21 @@ func FilterRawEvent(in []byte) []byte {
 	}
 	re := regexp.MustCompile(`\,{`)
 	return re.ReplaceAllLiteral(in, []byte(`{`))
+}
+
+func EventReader() chan I3barEvent {
+	queue := make(chan I3barEvent)
+	go eventReaderLoop(queue)
+	return queue
+}
+
+func eventReaderLoop(events chan I3barEvent) {
+	stdin := bufio.NewReader(os.Stdin)
+	for {
+		m := NewEvent()
+		line, _ := stdin.ReadBytes('\n')
+		json.Unmarshal( FilterRawEvent(line), &m)
+		if(m.X == 0) { continue } // x is neccesary, if it isnt present we got crap. THis should probably be logged... once I figure out how to make app-wide logger...
+		events <- m
+	}
 }

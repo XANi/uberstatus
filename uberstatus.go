@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"encoding/json"
 	"fmt"
 	"i3bar"
@@ -25,12 +24,8 @@ func main() {
 
 	c := msg.Encode()
 
-	st := bufio.NewReader(os.Stdin)
-	f, _ := os.Create("/tmp/dat2")
-	w := bufio.NewWriter(f)
-	//	dec := json.NewDecoder(st)
+	i3input := i3bar.EventReader()
 	for {
-		time.Sleep(time.Second)
 		fmt.Print(`[`)
 		msg := i3bar.NewMsg()
 		msg.FullText = fmt.Sprintf("Btn: %d", button)
@@ -40,12 +35,12 @@ func main() {
 		fmt.Print(`,`)
 		os.Stdout.Write(getTime())
 		fmt.Println(`],`)
-		//		m := i3bar.NewEvent()
-		//		dec.Decode(&m)
-		str, _ := st.ReadBytes('\n')
-		w.Write(i3bar.FilterRawEvent(str))
-		w.Flush()
-		//		button = m.Button
+		select {
+		case ev := (<-i3input):
+			button = ev.Button
+		case <-time.After(time.Second):
+			button = 0
+		}
 	}
 }
 
