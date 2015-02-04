@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"i3bar"
 	"os"
+	"plugin"
 	"regexp"
 	"time"
 )
@@ -23,6 +24,7 @@ func main() {
 	//c, err := json.Marshal(msg)
 
 	c := msg.Encode()
+	_, _ = plugin.NewPlugin("clock", c)
 
 	i3input := i3bar.EventReader()
 	for {
