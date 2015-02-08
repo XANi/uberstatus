@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"bufio"
 	"os"
+	"plugin_interface"
 //	"fmt"
 )
 
@@ -50,6 +51,17 @@ func NewMsg() (r I3barMsg) {
 	r.Align = `center`
 	r.SeparatorBlockWidth = 9
 	return r
+}
+
+func CreateMsg(update plugin_interface.Update) (r I3barMsg) {
+	msg := NewMsg()
+	msg.Name = update.Name
+	msg.Instance = update.Instance
+	msg.FullText = update.FullText
+	msg.ShortText = update.ShortText
+	msg.Color = update.Color
+	msg.Urgent = update.Urgent
+	return msg
 }
 
 func NewHeader() (r I3barHeader) {

@@ -6,6 +6,7 @@ import (
 	"i3bar"
 	"os"
 	"plugin"
+	"plugin_interface"
 	"regexp"
 	"time"
 )
@@ -24,9 +25,13 @@ func main() {
 	//c, err := json.Marshal(msg)
 
 	c := msg.Encode()
-	_, _ = plugin.NewPlugin("clock", c)
 
 	i3input := i3bar.EventReader()
+
+	updates := make(chan plugin_interface.Update, 10)
+
+	_ = plugin.NewPlugin("clock", "", c, updates)
+
 	for {
 		fmt.Print(`[`)
 		msg := i3bar.NewMsg()
@@ -37,9 +42,12 @@ func main() {
 		fmt.Print(`,`)
 		os.Stdout.Write(getTime())
 		fmt.Println(`],`)
+
 		select {
 		case ev := (<-i3input):
 			button = ev.Button
+		case upd := <-updates:
+			c = i3bar.CreateMsg(upd).Encode()
 		case <-time.After(time.Second):
 			button = 0
 		}
