@@ -3,13 +3,19 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"gopkg.in/yaml.v1"
 	"i3bar"
+	"io/ioutil"
 	"os"
 	"plugin"
 	"plugin_interface"
 	"regexp"
 	"time"
 )
+
+type Config struct {
+	Plugins *map[string]map[string]interface{}
+}
 
 func main() {
 	button := 0
@@ -21,16 +27,19 @@ func main() {
 		fmt.Println("error:", err)
 	}
 	os.Stdout.Write(b)
-	fmt.Println("\n[")
 	//c, err := json.Marshal(msg)
 
 	c := msg.Encode()
 
 	i3input := i3bar.EventReader()
-
 	updates := make(chan plugin_interface.Update, 10)
+	config := LoadConfig()
+	fmt.Println("\n[")
 
-	_ = plugin.NewPlugin("clock", "", c, updates)
+	plugins := config.Plugins
+	ifd := (*plugins)[`clock`] //.(map[string]interface{})
+	_ = plugin.NewPlugin("clock", "", &ifd, updates)
+	_ = ifd
 
 	for {
 		fmt.Print(`[`)
@@ -39,8 +48,8 @@ func main() {
 		os.Stdout.Write(msg.Encode())
 		fmt.Print(`,`)
 		os.Stdout.Write(c)
-		fmt.Print(`,`)
-		os.Stdout.Write(getTime())
+		//		fmt.Print(`,`)
+		//		os.Stdout.Write(getTime())
 		fmt.Println(`],`)
 
 		select {
@@ -67,4 +76,23 @@ func getTime() []byte {
 func San(in []byte) []byte {
 	re := regexp.MustCompile(`\,{`)
 	return re.ReplaceAllLiteral(in, []byte(`{`))
+}
+
+type Cfg struct {
+	plugins map[string]interface{}
+}
+
+func LoadConfig() Config {
+	var cfg Config
+	cfg.Plugins = new(map[string]map[string]interface{})
+	raw_cfg, err := ioutil.ReadFile("/home/xani/src/my/uberstatus/cfg/uberstatus.default.conf")
+	err = yaml.Unmarshal([]byte(raw_cfg), &cfg)
+	_ = err
+	return cfg
+}
+
+func PrintInterface(a interface{}) {
+	fmt.Println("Interface:")
+	txt, _ := yaml.Marshal(a)
+	fmt.Printf("%s", txt)
 }

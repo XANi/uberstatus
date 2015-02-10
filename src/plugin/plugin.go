@@ -8,7 +8,7 @@ import (
 func NewPlugin(
 	name string, // Plugin name
 	instance string, // Plugin instance
-	config interface{}, // Plugin config
+	config *map[string]interface{}, // Plugin config
 	update_filtered chan plugin_interface.Update, // Update channel
 ) (	chan plugin_interface.Event)  {
 	events := make(chan plugin_interface.Event, 16)
