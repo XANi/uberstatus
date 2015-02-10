@@ -2,6 +2,7 @@ package plugin
 
 import (
 	plugin_clock "plugin/clock"
+	plugin_network "plugin/network"
 	"plugin_interface"
 	"fmt"
 )
@@ -17,6 +18,8 @@ func NewPlugin(
 	switch {
 	case name == `clock`:
 		go plugin_clock.New(config, events, update)
+	case name == `network`:
+		go plugin_network.New(config, events, update)
 	case true:
 		panic(fmt.Sprintf("no plugin named %s", name))
 	}

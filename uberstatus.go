@@ -38,7 +38,9 @@ func main() {
 
 	plugins := config.Plugins
 	ifd := (*plugins)[`clock`] //.(map[string]interface{})
-	_ = plugin.NewPlugin("clock", "", &ifd, updates)
+	net := (*plugins)[`clock`] //.(map[string]interface{})
+	//	_ = plugin.NewPlugin("clock", "", &ifd, updates)
+	_ = plugin.NewPlugin("network", "", &net, updates)
 	_ = ifd
 
 	for {
