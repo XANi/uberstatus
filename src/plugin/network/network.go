@@ -106,9 +106,26 @@ func Update(update chan plugin_interface.Update, cfg Config, stats *netStats) {
 	if (ts_diff < 0.01) {
 		return ; // quicker probing doesnt make sense, no div by 0, should probably return an error...
 	}
-	ev.FullText = fmt.Sprintf(`%s: rx: %s tx %s`, cfg.iface, formatBw(float64(rx_diff) / ts_diff), formatBw(float64(tx_diff) / ts_diff))
+	rx_bw := float64(rx_diff) / ts_diff
+	tx_bw := float64(tx_diff) / ts_diff
+	ev.FullText = fmt.Sprintf(`%s: rx: %s tx %s`, cfg.iface,  formatBw(rx_bw), formatBw(tx_bw))
 	ev.ShortText = fmt.Sprintf(`-%s-`, cfg.iface)
-
+	switch {
+	case (rx_bw + tx_bw) < 50 * 1024:
+		ev.Color = "#aaaaff"
+	case (rx_bw + tx_bw) < 150 * 1024:
+		ev.Color = "#aa33ff"
+	case (rx_bw + tx_bw) < 450 * 1024:
+		ev.Color = "#00ffff"
+	case (rx_bw + tx_bw) < 1024 * 1024:
+		ev.Color = "#00ff00"
+	case (rx_bw + tx_bw) < 2048 * 1024:
+		ev.Color = "#99ff00"
+	case (rx_bw + tx_bw) < 4096 * 1024:
+		ev.Color = "#ffff00"
+	default:
+		ev.Color = "#ff4400"
+	}
 	update <- ev
 }
 
@@ -132,7 +149,7 @@ func formatBw (bytes float64) string {
 	case bytes < 1.25 * 1024 * 1024:
 		return fmt.Sprintf(`%.2f Mb`,float64(bytes * 8 / 1024 / 1024))
 	case bytes < 100 * 1024 * 1024:
-		return fmt.Sprintf(`%d Mb`,float64(bytes * 8 / 1024 / 1024))
+		return fmt.Sprintf(`%d Mb`,uint64(bytes * 8 / 1024 / 1024))
 	default:
 		return fmt.Sprintf(`%.3f Gb`,float64(bytes * 8 / 1024 / 1024 / 1024))
 	}
