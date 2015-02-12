@@ -6,9 +6,10 @@ import (
 	"github.com/op/go-logging"
 	"gopkg.in/yaml.v1"
 	"i3bar"
-	"io/ioutil"
+	//	"io/ioutil"
 	"os"
-	"plugin"
+	//	"plugin"
+	"config"
 	"plugin_interface"
 	"regexp"
 	"time"
@@ -20,7 +21,7 @@ type Config struct {
 
 var log = logging.MustGetLogger("main")
 var logFormat = logging.MustStringFormatter(
-	"%{color}%{time:15:04:05.000} %{shortpkg}↛%{shortfunc}: %{level:.4s} %{id:03x}%{color:reset}%{message}",
+	"%{color}%{time:15:04:05.000} %{shortpkg}↛%{shortfunc}: %{level:.4s} %{id:03x} %{color:reset}%{message}",
 )
 
 func main() {
@@ -43,15 +44,24 @@ func main() {
 
 	i3input := i3bar.EventReader()
 	updates := make(chan plugin_interface.Update, 10)
-	config := LoadConfig()
-	fmt.Println("\n[")
+	cfg := config.LoadConfig()
+	slotMap := make(map[string]map[string]int)
+	for idx, pluginCfg := range cfg.Plugins {
+		log.Info("Loading plugin %s into slot %d", pluginCfg.Plugin, idx)
+		if slotMap[pluginCfg.Name] == nil {
+			slotMap[pluginCfg.Name] = make(map[string]int)
+		}
+		slotMap[pluginCfg.Name][pluginCfg.Instance] = idx
+	}
+	_ = cfg
+	// fmt.Println("\n[")
 
-	plugins := config.Plugins
-	ifd := (*plugins)[`clock`] //.(map[string]interface{})
-	net := (*plugins)[`clock`] //.(map[string]interface{})
-	//	_ = plugin.NewPlugin("clock", "", &ifd, updates)
-	_ = plugin.NewPlugin("network", "", &net, updates)
-	_ = ifd
+	// plugins := config.Plugins
+	// ifd := (*plugins)[`clock`] //.(map[string]interface{})
+	// net := (*plugins)[`clock`] //.(map[string]interface{})
+	// //	_ = plugin.NewPlugin("clock", "", &ifd, updates)
+	// _ = plugin.NewPlugin("network", "", &net, updates)
+	// _ = ifd
 
 	for {
 		fmt.Print(`[`)
@@ -88,21 +98,6 @@ func getTime() []byte {
 func San(in []byte) []byte {
 	re := regexp.MustCompile(`\,{`)
 	return re.ReplaceAllLiteral(in, []byte(`{`))
-}
-
-type Cfg struct {
-	plugins map[string]interface{}
-}
-
-func LoadConfig() Config {
-	var cfg Config
-	cfg.Plugins = new(map[string]map[string]interface{})
-	cfgFile := "/home/xani/src/my/uberstatus/cfg/uberstatus.default.conf"
-	log.Info(fmt.Sprintf("Loading config file: %s", cfgFile))
-	raw_cfg, err := ioutil.ReadFile(cfgFile)
-	err = yaml.Unmarshal([]byte(raw_cfg), &cfg)
-	_ = err
-	return cfg
 }
 
 func PrintInterface(a interface{}) {
