@@ -68,14 +68,12 @@ func main() {
 
 	for {
 		fmt.Print(`[`)
-		msg := i3bar.NewMsg()
-		msg.FullText = fmt.Sprintf("Btn: %d", button)
-		os.Stdout.Write(msg.Encode())
-		fmt.Print(`,`)
-		os.Stdout.Write(c)
-		//		fmt.Print(`,`)
-		//		os.Stdout.Write(getTime())
+		for idx, msg := range slots {
+			os.Stdout.Write(msg.Encode())
+			fmt.Print(`,`)
+		}
 		fmt.Println(`],`)
+
 
 		select {
 		case ev := (<-i3input):
