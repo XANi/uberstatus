@@ -7,9 +7,9 @@ import (
 	"gopkg.in/yaml.v1"
 	"i3bar"
 	//	"io/ioutil"
-	"os"
-	//	"plugin"
 	"config"
+	"os"
+	"plugin"
 	"plugin_interface"
 	"regexp"
 	"time"
@@ -51,6 +51,7 @@ func main() {
 		}
 		slotMap[pluginCfg.Name][pluginCfg.Instance] = idx
 		slots[idx] = i3bar.NewMsg()
+		_ = plugin.NewPlugin(pluginCfg.Name, pluginCfg.Instance, pluginCfg.Config, updates)
 	}
 
 	_ = slots
@@ -65,6 +66,14 @@ func main() {
 	fmt.Println(`[`)
 
 	for {
+		select {
+		case ev := (<-i3input):
+			log.Info("Gut event from plugin %d", ev.Button)
+		case upd := <-updates:
+			parseUpdate(upd, &slots, &slotMap)
+		case <-time.After(time.Second):
+			log.Info("Time passed")
+		}
 		fmt.Print(`[`)
 
 		for idx, msg := range slots {
@@ -74,14 +83,16 @@ func main() {
 			}
 		}
 		fmt.Println(`],`)
-		select {
-		case ev := (<-i3input):
-			log.Info("Gut event from plugin %d", ev.Button)
-		case upd := <-updates:
-			log.Info("Gut update from plugin %s", upd.Name)
-		case <-time.After(time.Second):
-			log.Info("Time passed")
-		}
+
+	}
+}
+
+func parseUpdate(update plugin_interface.Update, slots *[]i3bar.Msg, slotMap *map[string]map[string]int) {
+	if val, ok := (*slotMap)[update.Name][update.Instance]; ok {
+		(*slots)[val] = i3bar.CreateMsg(update)
+		log.Info("Got msg from unk name: %s, instance: %s", update.Name, update.Instance)
+	} else {
+		log.Warning("Got msg from unknown place, name: %s, instance: %s", update.Name, update.Instance)
 	}
 }
 

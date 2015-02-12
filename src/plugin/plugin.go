@@ -6,17 +6,20 @@ import (
 	"plugin_interface"
 	"fmt"
 	"github.com/op/go-logging"
+		"gopkg.in/yaml.v1"
 )
 var log = logging.MustGetLogger("main")
 func NewPlugin(
 	name string, // Plugin name
 	instance string, // Plugin instance
-	config *map[string]interface{}, // Plugin config
+	config map[string]interface{}, // Plugin config
 	update_filtered chan plugin_interface.Update, // Update channel
 ) (	chan plugin_interface.Event)  {
 	events := make(chan plugin_interface.Event, 16)
 	update := make(chan plugin_interface.Update,1)
 	log.Info("Adding plugin %s, instance %s",name, instance)
+	str, _ := yaml.Marshal(config)
+	log.Warning(string(str))
 	switch {
 	case name == `clock`:
 		go plugin_clock.New(config, events, update)

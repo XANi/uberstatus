@@ -29,5 +29,7 @@ func LoadConfig() Config {
 	raw_cfg, err := ioutil.ReadFile(cfgFile)
 	err = yaml.Unmarshal([]byte(raw_cfg), &cfg)
 	_ = err
+	str, _ := yaml.Marshal(cfg)
+	log.Warning(string(str))
 	return cfg
 }

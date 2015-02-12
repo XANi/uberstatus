@@ -13,7 +13,7 @@ type Config struct {
 }
 
 
-func New(config *map[string]interface{}, events chan plugin_interface.Event, update chan plugin_interface.Update) {
+func New(config map[string]interface{}, events chan plugin_interface.Event, update chan plugin_interface.Update) {
 	c := loadConfig(config)
 	for {
 		select {
@@ -26,11 +26,11 @@ func New(config *map[string]interface{}, events chan plugin_interface.Event, upd
 
 }
 
-func loadConfig(raw *map[string]interface{}) Config {
+func loadConfig(raw map[string]interface{}) Config {
 	var c Config
 	c.long_format = `2006-01-02 MST 15:04:05.00`
 	c.short_format = `15:04:05`
-	for key, value := range (*raw) {
+	for key, value := range raw {
 		converted, ok := value.(string)
 		if ok {
 			switch {

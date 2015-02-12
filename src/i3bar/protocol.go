@@ -45,7 +45,7 @@ func NewEvent() (r Event) {
 
 func NewMsg() (r Msg) {
 	// return msg with defaults
-	r.FullText="asd"
+	r.FullText="?"
 	r.Color=`#aaaaaa`
 	r.Separator = true
 	r.Align = `center`

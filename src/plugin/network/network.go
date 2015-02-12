@@ -2,13 +2,16 @@ package network
 
 import (
 	"plugin_interface"
-//	"gopkg.in/yaml.v1"
+	"gopkg.in/yaml.v1"
 	"time"
 	"io/ioutil"
 	"fmt"
 	"strings"
 	"strconv"
+	"github.com/op/go-logging"
 )
+
+var log = logging.MustGetLogger("main")
 
 type Config struct {
 	iface string
@@ -23,11 +26,19 @@ type netStats struct {
 	ts time.Time
 }
 
-func New(config *map[string]interface{}, events chan plugin_interface.Event, update chan plugin_interface.Update) {
+func New(config map[string]interface{}, events chan plugin_interface.Event, update chan plugin_interface.Update) {
 	c := loadConfig(config)
+	str, _ := yaml.Marshal(config)
+	log.Warning(string(str))
 	var stats netStats
 	stats.old_ts = time.Now()
 	stats.ts = time.Now()
+	var ev plugin_interface.Update
+	//send sth at start of plugin, in case we dont get anything useful (like interface with no traffic)
+	ev.FullText= fmt.Sprintf("%s!!", c.iface)
+	ev.Color = "#999999"
+	update <- ev
+	Update(update,c,&stats)
 	for {
 		select {
 		case _ = (<-events):
@@ -39,17 +50,20 @@ func New(config *map[string]interface{}, events chan plugin_interface.Event, upd
 
 }
 
-func loadConfig(raw *map[string]interface{}) Config {
+func loadConfig(raw map[string]interface{}) Config {
 	var c Config
-	c.iface = `eth0`
-	for key, value := range (*raw) {
+	c.iface = `lo`
+	for key, value := range raw {
 		converted, ok := value.(string)
 		if ok {
 			switch {
 			case key == `iface`:
 				c.iface=converted
+				log.Warning("-- %s %s--", key, c.iface)
+
 			}
 		} else {
+			log.Warning("-- %s--", key)
 			_ = ok
 		}
 	}
@@ -61,7 +75,6 @@ func Update(update chan plugin_interface.Update, cfg Config, stats *netStats) {
 	var ev plugin_interface.Update
 	ev.Color=`#ffffdd`
 	stats.old_ts = stats.ts
-
 	rx, tx := getStats(cfg.iface)
 	stats.ts = time.Now()
 
