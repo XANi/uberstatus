@@ -46,14 +46,17 @@ func main() {
 	updates := make(chan plugin_interface.Update, 10)
 	cfg := config.LoadConfig()
 	slotMap := make(map[string]map[string]int)
+	slots := make([]i3bar.Msg, len(cfg.Plugins))
 	for idx, pluginCfg := range cfg.Plugins {
 		log.Info("Loading plugin %s into slot %d", pluginCfg.Plugin, idx)
 		if slotMap[pluginCfg.Name] == nil {
 			slotMap[pluginCfg.Name] = make(map[string]int)
 		}
 		slotMap[pluginCfg.Name][pluginCfg.Instance] = idx
+		slots[idx] = i3bar.NewMsg()
 	}
-	_ = cfg
+
+	_ = slots
 	// fmt.Println("\n[")
 
 	// plugins := config.Plugins

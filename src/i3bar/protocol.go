@@ -9,7 +9,7 @@ import (
 //	"fmt"
 )
 
-type I3barHeader struct{
+type Header struct{
 	Version int8 `json:"version"`
 	// not used yet
 	// Stop_signal  uint8 `json:"stop_signal"`
@@ -17,7 +17,7 @@ type I3barHeader struct{
 	ClickEvents bool `json:"click_events"`
 }
 // http://i3wm.org/docs/i3bar-protocol.html
-type I3barMsg struct {
+type Msg struct {
 	FullText string `json:"full_text"` // full text, when shortening is not required
 	ShortText string `json:"short_text"` // shortened version of text to use when bar is full
 	Color string `json:"color"` // color in #ffff00
@@ -31,7 +31,7 @@ type I3barMsg struct {
 }
 
 // incoming event
-type I3barEvent struct {
+type Event struct {
 	Name string `json:"name"`
 	Instance string `json:"instance"`
 	Button int `json:"button"`
@@ -39,11 +39,11 @@ type I3barEvent struct {
 	Y int `json:"y"`
 }
 
-func NewEvent() (r I3barEvent) {
+func NewEvent() (r Event) {
 	return r
 }
 
-func NewMsg() (r I3barMsg) {
+func NewMsg() (r Msg) {
 	// return msg with defaults
 	r.FullText="asd"
 	r.Color=`#aaaaaa`
@@ -53,7 +53,7 @@ func NewMsg() (r I3barMsg) {
 	return r
 }
 
-func CreateMsg(update plugin_interface.Update) (r I3barMsg) {
+func CreateMsg(update plugin_interface.Update) (r Msg) {
 	msg := NewMsg()
 	msg.Name = update.Name
 	msg.Instance = update.Instance
@@ -64,18 +64,18 @@ func CreateMsg(update plugin_interface.Update) (r I3barMsg) {
 	return msg
 }
 
-func NewHeader() (r I3barHeader) {
+func NewHeader() (r Header) {
 	r.Version = 1
 	r.ClickEvents = true
 	return r
 }
 
-func (r I3barMsg) Encode() []byte {
+func (r Msg) Encode() []byte {
 	s, _ :=  json.Marshal(r)
 	return s
 }
 
-func (r I3barHeader) Encode() []byte {
+func (r Header) Encode() []byte {
 	s, _ :=  json.Marshal(r)
 	return s
 }
@@ -99,13 +99,13 @@ func FilterRawEvent(in []byte) []byte {
 	return re.ReplaceAllLiteral(in, []byte(`{`))
 }
 
-func EventReader() chan I3barEvent {
-	queue := make(chan I3barEvent)
+func EventReader() chan Event {
+	queue := make(chan Event)
 	go eventReaderLoop(queue)
 	return queue
 }
 
-func eventReaderLoop(events chan I3barEvent) {
+func eventReaderLoop(events chan Event) {
 	stdin := bufio.NewReader(os.Stdin)
 	for {
 		m := NewEvent()
