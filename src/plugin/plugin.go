@@ -5,7 +5,9 @@ import (
 	plugin_network "plugin/network"
 	"plugin_interface"
 	"fmt"
+	"github.com/op/go-logging"
 )
+var log = logging.MustGetLogger("main")
 func NewPlugin(
 	name string, // Plugin name
 	instance string, // Plugin instance
@@ -14,7 +16,7 @@ func NewPlugin(
 ) (	chan plugin_interface.Event)  {
 	events := make(chan plugin_interface.Event, 16)
 	update := make(chan plugin_interface.Update,1)
-
+	log.Info("Adding plugin %s, instance %s",name, instance)
 	switch {
 	case name == `clock`:
 		go plugin_clock.New(config, events, update)

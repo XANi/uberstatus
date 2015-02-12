@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/op/go-logging"
 	"gopkg.in/yaml.v1"
 	"i3bar"
 	"io/ioutil"
@@ -17,7 +18,16 @@ type Config struct {
 	Plugins *map[string]map[string]interface{}
 }
 
+var log = logging.MustGetLogger("main")
+var logFormat = logging.MustStringFormatter(
+	"%{color}%{time:15:04:05.000} %{shortpkg}↛%{shortfunc}: %{level:.4s} %{id:03x}%{color:reset}%{message}",
+)
+
 func main() {
+	logBackend := logging.NewLogBackend(os.Stderr, "", 0)
+	logBackendFormatter := logging.NewBackendFormatter(logBackend, logFormat)
+	logging.SetBackend(logBackendFormatter)
+	log.Info("Starting")
 	button := 0
 	header := i3bar.NewHeader()
 	msg := i3bar.NewMsg()
@@ -87,7 +97,9 @@ type Cfg struct {
 func LoadConfig() Config {
 	var cfg Config
 	cfg.Plugins = new(map[string]map[string]interface{})
-	raw_cfg, err := ioutil.ReadFile("/home/xani/src/my/uberstatus/cfg/uberstatus.default.conf")
+	cfgFile := "/home/xani/src/my/uberstatus/cfg/uberstatus.default.conf"
+	log.Info(fmt.Sprintf("Loading config file: %s", cfgFile))
+	raw_cfg, err := ioutil.ReadFile(cfgFile)
 	err = yaml.Unmarshal([]byte(raw_cfg), &cfg)
 	_ = err
 	return cfg
