@@ -156,14 +156,14 @@ func getStats(iface string) (uint64, uint64) {
 func formatBw (bytes float64) string {
 	switch {
 	case bytes < 125:
-		return fmt.Sprintf(`%d b`,uint64(bytes * 8))
+		return fmt.Sprintf(`%.5g  b`,float64(bytes * 8))
 	case bytes < 125 * 1024:
-		return fmt.Sprintf(`%d Kb`,uint64(bytes * 8 / 1024))
+		return fmt.Sprintf(`%.5g Kb`,float64(bytes * 8 / 1024))
 	case bytes < 1.25 * 1024 * 1024:
-		return fmt.Sprintf(`%.2f Mb`,float64(bytes * 8 / 1024 / 1024))
+		return fmt.Sprintf(`%.5g Mb`,float64(bytes * 8 / 1024 / 1024))
 	case bytes < 100 * 1024 * 1024:
-		return fmt.Sprintf(`%d Mb`,uint64(bytes * 8 / 1024 / 1024))
+		return fmt.Sprintf(`%.5g Mb`,float64(bytes * 8 / 1024 / 1024))
 	default:
-		return fmt.Sprintf(`%.3f Gb`,float64(bytes * 8 / 1024 / 1024 / 1024))
+		return fmt.Sprintf(`%4.3f Gb`,float64(bytes * 8 / 1024 / 1024 / 1024))
 	}
 }
