@@ -62,19 +62,18 @@ func main() {
 	// //	_ = plugin.NewPlugin("clock", "", &ifd, updates)
 	// _ = plugin.NewPlugin("network", "", &net, updates)
 	// _ = ifd
+	fmt.Println(`[`)
 
 	for {
 		fmt.Print(`[`)
 
 		for idx, msg := range slots {
-			fmt.Print(`[`)
 			os.Stdout.Write(msg.Encode())
-			fmt.Print(`]`)
 			if idx+1 < (len(slots)) {
 				fmt.Print(`,`)
 			}
 		}
-		fmt.Println(`]`)
+		fmt.Println(`],`)
 		select {
 		case ev := (<-i3input):
 			log.Info("Gut event from plugin %d", ev.Button)
