@@ -29,7 +29,6 @@ func main() {
 	logBackendFormatter := logging.NewBackendFormatter(logBackend, logFormat)
 	logging.SetBackend(logBackendFormatter)
 	log.Info("Starting")
-	button := 0
 	header := i3bar.NewHeader()
 	msg := i3bar.NewMsg()
 	msg.FullText = `test`
@@ -39,8 +38,6 @@ func main() {
 	}
 	os.Stdout.Write(b)
 	//c, err := json.Marshal(msg)
-
-	c := msg.Encode()
 
 	i3input := i3bar.EventReader()
 	updates := make(chan plugin_interface.Update, 10)
@@ -68,20 +65,23 @@ func main() {
 
 	for {
 		fmt.Print(`[`)
+
 		for idx, msg := range slots {
+			fmt.Print(`[`)
 			os.Stdout.Write(msg.Encode())
-			fmt.Print(`,`)
+			fmt.Print(`]`)
+			if idx+1 < (len(slots)) {
+				fmt.Print(`,`)
+			}
 		}
-		fmt.Println(`],`)
-
-
+		fmt.Println(`]`)
 		select {
 		case ev := (<-i3input):
-			button = ev.Button
+			log.Info("Gut event from plugin %d", ev.Button)
 		case upd := <-updates:
-			c = i3bar.CreateMsg(upd).Encode()
+			log.Info("Gut update from plugin %s", upd.Name)
 		case <-time.After(time.Second):
-			button = 0
+			log.Info("Time passed")
 		}
 	}
 }
