@@ -8,3 +8,5 @@ DEADJOE
 # compiled files
 _vendor/
 uberstatus
+#
+cfg/*

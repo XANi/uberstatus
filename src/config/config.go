@@ -5,9 +5,20 @@ import (
 	"github.com/op/go-logging"
 	"gopkg.in/yaml.v1"
 	"io/ioutil"
+	"os"
+	"path/filepath"
 )
 
 var log = logging.MustGetLogger("main")
+
+var cfgFiles =[]string{
+	"$HOME/.config/uberstatus/uberstatus.conf",
+	"./cfg/uberstatus.conf",
+	"./cfg/uberstatus.default.conf",
+	"/usr/share/doc/uberstatus/uberstatus.example.conf",
+}
+
+
 
 type PluginConfig struct {
 	Name string
@@ -24,7 +35,18 @@ type Config struct {
 
 func LoadConfig() Config {
 	var cfg Config
-	cfgFile := "/home/xani/src/my/uberstatus/cfg/uberstatus.default.conf"
+	var cfgFile string
+	for _,element := range cfgFiles {
+		filename, _ := filepath.Abs(os.ExpandEnv(element))
+		log.Warning(filename)
+		if _, err := os.Stat(filename); err == nil {
+			cfgFile = filename
+			break
+		}
+	}
+	if cfgFile == "" {
+		log.Panic("could not find config file: %v", cfgFiles)
+	}
 	log.Info(fmt.Sprintf("Loading config file: %s", cfgFile))
 	raw_cfg, err := ioutil.ReadFile(cfgFile)
 	err = yaml.Unmarshal([]byte(raw_cfg), &cfg)
