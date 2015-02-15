@@ -9,6 +9,7 @@ import (
 	"strings"
 	"strconv"
 	"github.com/op/go-logging"
+	"github.com/VividCortex/ewma"
 )
 
 var log = logging.MustGetLogger("main")
@@ -22,6 +23,8 @@ type netStats struct {
 	rx uint64
 	old_tx uint64
 	old_rx uint64
+	ewma_tx ewma.MovingAverage
+	ewma_rx ewma.MovingAverage
 	old_ts time.Time
 	ts time.Time
 }
@@ -31,6 +34,8 @@ func New(config map[string]interface{}, events chan plugin_interface.Event, upda
 	str, _ := yaml.Marshal(config)
 	log.Warning(string(str))
 	var stats netStats
+	stats.ewma_rx = ewma.NewMovingAverage()
+	stats.ewma_tx = ewma.NewMovingAverage()
 	stats.old_ts = time.Now()
 	stats.ts = time.Now()
 	var ev plugin_interface.Update
@@ -121,11 +126,12 @@ func Update(update chan plugin_interface.Update, cfg Config, stats *netStats) {
 	}
 	rx_bw := float64(rx_diff) / ts_diff
 	tx_bw := float64(tx_diff) / ts_diff
-	divider, unit := getUnit(rx_bw + tx_bw)
-	ev.FullText = fmt.Sprintf(`%s:%6.3g/%6.3g %s`, cfg.iface,  rx_bw/divider, tx_bw/divider, unit)
-	if strings.Contains(ev.FullText,`+`) {
-		log.Warning("%v %v %v %v", rx_bw, tx_bw, divider, unit)
-	}
+	stats.ewma_rx.Add(rx_bw)
+	stats.ewma_tx.Add(tx_bw)
+	rx_avg := stats.ewma_rx.Value()
+	tx_avg := stats.ewma_tx.Value()
+	divider, unit := getUnit(rx_avg + tx_avg)
+	ev.FullText = fmt.Sprintf(`%s:%6.3g/%6.3g %s`, cfg.iface,  rx_avg/divider, tx_avg/divider, unit)
 	ev.ShortText = fmt.Sprintf(`-%s-`, cfg.iface)
 	switch {
 	case (rx_bw + tx_bw) < 50 * 1024:

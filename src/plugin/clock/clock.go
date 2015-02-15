@@ -4,12 +4,17 @@ import (
 	"plugin_interface"
 //	"gopkg.in/yaml.v1"
 	"time"
+	"github.com/op/go-logging"
 //	"fmt"
 )
+
+var log = logging.MustGetLogger("main")
+
 
 type Config struct {
 	long_format string
 	short_format string
+	interval int
 }
 
 
@@ -19,7 +24,7 @@ func New(config map[string]interface{}, events chan plugin_interface.Event, upda
 		select {
 		case _ = (<-events):
 			Update(update, c.long_format)
-		case <-time.After(time.Second):
+		case <-time.After(time.Duration(c.interval) * time.Millisecond):
 			Update(update, c.long_format)
 		}
 	}
@@ -30,18 +35,32 @@ func loadConfig(raw map[string]interface{}) Config {
 	var c Config
 	c.long_format = `2006-01-02 MST 15:04:05.00`
 	c.short_format = `15:04:05`
+	c.interval = 500
 	for key, value := range raw {
 		converted, ok := value.(string)
 		if ok {
 			switch {
 			case key == `long_format`:
 				c.long_format=converted
-
 			case key == `short_format`:
 				c.short_format=converted
+			default:
+				log.Warning("unknown config key: [%s]", key)
+
 			}
+			log.Warning("t: %s", key)
+		} else {
+			converted, ok := value.(int)
+			if ok {
+				switch {
+				case key == `interval`:
+					c.interval = converted
+				default:
+					log.Warning("unknown config key: [%s]", key)
+				}
 			} else {
-			_ = ok
+				log.Error("Cant interpret value of config key [%s]", key)
+			}
 		}
 	}
 	return c
