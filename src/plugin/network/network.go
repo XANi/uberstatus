@@ -34,8 +34,8 @@ func New(config map[string]interface{}, events chan plugin_interface.Event, upda
 	str, _ := yaml.Marshal(config)
 	log.Warning(string(str))
 	var stats netStats
-	stats.ewma_rx = ewma.NewMovingAverage()
-	stats.ewma_tx = ewma.NewMovingAverage()
+	stats.ewma_rx = ewma.NewMovingAverage(5)
+	stats.ewma_tx = ewma.NewMovingAverage(5)
 	stats.old_ts = time.Now()
 	stats.ts = time.Now()
 	var ev plugin_interface.Update
