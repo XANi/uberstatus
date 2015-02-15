@@ -121,7 +121,11 @@ func Update(update chan plugin_interface.Update, cfg Config, stats *netStats) {
 	}
 	rx_bw := float64(rx_diff) / ts_diff
 	tx_bw := float64(tx_diff) / ts_diff
-	ev.FullText = fmt.Sprintf(`%s: rx: %s tx %s`, cfg.iface,  formatBw(rx_bw), formatBw(tx_bw))
+	divider, unit := getUnit(rx_bw + tx_bw)
+	ev.FullText = fmt.Sprintf(`%s:%6.3g/%6.3g %s`, cfg.iface,  rx_bw/divider, tx_bw/divider, unit)
+	if strings.Contains(ev.FullText,`+`) {
+		log.Warning("%v %v %v %v", rx_bw, tx_bw, divider, unit)
+	}
 	ev.ShortText = fmt.Sprintf(`-%s-`, cfg.iface)
 	switch {
 	case (rx_bw + tx_bw) < 50 * 1024:
@@ -153,17 +157,13 @@ func getStats(iface string) (uint64, uint64) {
 }
 
 
-func formatBw (bytes float64) string {
+func getUnit(bytes float64) (divider float64, unit string) {
 	switch {
-	case bytes < 125:
-		return fmt.Sprintf(`%.5g  b`,float64(bytes * 8))
 	case bytes < 125 * 1024:
-		return fmt.Sprintf(`%.5g Kb`,float64(bytes * 8 / 1024))
-	case bytes < 1.25 * 1024 * 1024:
-		return fmt.Sprintf(`%.5g Mb`,float64(bytes * 8 / 1024 / 1024))
+		return 1024/8, `Kb`
 	case bytes < 100 * 1024 * 1024:
-		return fmt.Sprintf(`%.5g Mb`,float64(bytes * 8 / 1024 / 1024))
+		return 1024 * 1024 / 8, `Mb`
 	default:
-		return fmt.Sprintf(`%4.3f Gb`,float64(bytes * 8 / 1024 / 1024 / 1024))
+		return 1024 * 1024 * 1024 / 8, `Gb`
 	}
 }
