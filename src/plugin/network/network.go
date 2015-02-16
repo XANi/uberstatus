@@ -137,7 +137,7 @@ func Update(update chan plugin_interface.Update, cfg Config, stats *netStats) {
 	case (rx_bw + tx_bw) < 50 * 1024:
 		ev.Color = "#aaaaff"
 	case (rx_bw + tx_bw) < 150 * 1024:
-		ev.Color = "#aa33ff"
+		ev.Color = "#11aaff"
 	case (rx_bw + tx_bw) < 450 * 1024:
 		ev.Color = "#00ffff"
 	case (rx_bw + tx_bw) < 1024 * 1024:
