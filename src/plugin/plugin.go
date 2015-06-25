@@ -3,10 +3,11 @@ package plugin
 import (
 	plugin_clock "plugin/clock"
 	plugin_network "plugin/network"
+	plugin_i3blocks "plugin/i3blocks"
 	"plugin_interface"
 	"fmt"
 	"github.com/op/go-logging"
-		"gopkg.in/yaml.v1"
+	"gopkg.in/yaml.v1"
 )
 var log = logging.MustGetLogger("main")
 func NewPlugin(
@@ -25,6 +26,8 @@ func NewPlugin(
 		go plugin_clock.New(config, events, update)
 	case name == `network`:
 		go plugin_network.New(config, events, update)
+	case name == `i3blocks`:
+		go plugin_i3blocks.New(config, events, update)
 	case true:
 		panic(fmt.Sprintf("no plugin named %s", name))
 	}
