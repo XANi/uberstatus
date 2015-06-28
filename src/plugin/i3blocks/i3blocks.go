@@ -8,7 +8,7 @@ import (
 	"github.com/op/go-logging"
 	"strings"
 	"bytes"
-//	"fmt"
+	"fmt"
 )
 
 var log = logging.MustGetLogger("main")
@@ -72,9 +72,9 @@ func loadConfig(raw map[string]interface{}) Config {
 }
 
 
-func Update(update chan plugin_interface.Update, config Config) {
+func Update(update chan plugin_interface.Update, cfg Config) {
 	var ev plugin_interface.Update
-	cmd := exec.Command(config.command)
+	cmd := exec.Command(cfg.command)
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	err := cmd.Run()
@@ -90,21 +90,20 @@ func Update(update chan plugin_interface.Update, config Config) {
 	if st_len >= 4 {
 		ev.Color = st[2]
 	} else {
-		ev.Color = config.color
+		ev.Color = cfg.color
 	}
-
 	if st_len == 3 {
 		ev.ShortText = st[1]
-		ev.FullText = st[0]
 	}
 	if st_len == 2 {
-		ev.FullText = st[0]
 		ev.ShortText = st[0]
 	}
 	// len of 1 means there was nothing to split, no \n probably means invalid input
 	if st_len <= 1 {
-		log.Warning("Command %s returned nothing",config.command)
+		log.Warning("Command %s returned nothing",cfg.command)
 		return
+	} else {
+		ev.FullText = fmt.Sprint(cfg.prefix, st[0])
 	}
 	update <- ev
 }

@@ -31,8 +31,6 @@ func NewPlugin(
 	case true:
 		panic(fmt.Sprintf("no plugin named %s", name))
 	}
-
-
 	go filterUpdate(name, instance, update ,update_filtered)
 	return events
 }

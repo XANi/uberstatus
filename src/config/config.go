@@ -53,5 +53,6 @@ func LoadConfig() Config {
 	_ = err
 	str, _ := yaml.Marshal(cfg)
 	log.Warning(string(str))
+
 	return cfg
 }
