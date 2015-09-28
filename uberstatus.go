@@ -27,7 +27,11 @@ var logFormat = logging.MustStringFormatter(
 func main() {
 	logBackend := logging.NewLogBackend(os.Stderr, "", 0)
 	logBackendFormatter := logging.NewBackendFormatter(logBackend, logFormat)
-	logging.SetBackend(logBackendFormatter)
+	_ = logBackendFormatter
+	logBackendLeveled := logging.AddModuleLevel(logBackendFormatter)
+	logBackendLeveled.SetLevel(logging.NOTICE, "")
+	logging.SetBackend(logBackendLeveled)
+
 	log.Info("Starting")
 	header := i3bar.NewHeader()
 	msg := i3bar.NewMsg()
