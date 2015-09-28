@@ -50,12 +50,16 @@ func main() {
 	slots := make([]i3bar.Msg, len(cfg.Plugins))
 	for idx, pluginCfg := range cfg.Plugins {
 		log.Info("Loading plugin %s into slot %d", pluginCfg.Plugin, idx)
-		if slotMap[pluginCfg.Name] == nil {
-			slotMap[pluginCfg.Name] = make(map[string]int)
+		if slotMap[pluginCfg.Plugin] == nil {
+			slotMap[pluginCfg.Plugin] = make(map[string]int)
 		}
-		slotMap[pluginCfg.Name][pluginCfg.Instance] = idx
+		if len(pluginCfg.Instance) == 0 {
+			pluginCfg.Instance = pluginCfg.Name
+		}
+
+		slotMap[pluginCfg.Plugin][pluginCfg.Instance] = idx
 		slots[idx] = i3bar.NewMsg()
-		_ = plugin.NewPlugin(pluginCfg.Name, pluginCfg.Instance, pluginCfg.Config, updates)
+		_ = plugin.NewPlugin(pluginCfg.Plugin, pluginCfg.Instance, pluginCfg.Config, updates)
 	}
 
 	_ = slots
