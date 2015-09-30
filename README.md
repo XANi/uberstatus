@@ -7,6 +7,12 @@ Goals:
 * integrate most of core functionality directly (checking cpu, network etc. without extra forking
 * Support push and pull (polling) type of plugins
 
+# Operation
+
+Each of plugins operates asynchronously and can send update of its status at any time. On each plugin update state is sent upstream (including previous cached plugin state) so it is possible to have each plugin update separetely.
+
+Each plugin have a name (by default plugin name) and instance (in case of plugins that will be used multiple times, like network interfaces).
+
 
 # Plugins
 
