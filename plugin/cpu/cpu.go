@@ -1,7 +1,7 @@
 package cpu
 
 import (
-	"plugin_interface"
+	"github.com/XANi/uberstatus/uber"
 //	"gopkg.in/yaml.v1"
 	"github.com/op/go-logging"
 //	"fmt"
@@ -28,7 +28,7 @@ type CpuStats struct {
 }
 
 
-func New(config map[string]interface{}, events chan plugin_interface.Event, update chan plugin_interface.Update) {
+func New(config map[string]interface{}, events chan uber.Event, update chan uber.Update) {
 	c := loadConfig(config)
 	for {
 		select {

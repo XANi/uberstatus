@@ -1,7 +1,6 @@
 package i3blocks
 
 import (
-	"plugin_interface"
 	//	"gopkg.in/yaml.v1"
 	"os/exec"
 	"time"
@@ -9,6 +8,9 @@ import (
 	"strings"
 	"bytes"
 	"fmt"
+	//
+	"github.com/XANi/uberstatus/uber"
+
 )
 
 var log = logging.MustGetLogger("main")
@@ -21,7 +23,7 @@ type Config struct {
 	color string
 }
 
-func New(config map[string]interface{}, events chan plugin_interface.Event, update chan plugin_interface.Update) {
+func New(config map[string]interface{}, events chan uber.Event, update chan uber.Update) {
 	c := loadConfig(config)
 	for {
 		select {
@@ -72,8 +74,8 @@ func loadConfig(raw map[string]interface{}) Config {
 }
 
 
-func Update(update chan plugin_interface.Update, cfg Config) {
-	var ev plugin_interface.Update
+func Update(update chan uber.Update, cfg Config) {
+	var ev uber.Update
 	cmd := exec.Command(cfg.command)
 	var out bytes.Buffer
 	cmd.Stdout = &out

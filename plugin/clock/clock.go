@@ -1,7 +1,7 @@
 package clock
 
 import (
-	"plugin_interface"
+	"github.com/XANi/uberstatus/uber"
 //	"gopkg.in/yaml.v1"
 	"time"
 	"github.com/op/go-logging"
@@ -18,7 +18,7 @@ type Config struct {
 }
 
 
-func New(config map[string]interface{}, events chan plugin_interface.Event, update chan plugin_interface.Update) {
+func New(config map[string]interface{}, events chan uber.Event, update chan uber.Update) {
 	c := loadConfig(config)
 	for {
 		select {
@@ -67,16 +67,16 @@ func loadConfig(raw map[string]interface{}) Config {
 }
 
 
-func Update(update chan plugin_interface.Update, format string) {
+func Update(update chan uber.Update, format string) {
 	time := GetTimeEvent(format)
 	time.Color=`#DDDDFF`
 	update <- time
 }
 
 
-func GetTimeEvent(format string) plugin_interface.Update {
+func GetTimeEvent(format string) uber.Update {
 	t :=  time.Now().Local()
-	var ev plugin_interface.Update
+	var ev uber.Update
 	ev.FullText = t.Format(format)
 	ev.ShortText = t.Format(`15:04:05`)
 	return ev

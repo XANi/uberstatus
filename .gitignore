@@ -5,6 +5,8 @@
 .\#*
 \#*\#
 DEADJOE
+TAGS
+tags
 # compiled files
 _vendor/
 uberstatus

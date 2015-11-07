@@ -5,8 +5,9 @@ import (
 	"regexp"
 	"bufio"
 	"os"
-	"plugin_interface"
-//	"fmt"
+	//
+	"github.com/XANi/uberstatus/uber"
+	//	"fmt"
 )
 
 type Header struct{
@@ -53,7 +54,7 @@ func NewMsg() (r Msg) {
 	return r
 }
 
-func CreateMsg(update plugin_interface.Update) (r Msg) {
+func CreateMsg(update uber.Update) (r Msg) {
 	msg := NewMsg()
 	msg.Name = update.Name
 	msg.Instance = update.Instance

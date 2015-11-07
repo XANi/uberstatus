@@ -1,4 +1,4 @@
-package plugin_interface
+package uber
 
 type Event struct{
 	Button int

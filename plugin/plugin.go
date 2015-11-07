@@ -1,33 +1,42 @@
 package plugin
 
 import (
-	plugin_clock "plugin/clock"
-	plugin_network "plugin/network"
-	plugin_i3blocks "plugin/i3blocks"
-	"plugin_interface"
 	"fmt"
 	"github.com/op/go-logging"
 	"gopkg.in/yaml.v1"
+	//
+	"github.com/XANi/uberstatus/uber"
+	"github.com/XANi/uberstatus/plugin/clock"
+	"github.com/XANi/uberstatus/plugin/network"
+	"github.com/XANi/uberstatus/plugin/i3blocks"
+
 )
 var log = logging.MustGetLogger("main")
+
+
+//var plugins =  map[string]func(config map[string]interface{}, events chan plugin.Event, update chan plugin.Update)  {
+//	"clock": clock,
+//};
+
+
 func NewPlugin(
 	name string, // Plugin name
 	instance string, // Plugin instance
 	config map[string]interface{}, // Plugin config
-	update_filtered chan plugin_interface.Update, // Update channel
-) (	chan plugin_interface.Event)  {
-	events := make(chan plugin_interface.Event, 16)
-	update := make(chan plugin_interface.Update,1)
+	update_filtered chan uber.Update, // Update channel
+) (	chan uber.Event)  {
+	events := make(chan uber.Event, 16)
+	update := make(chan uber.Update,1)
 	log.Info("Adding plugin %s, instance %s",name, instance)
 	str, _ := yaml.Marshal(config)
 	log.Warning(string(str))
 	switch {
 	case name == `clock`:
-		go plugin_clock.New(config, events, update)
+		go clock.New(config, events, update)
 	case name == `network`:
-		go plugin_network.New(config, events, update)
+		go network.New(config, events, update)
 	case name == `i3blocks`:
-		go plugin_i3blocks.New(config, events, update)
+		go i3blocks.New(config, events, update)
 	case true:
 		panic(fmt.Sprintf("no plugin named %s", name))
 	}
@@ -40,8 +49,8 @@ func NewPlugin(
 func filterUpdate(
 	name string,
 	instance string,
-	update chan plugin_interface.Update,
-	update_filtered chan plugin_interface.Update ) {
+	update chan uber.Update,
+	update_filtered chan uber.Update ) {
 	for {
 		ev := <- update
 		ev.Name = name

@@ -1,7 +1,7 @@
 package network
 
 import (
-	"plugin_interface"
+	"github.com/XANi/uberstatus/uber"
 	"gopkg.in/yaml.v1"
 	"time"
 	"io/ioutil"
@@ -29,7 +29,7 @@ type netStats struct {
 	ts time.Time
 }
 
-func New(config map[string]interface{}, events chan plugin_interface.Event, update chan plugin_interface.Update) {
+func New(config map[string]interface{}, events chan uber.Event, update chan uber.Update) {
 	c := loadConfig(config)
 	str, _ := yaml.Marshal(config)
 	log.Warning(string(str))
@@ -38,7 +38,7 @@ func New(config map[string]interface{}, events chan plugin_interface.Event, upda
 	stats.ewma_tx = ewma.NewMovingAverage(5)
 	stats.old_ts = time.Now()
 	stats.ts = time.Now()
-	var ev plugin_interface.Update
+	var ev uber.Update
 	//send sth at start of plugin, in case we dont get anything useful (like interface with no traffic)
 	ev.FullText= fmt.Sprintf("%s!!", c.iface)
 	ev.Color = "#999999"
@@ -76,8 +76,8 @@ func loadConfig(raw map[string]interface{}) Config {
 }
 
 
-func Update(update chan plugin_interface.Update, cfg Config, stats *netStats) {
-	var ev plugin_interface.Update
+func Update(update chan uber.Update, cfg Config, stats *netStats) {
+	var ev uber.Update
 	ev.Color=`#ffffdd`
 	stats.old_ts = stats.ts
 	rx, tx := getStats(cfg.iface)

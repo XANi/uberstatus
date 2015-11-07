@@ -5,14 +5,15 @@ import (
 	"fmt"
 	"github.com/op/go-logging"
 	"gopkg.in/yaml.v1"
-	"i3bar"
 	//	"io/ioutil"
-	"config"
 	"os"
-	"plugin"
-	"plugin_interface"
 	"regexp"
 	"time"
+	//
+	"github.com/XANi/uberstatus/config"
+	"github.com/XANi/uberstatus/i3bar"
+	"github.com/XANi/uberstatus/plugin"
+	"github.com/XANi/uberstatus/uber"
 )
 
 type Config struct {
@@ -44,7 +45,7 @@ func main() {
 	//c, err := json.Marshal(msg)
 
 	i3input := i3bar.EventReader()
-	updates := make(chan plugin_interface.Update, 10)
+	updates := make(chan uber.Update, 10)
 	cfg := config.LoadConfig()
 	slotMap := make(map[string]map[string]int)
 	slots := make([]i3bar.Msg, len(cfg.Plugins))
@@ -95,7 +96,7 @@ func main() {
 	}
 }
 
-func parseUpdate(update plugin_interface.Update, slots *[]i3bar.Msg, slotMap *map[string]map[string]int) {
+func parseUpdate(update uber.Update, slots *[]i3bar.Msg, slotMap *map[string]map[string]int) {
 	if val, ok := (*slotMap)[update.Name][update.Instance]; ok {
 		(*slots)[val] = i3bar.CreateMsg(update)
 		log.Info("Got msg from unk name: %s, instance: %s", update.Name, update.Instance)
