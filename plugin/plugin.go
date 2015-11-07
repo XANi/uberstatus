@@ -14,9 +14,11 @@ import (
 var log = logging.MustGetLogger("main")
 
 
-//var plugins =  map[string]func(config map[string]interface{}, events chan plugin.Event, update chan plugin.Update)  {
-//	"clock": clock,
-//};
+var plugins =  map[string]func(config map[string]interface{}, events chan uber.Event, update chan uber.Update)  {
+	"clock": clock.New,
+	"network": network.New,
+	"i3blocks": i3blocks.New,
+};
 
 
 func NewPlugin(
@@ -30,14 +32,9 @@ func NewPlugin(
 	log.Info("Adding plugin %s, instance %s",name, instance)
 	str, _ := yaml.Marshal(config)
 	log.Warning(string(str))
-	switch {
-	case name == `clock`:
-		go clock.New(config, events, update)
-	case name == `network`:
-		go network.New(config, events, update)
-	case name == `i3blocks`:
-		go i3blocks.New(config, events, update)
-	case true:
+	if p, ok := plugins[name]; ok {
+		go p(config, events, update)
+	} else {
 		panic(fmt.Sprintf("no plugin named %s", name))
 	}
 	go filterUpdate(name, instance, update ,update_filtered)
