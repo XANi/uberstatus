@@ -6,7 +6,7 @@ import (
 //	"gopkg.in/yaml.v1"
 	"time"
 	"github.com/op/go-logging"
-//	"fmt"
+	"fmt"
 )
 
 // Example plugin for uberstatus
@@ -23,12 +23,16 @@ type config struct {
 
 type state struct {
 	cfg config
+	cnt int
+	ev int
 }
 
 
 func Run(c map[string]interface{}, events chan uber.Event, update chan uber.Update) {
 	var st state
 	st.cfg = loadConfig(c)
+	// initial update on start
+	update <- st.updatePeriodic()
 	for {
 		select {
 		case updateEvent := (<-events):
@@ -40,13 +44,21 @@ func Run(c map[string]interface{}, events chan uber.Event, update chan uber.Upda
 }
 
 
-func (*state) updatePeriodic() uber.Update {
+func (state *state) updatePeriodic() uber.Update {
 	var update uber.Update
+	update.FullText = fmt.Sprintf("nothing %d %d", state.cnt, state.ev)
+	update.ShortText = `nope`
+	update.Color = `#66cc66`
+	state.cnt =+ 1
 	return update
 }
 
-func (*state) updateFromEvent(e uber.Event) uber.Update {
+func (state *state) updateFromEvent(e uber.Event) uber.Update {
 	var update uber.Update
+	update.FullText = fmt.Sprintf("event: %+v", e)
+	update.ShortText = `upd`
+	update.Color = `#cccc66`
+	state.ev =+ 1
 	return update
 }
 
