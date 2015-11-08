@@ -5,10 +5,12 @@ import (
 	"regexp"
 	"bufio"
 	"os"
+	"github.com/op/go-logging"
 	//
 	"github.com/XANi/uberstatus/uber"
-	//	"fmt"
+	"fmt"
 )
+var log = logging.MustGetLogger("main")
 
 type Header struct{
 	Version int8 `json:"version"`
@@ -100,19 +102,28 @@ func FilterRawEvent(in []byte) []byte {
 	return re.ReplaceAllLiteral(in, []byte(`{`))
 }
 
-func EventReader() chan Event {
-	queue := make(chan Event)
+func EventReader() chan uber.Event {
+	queue := make(chan uber.Event)
 	go eventReaderLoop(queue)
 	return queue
 }
 
-func eventReaderLoop(events chan Event) {
+func eventReaderLoop(events chan uber.Event) {
 	stdin := bufio.NewReader(os.Stdin)
 	for {
 		m := NewEvent()
 		line, _ := stdin.ReadBytes('\n')
 		json.Unmarshal( FilterRawEvent(line), &m)
-		if(m.X == 0) { continue } // x is neccesary, if it isnt present we got crap. THis should probably be logged... once I figure out how to make app-wide logger...
-		events <- m
+		if(m.X == 0) { continue } // x is neccesary, if it isnt present we got crap. TODO This should probably be logged if it shows up too often
+		// This conversion is a lil bit of a waste but thanks to that there is no need to "taint" main uber.Event with any json tags
+		out := uber.Event {
+			Name: m.Name,
+			Instance: m.Instance,
+			Button: m.Button,
+			X: m.X,
+			Y: m.Y,
+		}
+		log.Warning(fmt.Sprintf("aa: %+v", out))
+		events <- out
 	}
 }

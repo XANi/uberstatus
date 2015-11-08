@@ -1,11 +1,16 @@
 package uber
 
+
+// event passed from X/status bar manager
 type Event struct{
+	Name string
+	Instance string
 	Button int
 	X int
 	Y int
 }
 
+// update sent by plugin
 type Update struct{
 	Name string
 	Instance string

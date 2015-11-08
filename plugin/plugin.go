@@ -26,6 +26,7 @@ var plugins =  map[string]func(config map[string]interface{}, events chan uber.E
 func NewPlugin(
 	name string, // Plugin name
 	instance string, // Plugin instance
+	backend string, // Plugin backend
 	config map[string]interface{}, // Plugin config
 	update_filtered chan uber.Update, // Update channel
 ) (	chan uber.Event)  {
@@ -34,10 +35,10 @@ func NewPlugin(
 	log.Info("Adding plugin %s, instance %s",name, instance)
 	str, _ := yaml.Marshal(config)
 	log.Warning(string(str))
-	if p, ok := plugins[name]; ok {
+	if p, ok := plugins[backend]; ok {
 		go p(config, events, update)
 	} else {
-		panic(fmt.Sprintf("no plugin named %s", name))
+		panic(fmt.Sprintf("no plugin named %s", backend))
 	}
 	go filterUpdate(name, instance, update ,update_filtered)
 	return events

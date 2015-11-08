@@ -25,12 +25,21 @@ var logFormat = logging.MustStringFormatter(
 	"%{color}%{time:15:04:05.000} %{shortpkg}↛%{shortfunc}: %{level:.4s} %{id:03x} %{color:reset}%{message}",
 )
 
+type pluginMap struct {
+	// channels used to send events to plugin
+	input   map[string]map[string]chan uber.Event
+	output  map[string]map[string]chan uber.Update
+	slots   []i3bar.Msg
+	slotMap map[string]map[string]int
+}
+
 func main() {
 	logBackend := logging.NewLogBackend(os.Stderr, "", 0)
 	logBackendFormatter := logging.NewBackendFormatter(logBackend, logFormat)
 	_ = logBackendFormatter
 	logBackendLeveled := logging.AddModuleLevel(logBackendFormatter)
-	logBackendLeveled.SetLevel(logging.NOTICE, "")
+	logBackendLeveled.SetLevel(logging.DEBUG, "")
+	//	logBackendLeveled.SetLevel(logging.NOTICE, "")
 	logging.SetBackend(logBackendLeveled)
 
 	log.Info("Starting")
@@ -47,23 +56,26 @@ func main() {
 	i3input := i3bar.EventReader()
 	updates := make(chan uber.Update, 10)
 	cfg := config.LoadConfig()
-	slotMap := make(map[string]map[string]int)
-	slots := make([]i3bar.Msg, len(cfg.Plugins))
+	plugins := pluginMap{
+		slotMap: make(map[string]map[string]int),
+		slots:   make([]i3bar.Msg, len(cfg.Plugins)),
+		input:   make(map[string]map[string]chan uber.Event),
+	}
 	for idx, pluginCfg := range cfg.Plugins {
-		log.Info("Loading plugin %s into slot %d", pluginCfg.Plugin, idx)
-		if slotMap[pluginCfg.Plugin] == nil {
-			slotMap[pluginCfg.Plugin] = make(map[string]int)
+		log.Info("Loading plugin %s into slot %d: %+v", pluginCfg.Plugin, idx, pluginCfg)
+		if plugins.slotMap[pluginCfg.Name] == nil {
+			plugins.slotMap[pluginCfg.Name] = make(map[string]int)
+			plugins.input[pluginCfg.Name] = make(map[string]chan uber.Event)
 		}
-		if len(pluginCfg.Instance) == 0 {
-			pluginCfg.Instance = pluginCfg.Name
-		}
+		//		if len(pluginCfg.Instance) == 0 {
+		//			pluginCfg.Instance = pluginCfg.Name
+		//		}
 
-		slotMap[pluginCfg.Plugin][pluginCfg.Instance] = idx
-		slots[idx] = i3bar.NewMsg()
-		_ = plugin.NewPlugin(pluginCfg.Plugin, pluginCfg.Instance, pluginCfg.Config, updates)
+		plugins.slotMap[pluginCfg.Name][pluginCfg.Instance] = idx
+		plugins.slots[idx] = i3bar.NewMsg()
+		plugins.input[pluginCfg.Name][pluginCfg.Instance] = plugin.NewPlugin(pluginCfg.Name, pluginCfg.Instance, pluginCfg.Plugin, pluginCfg.Config, updates)
 	}
 
-	_ = slots
 	// fmt.Println("\n[")
 
 	// plugins := config.Plugins
@@ -77,17 +89,17 @@ func main() {
 	for {
 		select {
 		case ev := (<-i3input):
-			log.Info("Gut event from plugin %d", ev.Button)
+			plugins.parseEvent(ev)
 		case upd := <-updates:
-			parseUpdate(upd, &slots, &slotMap)
-		case <-time.After(time.Second):
+			plugins.parseUpdate(upd)
+		case <-time.After(time.Second * 10):
 			log.Info("Time passed")
 		}
 		fmt.Print(`[`)
 
-		for idx, msg := range slots {
+		for idx, msg := range plugins.slots {
 			os.Stdout.Write(msg.Encode())
-			if idx+1 < (len(slots)) {
+			if idx+1 < (len(plugins.slots)) {
 				fmt.Print(`,`)
 			}
 		}
@@ -96,13 +108,21 @@ func main() {
 	}
 }
 
-func parseUpdate(update uber.Update, slots *[]i3bar.Msg, slotMap *map[string]map[string]int) {
-	if val, ok := (*slotMap)[update.Name][update.Instance]; ok {
-		(*slots)[val] = i3bar.CreateMsg(update)
-		log.Info("Got msg from unk name: %s, instance: %s", update.Name, update.Instance)
+func (plugins *pluginMap) parseUpdate(update uber.Update) {
+	if val, ok := plugins.slotMap[update.Name][update.Instance]; ok {
+		plugins.slots[val] = i3bar.CreateMsg(update)
 	} else {
 		log.Warning("Got msg from unknown place, name: %s, instance: %s", update.Name, update.Instance)
 	}
+}
+
+func (plugins *pluginMap) parseEvent(ev uber.Event) {
+	if val, ok := plugins.slotMap[ev.Name][ev.Instance]; ok {
+		log.Info("got event for %+v", val)
+	} else {
+		log.Info("rejected event %+v", ev)
+	}
+
 }
 
 func getTime() []byte {
