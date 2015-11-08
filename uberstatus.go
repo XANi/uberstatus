@@ -117,10 +117,12 @@ func (plugins *pluginMap) parseUpdate(update uber.Update) {
 }
 
 func (plugins *pluginMap) parseEvent(ev uber.Event) {
-	if val, ok := plugins.slotMap[ev.Name][ev.Instance]; ok {
-		log.Info("got event for %+v", val)
+	if val, ok := plugins.input[ev.Name][ev.Instance]; ok {
+		val <- ev
+		//plugin
 	} else {
 		log.Info("rejected event %+v", ev)
+		//		log.Info("map: %+v", plugins)
 	}
 
 }

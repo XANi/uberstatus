@@ -49,7 +49,7 @@ func (state *state) updatePeriodic() uber.Update {
 	update.FullText = fmt.Sprintf("nothing %d %d", state.cnt, state.ev)
 	update.ShortText = `nope`
 	update.Color = `#66cc66`
-	state.cnt =+ 1
+	state.cnt++
 	return update
 }
 
@@ -58,7 +58,7 @@ func (state *state) updateFromEvent(e uber.Event) uber.Update {
 	update.FullText = fmt.Sprintf("event: %+v", e)
 	update.ShortText = `upd`
 	update.Color = `#cccc66`
-	state.ev =+ 1
+	state.ev++
 	return update
 }
 

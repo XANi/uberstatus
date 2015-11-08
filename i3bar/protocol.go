@@ -8,7 +8,6 @@ import (
 	"github.com/op/go-logging"
 	//
 	"github.com/XANi/uberstatus/uber"
-	"fmt"
 )
 var log = logging.MustGetLogger("main")
 
@@ -27,7 +26,7 @@ type Msg struct {
 	MinWidth string `json:"min_width"` // width in pixels, or string which will be measured for min_width
 	Align string `json:"align"` // left/right/center align when size of text is smaller than minWidth
 	Name string `json:"name"` // block name (ignored by i3bar, but will be returned in event)
-	Instance string `json:"instace"` // block instance (ignored by i3bar, but will be returned in event)
+	Instance string `json:"instance"` // block instance (ignored by i3bar, but will be returned in event)
 	Urgent bool `json:"urgent"` // urgent flag
 	Separator bool `json:"separator"` // draw eparator
 	SeparatorBlockWidth int16 `json:"separator_block_width"` //number of pixe
@@ -123,7 +122,6 @@ func eventReaderLoop(events chan uber.Event) {
 			X: m.X,
 			Y: m.Y,
 		}
-		log.Warning(fmt.Sprintf("aa: %+v", out))
 		events <- out
 	}
 }
