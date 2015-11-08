@@ -28,7 +28,7 @@ type CpuStats struct {
 }
 
 
-func New(config map[string]interface{}, events chan uber.Event, update chan uber.Update) {
+func Run(config map[string]interface{}, events chan uber.Event, update chan uber.Update) {
 	c := loadConfig(config)
 	for {
 		select {

@@ -29,7 +29,7 @@ type netStats struct {
 	ts time.Time
 }
 
-func New(config map[string]interface{}, events chan uber.Event, update chan uber.Update) {
+func Run(config map[string]interface{}, events chan uber.Event, update chan uber.Update) {
 	c := loadConfig(config)
 	str, _ := yaml.Marshal(config)
 	log.Warning(string(str))

@@ -9,15 +9,17 @@ import (
 	"github.com/XANi/uberstatus/plugin/clock"
 	"github.com/XANi/uberstatus/plugin/network"
 	"github.com/XANi/uberstatus/plugin/i3blocks"
+	"github.com/XANi/uberstatus/plugin/example"
 
 )
 var log = logging.MustGetLogger("main")
 
 
 var plugins =  map[string]func(config map[string]interface{}, events chan uber.Event, update chan uber.Update)  {
-	"clock": clock.New,
-	"network": network.New,
-	"i3blocks": i3blocks.New,
+	"clock": clock.Run,
+	"network": network.Run,
+	"i3blocks": i3blocks.Run,
+	"example": example.Run,
 };
 
 
