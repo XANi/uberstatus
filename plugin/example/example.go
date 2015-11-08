@@ -46,7 +46,7 @@ func Run(c map[string]interface{}, events chan uber.Event, update chan uber.Upda
 
 func (state *state) updatePeriodic() uber.Update {
 	var update uber.Update
-	update.FullText = fmt.Sprintf("nothing %d %d", state.cnt, state.ev)
+	update.FullText = fmt.Sprintf("%s %d %d", state.cfg.prefix, state.cnt, state.ev)
 	update.ShortText = `nope`
 	update.Color = `#66cc66`
 	state.cnt++
@@ -55,7 +55,7 @@ func (state *state) updatePeriodic() uber.Update {
 
 func (state *state) updateFromEvent(e uber.Event) uber.Update {
 	var update uber.Update
-	update.FullText = fmt.Sprintf("event: %+v", e)
+	update.FullText = fmt.Sprintf("%s %+v", state.cfg.prefix, e)
 	update.ShortText = `upd`
 	update.Color = `#cccc66`
 	state.ev++
