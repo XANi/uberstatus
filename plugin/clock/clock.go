@@ -22,16 +22,16 @@ func Run(config map[string]interface{}, events chan uber.Event, update chan uber
 	c := loadConfig(config)
 	for {
 		select {
-		case _ = (<-events):
-			UpdateWithDate(update)
-			ret := false
-			for ret == false {
-				select {
-				case _ = (<-events):
-					// drain any incoming event to avoid filling up channel
-				case <-time.After(2* time.Second):
-					ret = true
+		case ev := (<-events):
+				if ev.Button == 3 {
+					UpdateWithMonth(update)
+				} else {
+					UpdateWithDate(update)
 				}
+			select {
+				// after next click "normal" (time) handler will fire
+			case _ = (<-events):
+			case <-time.After(2* time.Second):
 			}
 		case <-time.After(time.Duration(c.interval) * time.Millisecond):
 			Update(update, c.long_format)
@@ -77,6 +77,10 @@ func loadConfig(raw map[string]interface{}) Config {
 
 func UpdateWithDate(update chan uber.Update) {
 	Update(update, "2006-01-02")
+}
+
+func UpdateWithMonth(update chan uber.Update) {
+	Update(update, "Mon Jan MST")
 }
 
 func Update(update chan uber.Update, format string) {
