@@ -31,6 +31,11 @@ type netStats struct {
 	ts time.Time
 }
 
+const ShowFirstAddr = 0
+const ShowSecondAddr = 1
+const ShowAllAddr = -1
+
+
 func Run(config map[string]interface{}, events chan uber.Event, update chan uber.Update) {
 	c := loadConfig(config)
 	str, _ := yaml.Marshal(config)
@@ -48,8 +53,18 @@ func Run(config map[string]interface{}, events chan uber.Event, update chan uber
 	Update(update,c,&stats)
 	for {
 		select {
-		case _ = (<-events):
-			UpdateAddr(update, c.iface)
+		case ev := (<-events):
+			if ev.Button == 1 {
+				UpdateAddr(update,c.iface,ShowFirstAddr)
+			} else if ev.Button == 3 {
+				UpdateAddr(update, c.iface,ShowSecondAddr)
+			} else {
+				UpdateAddr(update, c.iface,ShowAllAddr)
+			}
+			select {
+			case _ = (<-events):
+			case <-time.After(10 * time.Second):
+			}
 		case <-time.After(time.Second):
 			Update(update,c,&stats)
 		}
@@ -77,18 +92,28 @@ func loadConfig(raw map[string]interface{}) Config {
 	return c
 }
 
-func UpdateAddr(update chan uber.Update, ifname string) {
+
+func UpdateAddr(update chan uber.Update, ifname string, addr_id int) {
 	var ev uber.Update
 	ev.Color=`#aaffaa`
 	ifaces, _ := net.Interfaces()
+end:
 	for _,iface := range ifaces {
 		if iface.Name == ifname {
-				v, _ := iface.Addrs()
-			ev.FullText = fmt.Sprintf("%+v", v)
+			v, _ := iface.Addrs()
+			if len(v) < addr_id {
+				break end
+			}
+			if addr_id < 0 {
+				ev.FullText = fmt.Sprintf("%+v", v)
+			} else {
+				ev.FullText = fmt.Sprintf("%+v", v[addr_id])
+			}
 			update <- ev
 			return
 		}
 	}
+
 	ev.FullText = fmt.Sprintf("%s??",ifname)
 	update <- ev
 }
