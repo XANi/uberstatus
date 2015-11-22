@@ -6,6 +6,7 @@ import (
 	"time"
 	"io/ioutil"
 	"fmt"
+	"net"
 	"strings"
 	"strconv"
 	"github.com/op/go-logging"
@@ -19,6 +20,7 @@ type Config struct {
 }
 
 type netStats struct {
+	ip string
 	tx uint64
 	rx uint64
 	old_tx uint64
@@ -40,14 +42,14 @@ func Run(config map[string]interface{}, events chan uber.Event, update chan uber
 	stats.ts = time.Now()
 	var ev uber.Update
 	//send sth at start of plugin, in case we dont get anything useful (like interface with no traffic)
-	ev.FullText= fmt.Sprintf("%s!!", c.iface)
+	ev.FullText= fmt.Sprintf("%s??", c.iface)
 	ev.Color = "#999999"
 	update <- ev
 	Update(update,c,&stats)
 	for {
 		select {
 		case _ = (<-events):
-			Update(update,c,&stats)
+			UpdateAddr(update, c.iface)
 		case <-time.After(time.Second):
 			Update(update,c,&stats)
 		}
@@ -75,10 +77,27 @@ func loadConfig(raw map[string]interface{}) Config {
 	return c
 }
 
+func UpdateAddr(update chan uber.Update, ifname string) {
+	var ev uber.Update
+	ev.Color=`#aaffaa`
+	ifaces, _ := net.Interfaces()
+	for _,iface := range ifaces {
+		if iface.Name == ifname {
+				v, _ := iface.Addrs()
+			ev.FullText = fmt.Sprintf("%+v", v)
+			update <- ev
+			return
+		}
+	}
+	ev.FullText = fmt.Sprintf("%s??",ifname)
+	update <- ev
+}
+
 
 func Update(update chan uber.Update, cfg Config, stats *netStats) {
 	var ev uber.Update
 	ev.Color=`#ffffdd`
+	ev.FullText= fmt.Sprintf("%s!!", cfg.iface)
 	stats.old_ts = stats.ts
 	rx, tx := getStats(cfg.iface)
 	stats.ts = time.Now()
@@ -96,6 +115,7 @@ func Update(update chan uber.Update, cfg Config, stats *netStats) {
 		stats.tx = 0
 		stats.old_rx = 0
 		stats.old_tx = 0
+		update <- ev
 		return
 	}
 
