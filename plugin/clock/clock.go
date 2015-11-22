@@ -23,7 +23,16 @@ func Run(config map[string]interface{}, events chan uber.Event, update chan uber
 	for {
 		select {
 		case _ = (<-events):
-			Update(update, c.long_format)
+			UpdateWithDate(update)
+			ret := false
+			for ret == false {
+				select {
+				case _ = (<-events):
+					// drain any incoming event to avoid filling up channel
+				case <-time.After(2* time.Second):
+					ret = true
+				}
+			}
 		case <-time.After(time.Duration(c.interval) * time.Millisecond):
 			Update(update, c.long_format)
 		}
@@ -66,6 +75,9 @@ func loadConfig(raw map[string]interface{}) Config {
 	return c
 }
 
+func UpdateWithDate(update chan uber.Update) {
+	Update(update, "2006-01-02")
+}
 
 func Update(update chan uber.Update, format string) {
 	time := GetTimeEvent(format)
