@@ -93,6 +93,7 @@ func loadConfig(raw map[string]interface{}) Config {
 }
 
 
+
 func UpdateAddr(update chan uber.Update, ifname string, addr_id int) {
 	var ev uber.Update
 	ev.Color=`#aaffaa`
@@ -101,7 +102,8 @@ end:
 	for _,iface := range ifaces {
 		if iface.Name == ifname {
 			v, _ := iface.Addrs()
-			if len(v) < addr_id {
+			log.Error(fmt.Sprintf("---%d %s", len(v), addr_id))
+			if len(v) <= addr_id {
 				break end
 			}
 			if addr_id < 0 {
