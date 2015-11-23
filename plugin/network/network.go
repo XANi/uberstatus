@@ -102,7 +102,6 @@ end:
 	for _,iface := range ifaces {
 		if iface.Name == ifname {
 			v, _ := iface.Addrs()
-			log.Error(fmt.Sprintf("---%d %s", len(v), addr_id))
 			if len(v) <= addr_id {
 				break end
 			}
