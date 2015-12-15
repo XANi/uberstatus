@@ -29,12 +29,13 @@ type config struct {
 
 func Run(cfg uber.PluginConfig) {
 	c := loadConfig(cfg.Config)
+	var nullEv uber.Event
 	for {
 		select {
 		case ev := (<-cfg.Events):
 			c.Update(cfg.Update,c, ev)
 		case <-time.After(time.Duration(c.interval) * time.Millisecond):
-			c.Update(cfg.Update,c, uber.Event{})
+			c.Update(cfg.Update,c, nullEv)
 		}
 	}
 
