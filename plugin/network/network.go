@@ -53,7 +53,7 @@ func Run(cfg uber.PluginConfig) {
 	Update(cfg.Update,c,&stats)
 	for {
 		select {
-		case ev := (<-cfg.Events):
+		case ev := <-cfg.Events:
 			if ev.Button == 1 {
 				UpdateAddr(cfg.Update,c.iface,ShowFirstAddr)
 			} else if ev.Button == 3 {
@@ -62,7 +62,7 @@ func Run(cfg uber.PluginConfig) {
 				UpdateAddr(cfg.Update, c.iface,ShowAllAddr)
 			}
 			select {
-			case _ = (<-cfg.Events):
+			case _ = <-cfg.Events:
 			case <-time.After(10 * time.Second):
 			}
 		case <-time.After(time.Second):

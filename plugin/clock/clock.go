@@ -22,7 +22,7 @@ func Run(cfg uber.PluginConfig) {
 	c := loadConfig(cfg.Config)
 	for {
 		select {
-		case ev := (<-cfg.Events):
+		case ev := <-cfg.Events:
 				if ev.Button == 3 {
 					UpdateWithMonth(cfg.Update)
 				} else {
@@ -30,7 +30,7 @@ func Run(cfg uber.PluginConfig) {
 				}
 			select {
 				// after next click "normal" (time) handler will fire
-			case _ = (<-cfg.Events):
+			case _ = <-cfg.Events:
 			case <-time.After(2* time.Second):
 			}
 		case <-time.After(time.Duration(c.interval) * time.Millisecond):
