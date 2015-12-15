@@ -23,6 +23,7 @@ type Config struct {
 	Plugins *map[string]map[string]interface{}
 }
 
+var debug = false
 var log = logging.MustGetLogger("main")
 var logFormat = logging.MustStringFormatter(
 	"%{color}%{time:15:04:05.000} %{shortpkg}↛%{shortfunc}: %{level:.4s} %{id:03x} %{color:reset}%{message}",
@@ -37,10 +38,11 @@ type pluginMap struct {
 }
 
 func main() {
-	go func() {
-		log.Error("%+v", http.ListenAndServe("127.0.0.1:6060", nil))
-	}()
-	//	runtime.GOMAXPROCS(1)
+	if debug {
+		go func() {
+			log.Error("%+v", http.ListenAndServe("127.0.0.1:6060", nil))
+		}()
+	}
 	logBackend := logging.NewLogBackend(os.Stderr, "", 0)
 	logBackendFormatter := logging.NewBackendFormatter(logBackend, logFormat)
 	_ = logBackendFormatter

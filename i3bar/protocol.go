@@ -122,6 +122,11 @@ func eventReaderLoop(events chan uber.Event) {
 			X: m.X,
 			Y: m.Y,
 		}
-		events <- out
+		select {
+		case events <- out:
+		default:
+			log.Warning("input channel full, discarding input!")
+		}
+
 	}
 }
