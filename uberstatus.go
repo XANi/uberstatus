@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"github.com/op/go-logging"
 	"gopkg.in/yaml.v1"
+	//	"runtime"
 	//	"io/ioutil"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"regexp"
 	"time"
@@ -34,6 +37,10 @@ type pluginMap struct {
 }
 
 func main() {
+	go func() {
+		log.Error("%+v", http.ListenAndServe("127.0.0.1:6060", nil))
+	}()
+	//	runtime.GOMAXPROCS(1)
 	logBackend := logging.NewLogBackend(os.Stderr, "", 0)
 	logBackendFormatter := logging.NewBackendFormatter(logBackend, logFormat)
 	_ = logBackendFormatter
@@ -54,12 +61,15 @@ func main() {
 	//c, err := json.Marshal(msg)
 
 	i3input := i3bar.EventReader()
-	updates := make(chan uber.Update, 10)
+	// FIXME
+	// it looks like i3bar blocks stdout when stdin is not handled
+	// which feedbacks into plugins if channel does
+	updates := make(chan uber.Update, 100)
 	cfg := config.LoadConfig()
 	plugins := pluginMap{
 		slotMap: make(map[string]map[string]int),
 		slots:   make([]i3bar.Msg, len(cfg.Plugins)),
-		input:   make(map[string]map[string]chan uber.Event),
+		input:   make(map[string]map[string]chan uber.Event, 1),
 	}
 	for idx, pluginCfg := range cfg.Plugins {
 		log.Info("Loading plugin %s into slot %d: %+v", pluginCfg.Plugin, idx, pluginCfg)
@@ -85,7 +95,6 @@ func main() {
 	// _ = plugin.NewPlugin("network", "", &net, updates)
 	// _ = ifd
 	fmt.Println(`[`)
-
 	for {
 		select {
 		case ev := (<-i3input):
@@ -94,9 +103,9 @@ func main() {
 			plugins.parseUpdate(upd)
 		case <-time.After(time.Second * 10):
 			log.Info("Time passed")
+			_ = <-i3input
 		}
 		fmt.Print(`[`)
-
 		for idx, msg := range plugins.slots {
 			os.Stdout.Write(msg.Encode())
 			if idx+1 < (len(plugins.slots)) {

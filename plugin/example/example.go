@@ -28,17 +28,17 @@ type state struct {
 }
 
 
-func Run(c map[string]interface{}, events chan uber.Event, update chan uber.Update) {
+func Run(cfg uber.PluginConfig) {
 	var st state
-	st.cfg = loadConfig(c)
+	st.cfg = loadConfig(cfg.Config)
 	// initial update on start
-	update <- st.updatePeriodic()
+	cfg.Update <- st.updatePeriodic()
 	for {
 		select {
-		case updateEvent := (<-events):
-			update <- st.updateFromEvent(updateEvent)
+		case updateEvent := (<-cfg.Events):
+			cfg.Update <- st.updateFromEvent(updateEvent)
 		case <-time.After(time.Duration(st.cfg.interval) * time.Millisecond):
-			update <- st.updatePeriodic()
+			cfg.Update <- st.updatePeriodic()
 		}
 	}
 }

@@ -29,3 +29,12 @@ type TaggedUpdate struct {
 	Update *Update
 	Tag *Tag
 }
+
+
+type PluginConfig struct {
+	Name string
+	Instance string
+	Config map[string]interface{}
+	Events chan Event
+	Update chan Update
+}

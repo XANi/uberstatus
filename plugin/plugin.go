@@ -15,7 +15,7 @@ import (
 var log = logging.MustGetLogger("main")
 
 
-var plugins =  map[string]func(config map[string]interface{}, events chan uber.Event, update chan uber.Update)  {
+var plugins =  map[string]func(uber.PluginConfig)  {
 	"clock": clock.Run,
 	"network": network.Run,
 	"i3blocks": i3blocks.Run,
@@ -30,13 +30,19 @@ func NewPlugin(
 	config map[string]interface{}, // Plugin config
 	update_filtered chan uber.Update, // Update channel
 ) (	chan uber.Event)  {
-	events := make(chan uber.Event, 16)
+	events := make(chan uber.Event, 1)
 	update := make(chan uber.Update,1)
 	log.Info("Adding plugin %s, instance %s",name, instance)
 	str, _ := yaml.Marshal(config)
 	log.Warning(string(str))
 	if p, ok := plugins[backend]; ok {
-		go p(config, events, update)
+		go p(uber.PluginConfig{
+			Name: name,
+			Instance: instance,
+			Config: config,
+			Events: events,
+			Update: update,
+		})
 	} else {
 		panic(fmt.Sprintf("no plugin named %s", backend))
 	}

@@ -18,23 +18,23 @@ type Config struct {
 }
 
 
-func Run(config map[string]interface{}, events chan uber.Event, update chan uber.Update) {
-	c := loadConfig(config)
+func Run(cfg uber.PluginConfig) {
+	c := loadConfig(cfg.Config)
 	for {
 		select {
-		case ev := (<-events):
+		case ev := (<-cfg.Events):
 				if ev.Button == 3 {
-					UpdateWithMonth(update)
+					UpdateWithMonth(cfg.Update)
 				} else {
-					UpdateWithDate(update)
+					UpdateWithDate(cfg.Update)
 				}
 			select {
 				// after next click "normal" (time) handler will fire
-			case _ = (<-events):
+			case _ = (<-cfg.Events):
 			case <-time.After(2* time.Second):
 			}
 		case <-time.After(time.Duration(c.interval) * time.Millisecond):
-			Update(update, c.long_format)
+			Update(cfg.Update, c.long_format)
 		}
 	}
 

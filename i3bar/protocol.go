@@ -102,7 +102,7 @@ func FilterRawEvent(in []byte) []byte {
 }
 
 func EventReader() chan uber.Event {
-	queue := make(chan uber.Event)
+	queue := make(chan uber.Event,1)
 	go eventReaderLoop(queue)
 	return queue
 }

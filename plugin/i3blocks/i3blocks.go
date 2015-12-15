@@ -8,6 +8,8 @@ import (
 	"strings"
 	"bytes"
 	"fmt"
+	"os"
+	"strconv"
 	//
 	"github.com/XANi/uberstatus/uber"
 
@@ -16,28 +18,31 @@ import (
 var log = logging.MustGetLogger("main")
 
 
-type Config struct {
+type config struct {
 	prefix string
 	command string
 	interval int
 	color string
+	name string
+	instance string
 }
 
-func Run(config map[string]interface{}, events chan uber.Event, update chan uber.Update) {
-	c := loadConfig(config)
+func Run(cfg uber.PluginConfig) {
+	c := loadConfig(cfg.Config)
 	for {
 		select {
-		case _ = (<-events):
-			Update(update,c)
+		case ev := (<-cfg.Events):
+			c.Update(cfg.Update,c, ev)
 		case <-time.After(time.Duration(c.interval) * time.Millisecond):
-			Update(update,c)
+			c.Update(cfg.Update,c, uber.Event{})
 		}
 	}
 
 }
 
-func loadConfig(raw map[string]interface{}) Config {
-	var c Config
+
+func loadConfig(raw map[string]interface{}) config {
+	var c config
 	c.interval = 1000
 	c.color = `#ffffff`
 	log.Info("loading config")
@@ -72,11 +77,37 @@ func loadConfig(raw map[string]interface{}) Config {
 	}
 	return c
 }
+//   BLOCK_NAME
+//              The name of the block (usually the section name).
+//
+//       BLOCK_INSTANCE
+//              An optional argument to the script.
+//
+//       BLOCK_BUTTON
+//              Mouse button (1, 2 or 3) if the block was clicked.
+//
+//       BLOCK_X and BLOCK_Y
+//              Coordinates where the click occurred, if the block was clicked.
 
 
-func Update(update chan uber.Update, cfg Config) {
-	var ev uber.Update
+
+func (c *config) Update(update chan uber.Update, cfg config, ev uber.Event) {
+	var upd uber.Update
+
+	os.Setenv("BLOCK_NAME",c.name)
+	os.Setenv("BLOCK_NAME",c.instance)
+	// no event
+	if ev.Button == 0 {
+		os.Unsetenv("BLOCK_BUTTON")
+		os.Unsetenv("BLOCK_X")
+		os.Unsetenv("BLOCK_Y")
+	} else {
+		os.Setenv("BLOCK_BUTTON", strconv.Itoa(ev.Button))
+		os.Setenv("BLOCK_X",strconv.Itoa(ev.X))
+		os.Setenv("BLOCK_Y",strconv.Itoa(ev.Y))
+	}
 	cmd := exec.Command(cfg.command)
+	log.Debug(cfg.command)
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	err := cmd.Run()
@@ -90,22 +121,22 @@ func Update(update chan uber.Update, cfg Config) {
 	st_len := len(st)
 
 	if st_len >= 4 {
-		ev.Color = st[2]
+		upd.Color = st[2]
 	} else {
-		ev.Color = cfg.color
+		upd.Color = cfg.color
 	}
 	if st_len == 3 {
-		ev.ShortText = st[1]
+		upd.ShortText = st[1]
 	}
 	if st_len == 2 {
-		ev.ShortText = st[0]
+		upd.ShortText = st[0]
 	}
 	// len of 1 means there was nothing to split, no \n probably means invalid input
 	if st_len <= 1 {
 		log.Warning("Command %s returned nothing",cfg.command)
 		return
 	} else {
-		ev.FullText = fmt.Sprint(cfg.prefix, st[0])
+		upd.FullText = fmt.Sprint(cfg.prefix, st[0])
 	}
-	update <- ev
+	update <- upd
 }

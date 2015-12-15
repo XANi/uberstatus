@@ -36,9 +36,9 @@ const ShowSecondAddr = 1
 const ShowAllAddr = -1
 
 
-func Run(config map[string]interface{}, events chan uber.Event, update chan uber.Update) {
-	c := loadConfig(config)
-	str, _ := yaml.Marshal(config)
+func Run(cfg uber.PluginConfig) {
+	c := loadConfig(cfg.Config)
+	str, _ := yaml.Marshal(cfg.Config)
 	log.Warning(string(str))
 	var stats netStats
 	stats.ewma_rx = ewma.NewMovingAverage(5)
@@ -49,24 +49,24 @@ func Run(config map[string]interface{}, events chan uber.Event, update chan uber
 	//send sth at start of plugin, in case we dont get anything useful (like interface with no traffic)
 	ev.FullText= fmt.Sprintf("%s??", c.iface)
 	ev.Color = "#999999"
-	update <- ev
-	Update(update,c,&stats)
+	cfg.Update <- ev
+	Update(cfg.Update,c,&stats)
 	for {
 		select {
-		case ev := (<-events):
+		case ev := (<-cfg.Events):
 			if ev.Button == 1 {
-				UpdateAddr(update,c.iface,ShowFirstAddr)
+				UpdateAddr(cfg.Update,c.iface,ShowFirstAddr)
 			} else if ev.Button == 3 {
-				UpdateAddr(update, c.iface,ShowSecondAddr)
+				UpdateAddr(cfg.Update, c.iface,ShowSecondAddr)
 			} else {
-				UpdateAddr(update, c.iface,ShowAllAddr)
+				UpdateAddr(cfg.Update, c.iface,ShowAllAddr)
 			}
 			select {
-			case _ = (<-events):
+			case _ = (<-cfg.Events):
 			case <-time.After(10 * time.Second):
 			}
 		case <-time.After(time.Second):
-			Update(update,c,&stats)
+			Update(cfg.Update,c,&stats)
 		}
 	}
 
