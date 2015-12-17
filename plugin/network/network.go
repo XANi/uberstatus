@@ -177,6 +177,13 @@ func Update(update chan uber.Update, cfg Config, stats *netStats) {
 	rx_avg := stats.ewma_rx.Value()
 	tx_avg := stats.ewma_tx.Value()
 	divider, unit := getUnit(rx_avg + tx_avg)
+	// if speed is very low alias it to 0
+	if rx_avg < 0.1 {
+		rx_avg = 0
+	}
+	if tx_avg < 0.1 {
+		tx_avg = 0
+	}
 	ev.FullText = fmt.Sprintf(`%s:%6.3g/%6.3g %s`, cfg.iface,  rx_avg/divider, tx_avg/divider, unit)
 	ev.ShortText = fmt.Sprintf(`-%s-`, cfg.iface)
 	switch {
