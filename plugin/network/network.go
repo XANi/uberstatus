@@ -23,11 +23,11 @@ type netStats struct {
 	ip string
 	tx uint64
 	rx uint64
-	old_tx uint64
-	old_rx uint64
-	ewma_tx ewma.MovingAverage
-	ewma_rx ewma.MovingAverage
-	old_ts time.Time
+	oldTx uint64
+	oldRx uint64
+	ewmaTx ewma.MovingAverage
+	ewmaRx ewma.MovingAverage
+	oldTs time.Time
 	ts time.Time
 }
 
@@ -41,9 +41,9 @@ func Run(cfg uber.PluginConfig) {
 	str, _ := yaml.Marshal(cfg.Config)
 	log.Warning(string(str))
 	var stats netStats
-	stats.ewma_rx = ewma.NewMovingAverage(5)
-	stats.ewma_tx = ewma.NewMovingAverage(5)
-	stats.old_ts = time.Now()
+	stats.ewmaRx = ewma.NewMovingAverage(5)
+	stats.ewmaTx = ewma.NewMovingAverage(5)
+	stats.oldTs = time.Now()
 	stats.ts = time.Now()
 	var ev uber.Update
 	//send sth at start of plugin, in case we dont get anything useful (like interface with no traffic)
@@ -124,14 +124,14 @@ func Update(update chan uber.Update, cfg Config, stats *netStats) {
 	var ev uber.Update
 	ev.Color=`#ffffdd`
 	ev.FullText= fmt.Sprintf("%s!!", cfg.iface)
-	stats.old_ts = stats.ts
+	stats.oldTs = stats.ts
 	rx, tx := getStats(cfg.iface)
 	stats.ts = time.Now()
 
 	// TODO: do same on bigger time diff
-	if (stats.ts.UnixNano() < stats.old_ts.UnixNano()) {
+	if (stats.ts.UnixNano() < stats.oldTs.UnixNano()) {
 		// we are in time machine.. or ntp changed clock
-		stats.old_ts = stats.ts
+		stats.oldTs = stats.ts
 		return
 	}
 
@@ -139,8 +139,8 @@ func Update(update chan uber.Update, cfg Config, stats *netStats) {
 	if rx == 0 && tx == 0 {
 		stats.rx = 0
 		stats.tx = 0
-		stats.old_rx = 0
-		stats.old_tx = 0
+		stats.oldRx = 0
+		stats.oldTx = 0
 		update <- ev
 		return
 	}
@@ -149,8 +149,8 @@ func Update(update chan uber.Update, cfg Config, stats *netStats) {
 	if ( stats.rx > rx || stats.tx > tx ) {
 		stats.rx = rx
 		stats.tx = tx
-		stats.old_rx = rx
-		stats.old_tx = tx
+		stats.oldRx = rx
+		stats.oldTx = tx
 		return
 	}
 	//  init on first probe on empty interface
@@ -159,45 +159,45 @@ func Update(update chan uber.Update, cfg Config, stats *netStats) {
 		stats.tx = tx
 	}
 	// should be only useful data left
-	stats.old_rx = stats.rx
-	stats.old_tx = stats.tx
+	stats.oldRx = stats.rx
+	stats.oldTx = stats.tx
 	stats.rx = rx
 	stats.tx = tx
-	rx_diff := stats.rx - stats.old_rx
-	tx_diff := stats.tx - stats.old_tx
-	ts_diff := float64(stats.ts.UnixNano() - stats.old_ts.UnixNano())
-	ts_diff = ts_diff / 1000000000 //float64(time.Duration(time.Second).Nanoseconds()) // normalize
-	if (ts_diff < 0.01) {
+	rxDiff := stats.rx - stats.oldRx
+	txDiff := stats.tx - stats.oldTx
+	tsDiff := float64(stats.ts.UnixNano() - stats.oldTs.UnixNano())
+	tsDiff = tsDiff / 1000000000 //float64(time.Duration(time.Second).Nanoseconds()) // normalize
+	if (tsDiff < 0.01) {
 		return ; // quicker probing doesnt make sense, no div by 0, should probably return an error...
 	}
-	rx_bw := float64(rx_diff) / ts_diff
-	tx_bw := float64(tx_diff) / ts_diff
-	stats.ewma_rx.Add(rx_bw)
-	stats.ewma_tx.Add(tx_bw)
-	rx_avg := stats.ewma_rx.Value()
-	tx_avg := stats.ewma_tx.Value()
-	divider, unit := getUnit(rx_avg + tx_avg)
+	rxBw := float64(rxDiff) / tsDiff
+	txBw := float64(txDiff) / tsDiff
+	stats.ewmaRx.Add(rxBw)
+	stats.ewmaTx.Add(txBw)
+	rxAvg := stats.ewmaRx.Value()
+	txAvg := stats.ewmaTx.Value()
+	divider, unit := getUnit(rxAvg + txAvg)
 	// if speed is very low alias it to 0
-	if rx_avg < 0.1 {
-		rx_avg = 0
+	if rxAvg < 0.1 {
+		rxAvg = 0
 	}
-	if tx_avg < 0.1 {
-		tx_avg = 0
+	if txAvg < 0.1 {
+		txAvg = 0
 	}
-	ev.FullText = fmt.Sprintf(`%s:%6.3g/%6.3g %s`, cfg.iface,  rx_avg/divider, tx_avg/divider, unit)
+	ev.FullText = fmt.Sprintf(`%s:%6.3g/%6.3g %s`, cfg.iface,  rxAvg/divider, txAvg/divider, unit)
 	ev.ShortText = fmt.Sprintf(`-%s-`, cfg.iface)
 	switch {
-	case (rx_bw + tx_bw) < 50 * 1024:
+	case (rxBw + txBw) < 50 * 1024:
 		ev.Color = "#aaaaff"
-	case (rx_bw + tx_bw) < 150 * 1024:
+	case (rxBw + txBw) < 150 * 1024:
 		ev.Color = "#11aaff"
-	case (rx_bw + tx_bw) < 450 * 1024:
+	case (rxBw + txBw) < 450 * 1024:
 		ev.Color = "#00ffff"
-	case (rx_bw + tx_bw) < 1024 * 1024:
+	case (rxBw + txBw) < 1024 * 1024:
 		ev.Color = "#00ff00"
-	case (rx_bw + tx_bw) < 2048 * 1024:
+	case (rxBw + txBw) < 2048 * 1024:
 		ev.Color = "#99ff00"
-	case (rx_bw + tx_bw) < 4096 * 1024:
+	case (rxBw + txBw) < 4096 * 1024:
 		ev.Color = "#ffff00"
 	default:
 		ev.Color = "#ff4400"
@@ -206,11 +206,11 @@ func Update(update chan uber.Update, cfg Config, stats *netStats) {
 }
 
 func getStats(iface string) (uint64, uint64) {
-    raw_rx, _ := ioutil.ReadFile(fmt.Sprintf(`/sys/class/net/%s/statistics/rx_bytes`,iface))
+    rawRx, _ := ioutil.ReadFile(fmt.Sprintf(`/sys/class/net/%s/statistics/rx_bytes`,iface))
 	raw_tx, _ := ioutil.ReadFile(fmt.Sprintf(`/sys/class/net/%s/statistics/tx_bytes`,iface))
-	str_rx := strings.TrimSpace(string(raw_rx))
+	strRx := strings.TrimSpace(string(rawRx))
 	str_tx := strings.TrimSpace(string(raw_tx))
-	rx, _ := strconv.ParseUint(string(str_rx),10,64)
+	rx, _ := strconv.ParseUint(string(strRx),10,64)
 	tx, _ := strconv.ParseUint(string(str_tx),10,64)
 	return rx, tx
 }
