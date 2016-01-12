@@ -187,17 +187,15 @@ func Update(update chan uber.Update, cfg Config, stats *netStats) {
 	ev.FullText = fmt.Sprintf(`%s:%6.3g/%6.3g %s`, cfg.iface,  rxAvg/divider, txAvg/divider, unit)
 	ev.ShortText = fmt.Sprintf(`-%s-`, cfg.iface)
 	switch {
-	case (rxBw + txBw) < 50 * 1024:
-		ev.Color = "#aaaaff"
 	case (rxBw + txBw) < 150 * 1024:
 		ev.Color = "#11aaff"
 	case (rxBw + txBw) < 450 * 1024:
 		ev.Color = "#00ffff"
-	case (rxBw + txBw) < 1024 * 1024:
+	case (rxBw + txBw) < 4 * 1024 * 1024:
 		ev.Color = "#00ff00"
-	case (rxBw + txBw) < 2048 * 1024:
+	case (rxBw + txBw) <  8 * 1024 * 1024:
 		ev.Color = "#99ff00"
-	case (rxBw + txBw) < 4096 * 1024:
+	case (rxBw + txBw) <  16 * 1024 * 1024:
 		ev.Color = "#ffff00"
 	default:
 		ev.Color = "#ff4400"
@@ -207,11 +205,11 @@ func Update(update chan uber.Update, cfg Config, stats *netStats) {
 
 func getStats(iface string) (uint64, uint64) {
     rawRx, _ := ioutil.ReadFile(fmt.Sprintf(`/sys/class/net/%s/statistics/rx_bytes`,iface))
-	raw_tx, _ := ioutil.ReadFile(fmt.Sprintf(`/sys/class/net/%s/statistics/tx_bytes`,iface))
+	rawTx, _ := ioutil.ReadFile(fmt.Sprintf(`/sys/class/net/%s/statistics/tx_bytes`,iface))
 	strRx := strings.TrimSpace(string(rawRx))
-	str_tx := strings.TrimSpace(string(raw_tx))
+	strTx := strings.TrimSpace(string(rawTx))
 	rx, _ := strconv.ParseUint(string(strRx),10,64)
-	tx, _ := strconv.ParseUint(string(str_tx),10,64)
+	tx, _ := strconv.ParseUint(string(strTx),10,64)
 	return rx, tx
 }
 
