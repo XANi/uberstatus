@@ -7,6 +7,7 @@ import (
 	//
 	"github.com/XANi/uberstatus/uber"
 	"github.com/XANi/uberstatus/plugin/clock"
+	"github.com/XANi/uberstatus/plugin/cpu"
 	"github.com/XANi/uberstatus/plugin/network"
 	"github.com/XANi/uberstatus/plugin/i3blocks"
 	"github.com/XANi/uberstatus/plugin/example"
@@ -17,6 +18,7 @@ var log = logging.MustGetLogger("main")
 
 var plugins =  map[string]func(uber.PluginConfig)  {
 	"clock": clock.Run,
+	"cpu": cpu.Run,
 	"network": network.Run,
 	"i3blocks": i3blocks.Run,
 	"example": example.Run,
@@ -44,6 +46,7 @@ func NewPlugin(
 			Update: update,
 		})
 	} else {
+		log.Error(fmt.Sprintf("no plugin named %s", backend))
 		panic(fmt.Sprintf("no plugin named %s", backend))
 	}
 	go filterUpdate(name, instance, update ,update_filtered)
