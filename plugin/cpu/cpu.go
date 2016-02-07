@@ -25,6 +25,8 @@ type state struct {
 	ev                 int
 	currentTicksTotal  cpuTicks
 	previousTicksTotal cpuTicks
+	currentTicksPerCore []cpuTicks
+	previousTicksPerCore []cpuTicks
 }
 
 func Run(cfg uber.PluginConfig) {
@@ -44,7 +46,8 @@ func Run(cfg uber.PluginConfig) {
 
 func (state *state) updatePeriodic() uber.Update {
 	var update uber.Update
-	state.currentTicksTotal, _ = GetCpuTicks()
+	cpuStats, _ := GetCpuTicks()
+	state.currentTicksTotal = cpuStats[0]
 	ticksDiff := state.currentTicksTotal.Sub(state.previousTicksTotal)
 	state.previousTicksTotal = state.currentTicksTotal
 	usagePct := ticksDiff.GetCpuUsagePercent()
@@ -64,6 +67,8 @@ func (state *state) updateFromEvent(e uber.Event) uber.Update {
 	state.ev++
 	return update
 }
+
+
 
 func getBarChar(pct float64) string {
 	switch {

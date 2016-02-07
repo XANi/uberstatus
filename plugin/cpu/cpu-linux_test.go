@@ -8,10 +8,16 @@ import (
 
 func TestCpuLinuxTicks(t *testing.T) {
 	c, err := GetCpuTicks()
-	Convey("total", t, func() {
+	Convey("Total", t, func() {
 		So(err, ShouldBeNil)
-		So(c.total, ShouldBeGreaterThan, 0)
-		So(c.user, ShouldBeGreaterThan, 0)
-		So(c.system, ShouldBeGreaterThan, 0)
+		So(c[0].total, ShouldBeGreaterThan, 0)
+		So(c[0].user, ShouldBeGreaterThan, 0)
+		So(c[0].system, ShouldBeGreaterThan, 0)
+	})
+	Convey("First CPU", t, func() {
+		So(err, ShouldBeNil)
+		So(c[1].total, ShouldBeGreaterThan, 0)
+		So(c[1].user, ShouldBeGreaterThan, 0)
+	 	So(c[1].system, ShouldBeGreaterThan, 0)
 	})
 }
