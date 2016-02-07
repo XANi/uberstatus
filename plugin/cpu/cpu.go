@@ -25,6 +25,8 @@ type state struct {
 	cfg config
 	cnt int
 	ev int
+	currentTicks cpuTicks
+	previousTicks cpuTicks
 }
 func Run(cfg uber.PluginConfig) {
 	var st state
@@ -44,27 +46,66 @@ func Run(cfg uber.PluginConfig) {
 
 func (state *state) updatePeriodic() uber.Update {
 	var update uber.Update
-	update.FullText = fmt.Sprintf("%s %d %d", state.cfg.prefix, state.cnt, state.ev)
-	update.ShortText = `nope`
-	update.Color = `#66cc66`
+	state.currentTicks, _ = GetCpuTicks()
+	ticksDiff := state.currentTicks.Sub(state.previousTicks)
+	state.previousTicks = state.currentTicks
+	usagePct := ticksDiff.GetCpuUsagePercent()
+
+	update.FullText = fmt.Sprintf("%05.2f%%%s", usagePct, getBarChar(usagePct))
+	update.ShortText = fmt.Sprintf("%s", getBarChar(usagePct))
+	update.Color = getColor(usagePct)
 	state.cnt++
 	return update
 }
 
 func (state *state) updateFromEvent(e uber.Event) uber.Update {
 	var update uber.Update
-	update.FullText = fmt.Sprintf("%s %+v", state.cfg.prefix, e)
+	update.FullText = fmt.Sprintf("%s %+v", state.cfg.prefix, state.currentTicks)
 	update.ShortText = `upd`
 	update.Color = `#cccc66`
 	state.ev++
 	return update
 }
 
+func getBarChar(pct float64) string {
+	switch {
+    case  pct > 90:
+        return `█`
+    case  pct > 80:
+        return `▇`
+    case  pct > 70:
+        return `▆`
+    case  pct > 60:
+        return `▅`
+    case  pct > 40:
+        return `▄`
+    case  pct > 20:
+        return `▂`
+	}
+	return `▁`
+}
 
+func getColor(pct float64) string {
+	switch {
+	case  pct > 90:
+        return `#dd0000`
+    case  pct > 80:
+        return `#cc3333`
+    case  pct > 70:
+        return `#ccaa44`
+    case  pct > 50:
+        return `#cc9966`
+    case  pct > 30:
+        return `#cccc66`
+    case  pct > 10:
+        return `#66cc66`
+	}
+	return `#666666`
+}
 // parse received structure into config
 func loadConfig(c map[string]interface{}) config {
 	var cfg config
-	cfg.interval = 10000
+	cfg.interval = 1000
 	cfg.prefix = "ex: "
 	for key, value := range c {
 		converted, ok := value.(string)

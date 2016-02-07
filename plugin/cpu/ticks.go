@@ -18,7 +18,7 @@ type cpuTicks struct {
 
 func (c cpuTicks) GetCpuUsagePercent () float64 {
 	if (c.total == 0) { return 0 } // empty object
-	return ( float64(c.idle) / float64(c.total) ) * 100
+	return ( (float64(c.total) - float64(c.idle)) / float64(c.total) ) * 100
 
 }
 
