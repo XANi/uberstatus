@@ -3,22 +3,24 @@ package cpu
 type cpuTicks struct {
 	// non-system-specific
 	total uint64 // generic used stat, in case that gets ever posrted for non-linux systems
-	idle uint64 // generic idle stat
+	idle  uint64 // generic idle stat
 	// Linux-specific
-	system uint64
-	user uint64
-	nice uint64
-	iowait uint64 // 2.5.41
-	irq uint64 // 2.6
-	softirq uint64 // 2.6
-	steal uint64 // 2.6.11
-	guest uint64 // 2.6.24
+	system    uint64
+	user      uint64
+	nice      uint64
+	iowait    uint64 // 2.5.41
+	irq       uint64 // 2.6
+	softirq   uint64 // 2.6
+	steal     uint64 // 2.6.11
+	guest     uint64 // 2.6.24
 	guestNice uint64 // 2.6.33
 }
 
-func (c cpuTicks) GetCpuUsagePercent () float64 {
-	if (c.total == 0) { return 0 } // empty object
-	return ( (float64(c.total) - float64(c.idle)) / float64(c.total) ) * 100
+func (c cpuTicks) GetCpuUsagePercent() float64 {
+	if c.total == 0 {
+		return 0
+	} // empty object
+	return ((float64(c.total) - float64(c.idle)) / float64(c.total)) * 100
 
 }
 

@@ -1,12 +1,11 @@
 package cpu
 
-
 import (
 	"github.com/XANi/uberstatus/uber"
-//	"gopkg.in/yaml.v1"
-	"time"
-	"github.com/op/go-logging"
+	//	"gopkg.in/yaml.v1"
 	"fmt"
+	"github.com/op/go-logging"
+	"time"
 )
 
 // Example plugin for uberstatus
@@ -14,20 +13,20 @@ import (
 
 var log = logging.MustGetLogger("main")
 
-
 // set up a config struct
 type config struct {
-	prefix string
+	prefix   string
 	interval int
 }
 
 type state struct {
-	cfg config
-	cnt int
-	ev int
-	currentTicks cpuTicks
-	previousTicks cpuTicks
+	cfg                config
+	cnt                int
+	ev                 int
+	currentTicksTotal  cpuTicks
+	previousTicksTotal cpuTicks
 }
+
 func Run(cfg uber.PluginConfig) {
 	var st state
 	st.cfg = loadConfig(cfg.Config)
@@ -43,15 +42,14 @@ func Run(cfg uber.PluginConfig) {
 	}
 }
 
-
 func (state *state) updatePeriodic() uber.Update {
 	var update uber.Update
-	state.currentTicks, _ = GetCpuTicks()
-	ticksDiff := state.currentTicks.Sub(state.previousTicks)
-	state.previousTicks = state.currentTicks
+	state.currentTicksTotal, _ = GetCpuTicks()
+	ticksDiff := state.currentTicksTotal.Sub(state.previousTicksTotal)
+	state.previousTicksTotal = state.currentTicksTotal
 	usagePct := ticksDiff.GetCpuUsagePercent()
 
-	update.FullText = fmt.Sprintf("%05.2f%%%s", usagePct, getBarChar(usagePct))
+	update.FullText = fmt.Sprintf("%05.2f%%%s %d", usagePct, getBarChar(usagePct), GetCpuCount())
 	update.ShortText = fmt.Sprintf("%s", getBarChar(usagePct))
 	update.Color = getColor(usagePct)
 	state.cnt++
@@ -60,7 +58,7 @@ func (state *state) updatePeriodic() uber.Update {
 
 func (state *state) updateFromEvent(e uber.Event) uber.Update {
 	var update uber.Update
-	update.FullText = fmt.Sprintf("%s %+v", state.cfg.prefix, state.currentTicks)
+	update.FullText = fmt.Sprintf("%s %+v", state.cfg.prefix, state.currentTicksTotal)
 	update.ShortText = `upd`
 	update.Color = `#cccc66`
 	state.ev++
@@ -69,41 +67,42 @@ func (state *state) updateFromEvent(e uber.Event) uber.Update {
 
 func getBarChar(pct float64) string {
 	switch {
-    case  pct > 90:
-        return `█`
-    case  pct > 80:
-        return `▇`
-    case  pct > 70:
-        return `▆`
-    case  pct > 60:
-        return `▅`
-    case  pct > 40:
-        return `▄`
-    case  pct > 20:
-        return `▂`
-	case  pct > 10:
-        return `▁`
+	case pct > 90:
+		return `█`
+	case pct > 80:
+		return `▇`
+	case pct > 70:
+		return `▆`
+	case pct > 60:
+		return `▅`
+	case pct > 40:
+		return `▄`
+	case pct > 20:
+		return `▂`
+	case pct > 10:
+		return `▁`
 	}
 	return ` `
 }
 
 func getColor(pct float64) string {
 	switch {
-	case  pct > 90:
-        return `#dd0000`
-    case  pct > 80:
-        return `#cc3333`
-    case  pct > 70:
-        return `#ccaa44`
-    case  pct > 50:
-        return `#cc9966`
-    case  pct > 30:
-        return `#cccc66`
-    case  pct > 10:
-        return `#66cc66`
+	case pct > 90:
+		return `#dd0000`
+	case pct > 80:
+		return `#cc3333`
+	case pct > 70:
+		return `#ccaa44`
+	case pct > 50:
+		return `#cc9966`
+	case pct > 30:
+		return `#cccc66`
+	case pct > 10:
+		return `#66cc66`
 	}
 	return `#666666`
 }
+
 // parse received structure into config
 func loadConfig(c map[string]interface{}) config {
 	var cfg config
@@ -114,7 +113,7 @@ func loadConfig(c map[string]interface{}) config {
 		if ok {
 			switch {
 			case key == `prefix`:
-				cfg.prefix=converted
+				cfg.prefix = converted
 			default:
 				log.Warning("unknown config key: [%s]", key)
 
