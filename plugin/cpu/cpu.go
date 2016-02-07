@@ -81,8 +81,10 @@ func getBarChar(pct float64) string {
         return `▄`
     case  pct > 20:
         return `▂`
+	case  pct > 10:
+        return `▁`
 	}
-	return `▁`
+	return ` `
 }
 
 func getColor(pct float64) string {
