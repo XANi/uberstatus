@@ -23,21 +23,23 @@ type state struct {
 	cfg                config
 	cnt                int
 	ev                 int
-	currentTicksTotal  cpuTicks
-	previousTicksTotal cpuTicks
-	currentTicksPerCore []cpuTicks
-	previousTicksPerCore []cpuTicks
+	previousTicks      []cpuTicks
+	ticksDiff          []cpuTicks
 }
 
 func Run(cfg uber.PluginConfig) {
 	var st state
 	st.cfg = loadConfig(cfg.Config)
+	// init with current's total
+	st.previousTicks, _ = GetCpuTicks()
+	st.ticksDiff, _ = GetCpuTicks()
 	// initial update on start
 	cfg.Update <- st.updatePeriodic()
 	for {
 		select {
 		case updateEvent := (<-cfg.Events):
-			cfg.Update <- st.updateFromEvent(updateEvent)
+			//			cfg.Update <- st.updateFromEvent(updateEvent)
+			_ = updateEvent
 		case <-time.After(time.Duration(st.cfg.interval) * time.Millisecond):
 			cfg.Update <- st.updatePeriodic()
 		}
@@ -46,13 +48,18 @@ func Run(cfg uber.PluginConfig) {
 
 func (state *state) updatePeriodic() uber.Update {
 	var update uber.Update
-	cpuStats, _ := GetCpuTicks()
-	state.currentTicksTotal = cpuStats[0]
-	ticksDiff := state.currentTicksTotal.Sub(state.previousTicksTotal)
-	state.previousTicksTotal = state.currentTicksTotal
-	usagePct := ticksDiff.GetCpuUsagePercent()
+	currentTicks, _ := GetCpuTicks()
+	for i, ticks := range currentTicks {
+		state.ticksDiff[i] = ticks.Sub(state.previousTicks[i])
+		state.previousTicks[i]=ticks
+	}
+	usagePct := state.ticksDiff[0].GetCpuUsagePercent()
+	bars := ""
+	for _, d := range state.ticksDiff[1:] {
+		bars = bars + getBarChar(d.GetCpuUsagePercent())
+	}
 
-	update.FullText = fmt.Sprintf("%05.2f%%%s %d", usagePct, getBarChar(usagePct), GetCpuCount())
+	update.FullText = fmt.Sprintf("%05.2f%%%s", usagePct, bars)
 	update.ShortText = fmt.Sprintf("%s", getBarChar(usagePct))
 	update.Color = getColor(usagePct)
 	state.cnt++
@@ -61,7 +68,7 @@ func (state *state) updatePeriodic() uber.Update {
 
 func (state *state) updateFromEvent(e uber.Event) uber.Update {
 	var update uber.Update
-	update.FullText = fmt.Sprintf("%s %+v", state.cfg.prefix, state.currentTicksTotal)
+	update.FullText = fmt.Sprintf("%s %+v", state.cfg.prefix, state.previousTicks)
 	update.ShortText = `upd`
 	update.Color = `#cccc66`
 	state.ev++
