@@ -13,6 +13,8 @@ import (
 
 var log = logging.MustGetLogger("main")
 
+
+
 // set up a config struct
 type config struct {
 	prefix   string
@@ -26,6 +28,15 @@ type state struct {
 	previousTicks      []cpuTicks
 	ticksDiff          []cpuTicks
 }
+
+// pregenerate lookup table at start
+var ltBar = make(map[int8]string)
+var ltColor = make(map[int8]string)
+
+func init() {
+	generateLookupTables()
+}
+
 
 func Run(cfg uber.PluginConfig) {
 	var st state
@@ -56,12 +67,13 @@ func (state *state) updatePeriodic() uber.Update {
 	usagePct := state.ticksDiff[0].GetCpuUsagePercent()
 	bars := ""
 	for _, d := range state.ticksDiff[1:] {
-		bars = bars + getBarChar(d.GetCpuUsagePercent())
+		bars = bars + ltBar[int8(d.GetCpuUsagePercent())]
 	}
 
 	update.FullText = fmt.Sprintf("%05.2f%%%s", usagePct, bars)
 	update.ShortText = fmt.Sprintf("%s", getBarChar(usagePct))
 	update.Color = getColor(usagePct)
+	update.Markup = `pango`;
 	state.cnt++
 	return update
 }
@@ -109,10 +121,23 @@ func getColor(pct float64) string {
 		return `#cc9966`
 	case pct > 30:
 		return `#cccc66`
-	case pct > 10:
+	case pct > 15:
 		return `#66cc66`
 	}
 	return `#666666`
+}
+
+//var lookupTableBar = generateBarLookupTable()
+//var lookupTableColor = generateColorLookupTable()
+
+func generateLookupTables()  {
+	var i int8
+	for i = -1; i <= 101; i++ {
+		color := getColor(float64(i))
+		ltColor[i] = color
+		ltBar[i] = `<span color="` + color + `">` + getBarChar(float64(i)) + `</span>`
+	}
+
 }
 
 // parse received structure into config

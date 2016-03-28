@@ -17,6 +17,9 @@ type Update struct{
 	FullText string  // full text, when shortening is not required
 	ShortText string  // shortened version of text to use when bar is full
 	Color string // color in #ffff00
+	BackgroundColor string // color in #ffff00
+	BorderColor string // color in #ffff00
+	Markup string // markup, so far only pango in i3bar is supported
 	Urgent bool `json:"urgent"` // urgent flag, will update (assuming backend allows) immediately if that flag is present
 }
 
