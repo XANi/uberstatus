@@ -22,7 +22,10 @@ type Header struct{
 type Msg struct {
 	FullText string `json:"full_text"` // full text, when shortening is not required
 	ShortText string `json:"short_text"` // shortened version of text to use when bar is full
-	Color string `json:"color"` // color in #ffff00
+	Color string `json:"color,omitempty"` // color in #ffff00
+	Border string `json:"border,omitempty"` // color in #ffff00
+	Background string `json:"background,omitempty"` // color in #ffff00
+	Markup string `json:"markup,omitempty"` // markup, pango or none (default
 	MinWidth string `json:"min_width"` // width in pixels, or string which will be measured for min_width
 	Align string `json:"align"` // left/right/center align when size of text is smaller than minWidth
 	Name string `json:"name"` // block name (ignored by i3bar, but will be returned in event)
