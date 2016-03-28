@@ -1,8 +1,9 @@
-package example
+package memory
 
 
 import (
 	"github.com/XANi/uberstatus/uber"
+	"github.com/XANi/uberstatus/util"
 //	"gopkg.in/yaml.v1"
 	"time"
 	"github.com/op/go-logging"
@@ -17,14 +18,12 @@ var log = logging.MustGetLogger("main")
 
 // set up a config struct
 type config struct {
-	prefix string
 	interval int
+	prefix string
 }
 
 type state struct {
 	cfg config
-	cnt int
-	ev int
 }
 
 
@@ -37,8 +36,6 @@ func Run(cfg uber.PluginConfig) {
 		select {
 		case updateEvent := (<-cfg.Events):
 			cfg.Update <- st.updateFromEvent(updateEvent)
-			// that will wait 10 seconds on no event a
-			// and it will "eat" next event to switch to "normal" display
 			select {
 			case _ = <-cfg.Events:
 				cfg.Update <- st.updatePeriodic()
@@ -53,20 +50,48 @@ func Run(cfg uber.PluginConfig) {
 
 func (state *state) updatePeriodic() uber.Update {
 	var update uber.Update
-	update.Markup = `pango`
-	update.FullText = fmt.Sprintf(`<span color="#ffaaaa">[%s]</span> %d %d`, state.cfg.prefix, state.cnt, state.ev)
-	update.ShortText = `nope`
-	update.Color = `#66cc66`
-	state.cnt++
+	update.Markup="pango"
+	mem := getMemInfo()
+	memFree := mem.Free + mem.Cached + mem.Buffers
+	// some adjustments for high/low mem systems
+	// rescale % scale based on total memory
+	var memFreePctForCalc float64
+	memFreePct := float64(memFree) / float64(mem.Total) * 100
+	// cap "total for percent calculation" on 8G
+	memTotalForCalc := int64(8192 * 1024 * 1024) // fake total used for free % calculation
+	// cap "total for percent calculation" on 8G
+	if mem.Total < memTotalForCalc {
+		memTotalForCalc = mem.Total
+	}
+	if memFree > memTotalForCalc {
+		memFreePctForCalc = 100
+	} else {
+		memFreePctForCalc = float64(memFree) / float64(memTotalForCalc) * 100
+	}
+
+	update.FullText = fmt.Sprintf(`%s<span color="%s">%s</span>`,
+		state.cfg.prefix,
+		util.GetColorPct(int(100-memFreePctForCalc)),
+		util.FormatUnitBytes(memFree),
+	)
+	update.ShortText = fmt.Sprintf(`<span color="%s">%s%</span>`, 	util.GetColorPct(int(100-memFreePct)), memFreePct)
+	update.Color = `#999999`
 	return update
 }
 
 func (state *state) updateFromEvent(e uber.Event) uber.Update {
 	var update uber.Update
-	update.FullText = fmt.Sprintf("%s %+v", state.cfg.prefix, e)
-	update.ShortText = `upd`
-	update.Color = `#cccc66`
-	state.ev++
+	update.Markup = "pango"
+	mem := getMemInfo()
+	update.FullText = fmt.Sprintf(`<span color="#bbbbbb">Tot:</span> %s <span color="#bbbbbb">Buf:</span> %s <span color="#bbbbbb">Cache:</span> %s <span color="#bbbbbb">Swap U/C/T</span> %s/%s/%s`,
+		util.FormatUnitBytes(mem.Total),
+		util.FormatUnitBytes(mem.Buffers),
+		util.FormatUnitBytes(mem.Cached),
+		util.FormatUnitBytes(mem.SwapTotal - mem.SwapFree),
+		util.FormatUnitBytes(mem.SwapCached),
+		util.FormatUnitBytes(mem.SwapTotal),
+	)
+	update.Color = `#999999`
 	return update
 }
 
@@ -75,7 +100,7 @@ func (state *state) updateFromEvent(e uber.Event) uber.Update {
 func loadConfig(c map[string]interface{}) config {
 	var cfg config
 	cfg.interval = 10000
-	cfg.prefix = "ex: "
+	cfg.prefix = `MEM: `
 	for key, value := range c {
 		converted, ok := value.(string)
 		if ok {

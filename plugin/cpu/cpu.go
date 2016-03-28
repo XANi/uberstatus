@@ -2,6 +2,7 @@ package cpu
 
 import (
 	"github.com/XANi/uberstatus/uber"
+	"github.com/XANi/uberstatus/util"
 	//	"gopkg.in/yaml.v1"
 	"fmt"
 	"github.com/op/go-logging"
@@ -71,8 +72,8 @@ func (state *state) updatePeriodic() uber.Update {
 	}
 
 	update.FullText = fmt.Sprintf("%05.2f%%%s", usagePct, bars)
-	update.ShortText = fmt.Sprintf("%s", getBarChar(usagePct))
-	update.Color = getColor(usagePct)
+	update.ShortText = fmt.Sprintf("%s", util.GetBarChar(int(usagePct)))
+	update.Color = util.GetColorPct(int(usagePct))
 	update.Markup = `pango`;
 	state.cnt++
 	return update
@@ -87,55 +88,12 @@ func (state *state) updateFromEvent(e uber.Event) uber.Update {
 	return update
 }
 
-
-
-func getBarChar(pct float64) string {
-	switch {
-	case pct > 90:
-		return `█`
-	case pct > 80:
-		return `▇`
-	case pct > 70:
-		return `▆`
-	case pct > 60:
-		return `▅`
-	case pct > 40:
-		return `▄`
-	case pct > 20:
-		return `▂`
-	case pct > 10:
-		return `▁`
-	}
-	return ` `
-}
-
-func getColor(pct float64) string {
-	switch {
-	case pct > 90:
-		return `#dd0000`
-	case pct > 80:
-		return `#cc3333`
-	case pct > 70:
-		return `#ccaa44`
-	case pct > 50:
-		return `#cc9966`
-	case pct > 30:
-		return `#cccc66`
-	case pct > 15:
-		return `#66cc66`
-	}
-	return `#666666`
-}
-
-//var lookupTableBar = generateBarLookupTable()
-//var lookupTableColor = generateColorLookupTable()
-
 func generateLookupTables()  {
 	var i int8
 	for i = -1; i <= 101; i++ {
-		color := getColor(float64(i))
+		color := util.GetColorPct(int(i))
 		ltColor[i] = color
-		ltBar[i] = `<span color="` + color + `">` + getBarChar(float64(i)) + `</span>`
+		ltBar[i] = `<span color="` + color + `">` + util.GetBarChar(int(i)) + `</span>`
 	}
 
 }
