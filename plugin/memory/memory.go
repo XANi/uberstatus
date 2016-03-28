@@ -68,12 +68,16 @@ func (state *state) updatePeriodic() uber.Update {
 	} else {
 		memFreePctForCalc = float64(memFree) / float64(memTotalForCalc) * 100
 	}
+	swapPct := 100 - ((mem.SwapFree * 100) / mem.SwapTotal)
 
-	update.FullText = fmt.Sprintf(`%s<span color="%s">%s</span>`,
+	update.FullText = fmt.Sprintf(`%s<span color="%s">%s</span><span color="%s">%s</span>`,
 		state.cfg.prefix,
 		util.GetColorPct(int(100-memFreePctForCalc)),
 		util.FormatUnitBytes(memFree),
+		util.GetColorPct(int(swapPct)),
+		util.GetBarChar(int(swapPct)),
 	)
+//		util.GetColorPct(
 	update.ShortText = fmt.Sprintf(`<span color="%s">%s%</span>`, 	util.GetColorPct(int(100-memFreePct)), memFreePct)
 	update.Color = `#999999`
 	return update
