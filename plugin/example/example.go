@@ -37,6 +37,13 @@ func Run(cfg uber.PluginConfig) {
 		select {
 		case updateEvent := (<-cfg.Events):
 			cfg.Update <- st.updateFromEvent(updateEvent)
+			// that will wait 10 seconds on no event a
+			// and it will "eat" next event to switch to "normal" display
+			select {
+			case _ = <-cfg.Events:
+				cfg.Update <- st.updatePeriodic()
+			case <-time.After(10 * time.Second):
+			}
 		case <-time.After(time.Duration(st.cfg.interval) * time.Millisecond):
 			cfg.Update <- st.updatePeriodic()
 		}
@@ -46,7 +53,8 @@ func Run(cfg uber.PluginConfig) {
 
 func (state *state) updatePeriodic() uber.Update {
 	var update uber.Update
-	update.FullText = fmt.Sprintf("%s %d %d", state.cfg.prefix, state.cnt, state.ev)
+	update.Markup = `pango`
+	update.FullText = fmt.Sprintf(`<span color="#ffaaaa">[%s]</span> %d %d`, state.cfg.prefix, state.cnt, state.ev)
 	update.ShortText = `nope`
 	update.Color = `#66cc66`
 	state.cnt++

@@ -122,8 +122,9 @@ end:
 
 func Update(update chan uber.Update, cfg Config, stats *netStats) {
 	var ev uber.Update
-	ev.Color=`#ffffdd`
-	ev.FullText= fmt.Sprintf("%s!!", cfg.iface)
+	ev.Color=`#666666`
+	ev.Markup=`pango`
+	ev.FullText= fmt.Sprintf(`<span color="#666666">%s!!</span>`, cfg.iface)
 	stats.oldTs = stats.ts
 	rx, tx := getStats(cfg.iface)
 	stats.ts = time.Now()
@@ -184,22 +185,16 @@ func Update(update chan uber.Update, cfg Config, stats *netStats) {
 	if txAvg < 0.1 {
 		txAvg = 0
 	}
-	ev.FullText = fmt.Sprintf(`%s:%6.3g/%6.3g %s`, cfg.iface,  rxAvg/divider, txAvg/divider, unit)
+	ev.FullText = fmt.Sprintf(`<span color="#aaffaa">%s</span>:<span color="%s">%6.3g</span>/<span color="%s">%6.3g</span><span color="%s"> %s</span>`,
+		cfg.iface,
+		getBwColor(rxAvg),
+		rxAvg/divider,
+		getBwColor(txAvg),
+		txAvg/divider,
+		getBwColor(txAvg+rxAvg),
+		unit,
+	)
 	ev.ShortText = fmt.Sprintf(`-%s-`, cfg.iface)
-	switch {
-	case (rxBw + txBw) < 150 * 1024:
-		ev.Color = "#11aaff"
-	case (rxBw + txBw) < 450 * 1024:
-		ev.Color = "#00ffff"
-	case (rxBw + txBw) < 4 * 1024 * 1024:
-		ev.Color = "#00ff00"
-	case (rxBw + txBw) <  8 * 1024 * 1024:
-		ev.Color = "#99ff00"
-	case (rxBw + txBw) <  16 * 1024 * 1024:
-		ev.Color = "#ffff00"
-	default:
-		ev.Color = "#ff4400"
-	}
 	update <- ev
 }
 
@@ -211,6 +206,25 @@ func getStats(iface string) (uint64, uint64) {
 	rx, _ := strconv.ParseUint(string(strRx),10,64)
 	tx, _ := strconv.ParseUint(string(strTx),10,64)
 	return rx, tx
+}
+
+func getBwColor(bw float64) string {
+	switch {
+	case bw < 50 * 1024:
+		return "#666666"
+	case bw < 150 * 1024:
+		return "#11aaff"
+	case bw < 450 * 1024:
+		return "#00ffff"
+	case bw < 4 * 1024 * 1024:
+		return "#00ff00"
+	case bw <  8 * 1024 * 1024:
+		return "#99ff00"
+	case bw <  16 * 1024 * 1024:
+		return "#ffff00"
+	default:
+		return "#ff4400"
+	}
 }
 
 

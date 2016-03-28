@@ -2,6 +2,7 @@ package cpu
 
 import (
 	"github.com/XANi/uberstatus/uber"
+	"github.com/XANi/uberstatus/util"
 	//	"gopkg.in/yaml.v1"
 	"fmt"
 	"github.com/op/go-logging"
@@ -12,6 +13,8 @@ import (
 // plugins are wrapped in go() when loading
 
 var log = logging.MustGetLogger("main")
+
+
 
 // set up a config struct
 type config struct {
@@ -26,6 +29,15 @@ type state struct {
 	previousTicks      []cpuTicks
 	ticksDiff          []cpuTicks
 }
+
+// pregenerate lookup table at start
+var ltBar = make(map[int8]string)
+var ltColor = make(map[int8]string)
+
+func init() {
+	generateLookupTables()
+}
+
 
 func Run(cfg uber.PluginConfig) {
 	var st state
@@ -56,12 +68,13 @@ func (state *state) updatePeriodic() uber.Update {
 	usagePct := state.ticksDiff[0].GetCpuUsagePercent()
 	bars := ""
 	for _, d := range state.ticksDiff[1:] {
-		bars = bars + getBarChar(d.GetCpuUsagePercent())
+		bars = bars + ltBar[int8(d.GetCpuUsagePercent())]
 	}
 
 	update.FullText = fmt.Sprintf("%05.2f%%%s", usagePct, bars)
-	update.ShortText = fmt.Sprintf("%s", getBarChar(usagePct))
-	update.Color = getColor(usagePct)
+	update.ShortText = fmt.Sprintf("%s", util.GetBarChar(int(usagePct)))
+	update.Color = util.GetColorPct(int(usagePct))
+	update.Markup = `pango`;
 	state.cnt++
 	return update
 }
@@ -75,44 +88,14 @@ func (state *state) updateFromEvent(e uber.Event) uber.Update {
 	return update
 }
 
-
-
-func getBarChar(pct float64) string {
-	switch {
-	case pct > 90:
-		return `█`
-	case pct > 80:
-		return `▇`
-	case pct > 70:
-		return `▆`
-	case pct > 60:
-		return `▅`
-	case pct > 40:
-		return `▄`
-	case pct > 20:
-		return `▂`
-	case pct > 10:
-		return `▁`
+func generateLookupTables()  {
+	var i int8
+	for i = -1; i <= 101; i++ {
+		color := util.GetColorPct(int(i))
+		ltColor[i] = color
+		ltBar[i] = `<span color="` + color + `">` + util.GetBarChar(int(i)) + `</span>`
 	}
-	return ` `
-}
 
-func getColor(pct float64) string {
-	switch {
-	case pct > 90:
-		return `#dd0000`
-	case pct > 80:
-		return `#cc3333`
-	case pct > 70:
-		return `#ccaa44`
-	case pct > 50:
-		return `#cc9966`
-	case pct > 30:
-		return `#cccc66`
-	case pct > 10:
-		return `#66cc66`
-	}
-	return `#666666`
 }
 
 // parse received structure into config
