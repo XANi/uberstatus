@@ -2,28 +2,26 @@ package i3blocks
 
 import (
 	//	"gopkg.in/yaml.v1"
-	"os/exec"
-	"time"
-	"github.com/op/go-logging"
-	"strings"
 	"bytes"
 	"fmt"
+	"github.com/op/go-logging"
 	"os"
+	"os/exec"
 	"strconv"
+	"strings"
+	"time"
 	//
 	"github.com/XANi/uberstatus/uber"
-
 )
 
 var log = logging.MustGetLogger("main")
 
-
 type config struct {
-	prefix string
-	command string
+	prefix   string
+	command  string
 	interval int
-	color string
-	name string
+	color    string
+	name     string
 	instance string
 }
 
@@ -33,14 +31,13 @@ func Run(cfg uber.PluginConfig) {
 	for {
 		select {
 		case ev := (<-cfg.Events):
-			c.Update(cfg.Update,c, ev)
+			c.Update(cfg.Update, c, ev)
 		case <-time.After(time.Duration(c.interval) * time.Millisecond):
-			c.Update(cfg.Update,c, nullEv)
+			c.Update(cfg.Update, c, nullEv)
 		}
 	}
 
 }
-
 
 func loadConfig(raw map[string]interface{}) config {
 	var c config
@@ -78,6 +75,7 @@ func loadConfig(raw map[string]interface{}) config {
 	}
 	return c
 }
+
 //   BLOCK_NAME
 //              The name of the block (usually the section name).
 //
@@ -90,13 +88,11 @@ func loadConfig(raw map[string]interface{}) config {
 //       BLOCK_X and BLOCK_Y
 //              Coordinates where the click occurred, if the block was clicked.
 
-
-
 func (c *config) Update(update chan uber.Update, cfg config, ev uber.Event) {
 	var upd uber.Update
 
-	os.Setenv("BLOCK_NAME",c.name)
-	os.Setenv("BLOCK_NAME",c.instance)
+	os.Setenv("BLOCK_NAME", c.name)
+	os.Setenv("BLOCK_NAME", c.instance)
 	// no event
 	if ev.Button == 0 {
 		os.Unsetenv("BLOCK_BUTTON")
@@ -104,8 +100,8 @@ func (c *config) Update(update chan uber.Update, cfg config, ev uber.Event) {
 		os.Unsetenv("BLOCK_Y")
 	} else {
 		os.Setenv("BLOCK_BUTTON", strconv.Itoa(ev.Button))
-		os.Setenv("BLOCK_X",strconv.Itoa(ev.X))
-		os.Setenv("BLOCK_Y",strconv.Itoa(ev.Y))
+		os.Setenv("BLOCK_X", strconv.Itoa(ev.X))
+		os.Setenv("BLOCK_Y", strconv.Itoa(ev.Y))
 	}
 	cmd := exec.Command(cfg.command)
 	log.Debug(cfg.command)
@@ -118,7 +114,7 @@ func (c *config) Update(update chan uber.Update, cfg config, ev uber.Event) {
 	}
 	s := out.String()
 
-    st := strings.Split(s, "\n")
+	st := strings.Split(s, "\n")
 	st_len := len(st)
 
 	if st_len >= 4 {
@@ -134,7 +130,7 @@ func (c *config) Update(update chan uber.Update, cfg config, ev uber.Event) {
 	}
 	// len of 1 means there was nothing to split, no \n probably means invalid input
 	if st_len <= 1 {
-		log.Warning("Command %s returned nothing",cfg.command)
+		log.Warning("Command %s returned nothing", cfg.command)
 		return
 	} else {
 		upd.FullText = fmt.Sprint(cfg.prefix, st[0])

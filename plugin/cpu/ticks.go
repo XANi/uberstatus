@@ -20,7 +20,7 @@ func (c cpuTicks) GetCpuUsagePercent() float64 {
 	if c.total == 0 {
 		return 0
 	} // empty object
-	pct :=  ((float64(c.total) - float64(c.idle)) / float64(c.total)) * 100
+	pct := ((float64(c.total) - float64(c.idle)) / float64(c.total)) * 100
 	if pct > 100 {
 		return 100
 	} else {

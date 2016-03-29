@@ -1,14 +1,13 @@
 package df
 
-
 import (
 	"github.com/XANi/uberstatus/uber"
 	"github.com/XANi/uberstatus/util"
-//	"gopkg.in/yaml.v1"
-	"time"
-	"github.com/op/go-logging"
+	//	"gopkg.in/yaml.v1"
 	"fmt"
+	"github.com/op/go-logging"
 	"syscall"
+	"time"
 )
 
 // Example plugin for uberstatus
@@ -16,22 +15,20 @@ import (
 
 var log = logging.MustGetLogger("main")
 
-
 // set up a config struct
 type config struct {
-	prefix string
-	interval int
-	mounts []string
-	dfWarningMB uint64
-	dfWarningPercent uint64
-	dfCriticalMB uint64
+	prefix            string
+	interval          int
+	mounts            []string
+	dfWarningMB       uint64
+	dfWarningPercent  uint64
+	dfCriticalMB      uint64
 	dfCriticalPercent uint64
 }
 
 type state struct {
 	cfg config
 }
-
 
 func Run(cfg uber.PluginConfig) {
 	var st state
@@ -55,21 +52,20 @@ func Run(cfg uber.PluginConfig) {
 	}
 }
 
-
 func (state *state) updatePeriodic() uber.Update {
 	var update uber.Update
 	update.Markup = `pango`
-	update.FullText = fmt.Sprintf(`<span color="#cccccc">%s:</span>`, state.cfg.prefix)
+	update.FullText = fmt.Sprintf(`<span color="#cccccc">%s</span>`, state.cfg.prefix)
 	for _, part := range state.cfg.mounts {
 		diskFree, diskTotal := getDiskStats(part)
 		diskFreePercent := (diskFree * 100) / diskTotal
 		diskColor := `#aaffaa`
-		if (diskFree < state.cfg.dfCriticalMB * 1024 * 1024	||  diskFreePercent < state.cfg.dfCriticalPercent ) {
+		if diskFree < state.cfg.dfCriticalMB*1024*1024 || diskFreePercent < state.cfg.dfCriticalPercent {
 			diskColor = `#cc3333`
-		} else if (diskFree < state.cfg.dfWarningMB * 1024 * 1024	||  diskFreePercent < state.cfg.dfWarningPercent ) {
+		} else if diskFree < state.cfg.dfWarningMB*1024*1024 || diskFreePercent < state.cfg.dfWarningPercent {
 			diskColor = `#cc9966`
 		}
-		update.FullText = update.FullText + fmt.Sprintf(` <span color="#cccccc">%s:</span><span color="%s">%s</span>`, part, diskColor,  util.FormatUnitBytes(int64(diskFree)))
+		update.FullText = update.FullText + fmt.Sprintf(` <span color="#cccccc">%s:</span><span color="%s">%s</span>`, part, diskColor, util.FormatUnitBytes(int64(diskFree)))
 	}
 	update.ShortText = `nope`
 	update.Color = `#aaaaaa`
@@ -91,7 +87,6 @@ func getDiskStats(path string) (free uint64, total uint64) {
 	return stat.Bavail * uint64(stat.Bsize), stat.Blocks * uint64(stat.Bsize)
 }
 
-
 // parse received structure into config
 func loadConfig(c map[string]interface{}) config {
 	var cfg config
@@ -103,11 +98,11 @@ func loadConfig(c map[string]interface{}) config {
 	cfg.dfCriticalPercent = 5
 	for key, value := range c {
 		converted, ok := value.(string)
-		log.Warning(`key [%+v] v: [%T]`,converted, value)
+		log.Warning(`key [%+v] v: [%T]`, converted, value)
 		if ok {
 			switch {
 			case key == `prefix`:
-				cfg.prefix=converted
+				cfg.prefix = converted
 			default:
 				log.Warning("unknown config key: [%s]", key)
 
@@ -115,7 +110,7 @@ func loadConfig(c map[string]interface{}) config {
 		} else if converted, ok := value.([]interface{}); ok {
 			switch {
 			case key == `mounts`:
-				cfg.mounts=make([]string,len(converted))
+				cfg.mounts = make([]string, len(converted))
 				for i, v := range converted {
 					cfg.mounts[i] = v.(string)
 				}

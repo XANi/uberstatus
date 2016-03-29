@@ -21,16 +21,16 @@ func GetCpuTicks(cpuid ...int) (cpuStats []cpuTicks, err error) {
 	scanner := bufio.NewScanner(file)
 	scanner.Scan()
 	fields := strings.Fields(scanner.Text())
-	for strings.Contains(fields[0],`cpu`) {
-		ticks,err := parseCpuTicks(fields)
+	for strings.Contains(fields[0], `cpu`) {
+		ticks, err := parseCpuTicks(fields)
 		if err != nil {
 			return cpuStats, err
 		}
 		scanner.Scan()
 		fields = strings.Fields(scanner.Text())
-		cpuStats = append(cpuStats,ticks)
+		cpuStats = append(cpuStats, ticks)
 	}
-	return cpuStats,err
+	return cpuStats, err
 
 }
 func parseCpuTicks(fields []string) (ticks cpuTicks, err error) {

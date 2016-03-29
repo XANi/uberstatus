@@ -1,12 +1,11 @@
 package example
 
-
 import (
 	"github.com/XANi/uberstatus/uber"
-//	"gopkg.in/yaml.v1"
-	"time"
-	"github.com/op/go-logging"
+	//	"gopkg.in/yaml.v1"
 	"fmt"
+	"github.com/op/go-logging"
+	"time"
 )
 
 // Example plugin for uberstatus
@@ -14,19 +13,17 @@ import (
 
 var log = logging.MustGetLogger("main")
 
-
 // set up a config struct
 type config struct {
-	prefix string
+	prefix   string
 	interval int
 }
 
 type state struct {
 	cfg config
 	cnt int
-	ev int
+	ev  int
 }
-
 
 func Run(cfg uber.PluginConfig) {
 	var st state
@@ -50,7 +47,6 @@ func Run(cfg uber.PluginConfig) {
 	}
 }
 
-
 func (state *state) updatePeriodic() uber.Update {
 	var update uber.Update
 	update.Markup = `pango`
@@ -70,7 +66,6 @@ func (state *state) updateFromEvent(e uber.Event) uber.Update {
 	return update
 }
 
-
 // parse received structure into config
 func loadConfig(c map[string]interface{}) config {
 	var cfg config
@@ -81,7 +76,7 @@ func loadConfig(c map[string]interface{}) config {
 		if ok {
 			switch {
 			case key == `prefix`:
-				cfg.prefix=converted
+				cfg.prefix = converted
 			default:
 				log.Warning("unknown config key: [%s]", key)
 

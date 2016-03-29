@@ -14,8 +14,6 @@ import (
 
 var log = logging.MustGetLogger("main")
 
-
-
 // set up a config struct
 type config struct {
 	prefix   string
@@ -23,11 +21,11 @@ type config struct {
 }
 
 type state struct {
-	cfg                config
-	cnt                int
-	ev                 int
-	previousTicks      []cpuTicks
-	ticksDiff          []cpuTicks
+	cfg           config
+	cnt           int
+	ev            int
+	previousTicks []cpuTicks
+	ticksDiff     []cpuTicks
 }
 
 // pregenerate lookup table at start
@@ -37,7 +35,6 @@ var ltColor = make(map[int8]string)
 func init() {
 	generateLookupTables()
 }
-
 
 func Run(cfg uber.PluginConfig) {
 	var st state
@@ -63,7 +60,7 @@ func (state *state) updatePeriodic() uber.Update {
 	currentTicks, _ := GetCpuTicks()
 	for i, ticks := range currentTicks {
 		state.ticksDiff[i] = ticks.Sub(state.previousTicks[i])
-		state.previousTicks[i]=ticks
+		state.previousTicks[i] = ticks
 	}
 	usagePct := state.ticksDiff[0].GetCpuUsagePercent()
 	bars := ""
@@ -74,7 +71,7 @@ func (state *state) updatePeriodic() uber.Update {
 	update.FullText = fmt.Sprintf("%05.2f%%%s", usagePct, bars)
 	update.ShortText = fmt.Sprintf("%s", util.GetBarChar(int(usagePct)))
 	update.Color = util.GetColorPct(int(usagePct))
-	update.Markup = `pango`;
+	update.Markup = `pango`
 	state.cnt++
 	return update
 }
@@ -88,7 +85,7 @@ func (state *state) updateFromEvent(e uber.Event) uber.Update {
 	return update
 }
 
-func generateLookupTables()  {
+func generateLookupTables() {
 	var i int8
 	for i = -1; i <= 101; i++ {
 		color := util.GetColorPct(int(i))

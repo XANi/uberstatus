@@ -1,13 +1,12 @@
 package memory
 
-
 import (
 	"github.com/XANi/uberstatus/uber"
 	"github.com/XANi/uberstatus/util"
-//	"gopkg.in/yaml.v1"
-	"time"
-	"github.com/op/go-logging"
+	//	"gopkg.in/yaml.v1"
 	"fmt"
+	"github.com/op/go-logging"
+	"time"
 )
 
 // Example plugin for uberstatus
@@ -15,17 +14,15 @@ import (
 
 var log = logging.MustGetLogger("main")
 
-
 // set up a config struct
 type config struct {
 	interval int
-	prefix string
+	prefix   string
 }
 
 type state struct {
 	cfg config
 }
-
 
 func Run(cfg uber.PluginConfig) {
 	var st state
@@ -47,10 +44,9 @@ func Run(cfg uber.PluginConfig) {
 	}
 }
 
-
 func (state *state) updatePeriodic() uber.Update {
 	var update uber.Update
-	update.Markup="pango"
+	update.Markup = "pango"
 	mem := getMemInfo()
 	memFree := mem.Free + mem.Cached + mem.Buffers
 	// some adjustments for high/low mem systems
@@ -76,8 +72,8 @@ func (state *state) updatePeriodic() uber.Update {
 		util.GetColorPct(int(100-memFreePctForCalc)),
 		util.FormatUnitBytes(memFree),
 	)
-//		util.GetColorPct(
-	update.ShortText = fmt.Sprintf(`<span color="%s">%s%</span>`, 	util.GetColorPct(int(100-memFreePct)), memFreePct)
+	//		util.GetColorPct(
+	update.ShortText = fmt.Sprintf(`<span color="%s">%s%</span>`, util.GetColorPct(int(100-memFreePct)), memFreePct)
 	update.Color = `#999999`
 	return update
 }
@@ -90,14 +86,13 @@ func (state *state) updateFromEvent(e uber.Event) uber.Update {
 		util.FormatUnitBytes(mem.Total),
 		util.FormatUnitBytes(mem.Buffers),
 		util.FormatUnitBytes(mem.Cached),
-		util.FormatUnitBytes(mem.SwapTotal - mem.SwapFree),
+		util.FormatUnitBytes(mem.SwapTotal-mem.SwapFree),
 		util.FormatUnitBytes(mem.SwapCached),
 		util.FormatUnitBytes(mem.SwapTotal),
 	)
 	update.Color = `#999999`
 	return update
 }
-
 
 // parse received structure into config
 func loadConfig(c map[string]interface{}) config {
@@ -109,7 +104,7 @@ func loadConfig(c map[string]interface{}) config {
 		if ok {
 			switch {
 			case key == `prefix`:
-				cfg.prefix=converted
+				cfg.prefix = converted
 			default:
 				log.Warning("unknown config key: [%s]", key)
 

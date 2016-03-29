@@ -18,6 +18,6 @@ func TestCpuLinuxTicks(t *testing.T) {
 		So(err, ShouldBeNil)
 		So(c[1].total, ShouldBeGreaterThan, 0)
 		So(c[1].user, ShouldBeGreaterThan, 0)
-	 	So(c[1].system, ShouldBeGreaterThan, 0)
+		So(c[1].system, ShouldBeGreaterThan, 0)
 	})
 }

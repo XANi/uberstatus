@@ -2,36 +2,34 @@ package clock
 
 import (
 	"github.com/XANi/uberstatus/uber"
-//	"gopkg.in/yaml.v1"
-	"time"
+	//	"gopkg.in/yaml.v1"
 	"github.com/op/go-logging"
-//	"fmt"
+	"time"
+	//	"fmt"
 )
 
 var log = logging.MustGetLogger("main")
 
-
 type Config struct {
-	long_format string
+	long_format  string
 	short_format string
-	interval int
+	interval     int
 }
-
 
 func Run(cfg uber.PluginConfig) {
 	c := loadConfig(cfg.Config)
 	for {
 		select {
 		case ev := <-cfg.Events:
-				if ev.Button == 3 {
-					UpdateWithMonth(cfg.Update)
-				} else {
-					UpdateWithDate(cfg.Update)
-				}
+			if ev.Button == 3 {
+				UpdateWithMonth(cfg.Update)
+			} else {
+				UpdateWithDate(cfg.Update)
+			}
 			select {
-				// after next click "normal" (time) handler will fire
+			// after next click "normal" (time) handler will fire
 			case _ = <-cfg.Events:
-			case <-time.After(2* time.Second):
+			case <-time.After(2 * time.Second):
 			}
 		case <-time.After(time.Duration(c.interval) * time.Millisecond):
 			Update(cfg.Update, c.long_format)
@@ -50,9 +48,9 @@ func loadConfig(raw map[string]interface{}) Config {
 		if ok {
 			switch {
 			case key == `long_format`:
-				c.long_format=converted
+				c.long_format = converted
 			case key == `short_format`:
-				c.short_format=converted
+				c.short_format = converted
 			default:
 				log.Warning("unknown config key: [%s]", key)
 
@@ -85,13 +83,12 @@ func UpdateWithMonth(update chan uber.Update) {
 
 func Update(update chan uber.Update, format string) {
 	time := GetTimeEvent(format)
-	time.Color=`#DDDDFF`
+	time.Color = `#DDDDFF`
 	update <- time
 }
 
-
 func GetTimeEvent(format string) uber.Update {
-	t :=  time.Now().Local()
+	t := time.Now().Local()
 	var ev uber.Update
 	ev.FullText = t.Format(format)
 	ev.ShortText = t.Format(`15:04:05`)
