@@ -47,7 +47,7 @@ func main() {
 	logBackendFormatter := logging.NewBackendFormatter(logBackend, logFormat)
 	_ = logBackendFormatter
 	logBackendLeveled := logging.AddModuleLevel(logBackendFormatter)
-	logBackendLeveled.SetLevel(logging.DEBUG, "")
+	logBackendLeveled.SetLevel(logging.NOTICE, "")
 	//	logBackendLeveled.SetLevel(logging.NOTICE, "")
 	logging.SetBackend(logBackendLeveled)
 
