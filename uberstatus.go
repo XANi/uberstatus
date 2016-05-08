@@ -7,6 +7,7 @@ import (
 	"gopkg.in/yaml.v1"
 	//	"runtime"
 	//	"io/ioutil"
+	"flag"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
@@ -23,7 +24,7 @@ type Config struct {
 	Plugins *map[string]map[string]interface{}
 }
 
-var debug = true
+var debug = flag.Bool("d", false, "enable debug server on port 6060[pprof]")
 var version string
 var log = logging.MustGetLogger("main")
 var logFormat = logging.MustStringFormatter(
@@ -39,7 +40,8 @@ type pluginMap struct {
 }
 
 func main() {
-	if debug {
+	flag.Parse()
+	if *debug {
 		go func() {
 			log.Error("%+v", http.ListenAndServe("127.0.0.1:6060", nil))
 		}()
