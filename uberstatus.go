@@ -23,7 +23,8 @@ type Config struct {
 	Plugins *map[string]map[string]interface{}
 }
 
-var debug = false
+var debug = true
+var version string
 var log = logging.MustGetLogger("main")
 var logFormat = logging.MustStringFormatter(
 	"%{color}%{time:15:04:05.000} %{shortpkg}↛%{shortfunc}: %{level:.4s} %{id:03x} %{color:reset}%{message}",
@@ -97,25 +98,37 @@ func main() {
 	// _ = plugin.NewPlugin("network", "", &net, updates)
 	// _ = ifd
 	fmt.Println(`[`)
+	ow := make(chan string, 32)
+	go outputWriter(ow)
 	for {
 		select {
 		case ev := (<-i3input):
 			plugins.parseEvent(ev)
 		case upd := <-updates:
 			plugins.parseUpdate(upd)
-		case <-time.After(time.Second * 10):
+		case <-time.After(time.Second * 1):
 			log.Info("Time passed")
 			_ = <-i3input
 		}
-		fmt.Print(`[`)
+		out := `[`
 		for idx, msg := range plugins.slots {
-			os.Stdout.Write(msg.Encode())
+			out = out + string(msg.Encode())
 			if idx+1 < (len(plugins.slots)) {
-				fmt.Print(`,`)
+				out = out + `,`
 			}
 		}
-		fmt.Println(`],`)
-
+		out = out + `],`
+		select {
+		case ow <- out:
+		default:
+			log.Warning("output channel full, discarding output!")
+		}
+	}
+}
+func outputWriter(out chan string) {
+	for {
+		ev := <-out
+		os.Stdout.Write([]byte(ev))
 	}
 }
 
