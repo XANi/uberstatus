@@ -108,7 +108,6 @@ func main() {
 			plugins.parseUpdate(upd)
 		case <-time.After(time.Second * 1):
 			log.Info("Time passed")
-			_ = <-i3input
 		}
 		out := `[`
 		for idx, msg := range plugins.slots {
