@@ -33,8 +33,7 @@ var logFormat = logging.MustStringFormatter(
 
 type pluginMap struct {
 	// channels used to send events to plugin
-	input   map[string]map[string]chan uber.Event
-	output  map[string]map[string]chan uber.Update
+	plugins map[string]map[string]uber.PluginConfig
 	slots   []i3bar.Msg
 	slotMap map[string]map[string]int
 }
@@ -74,13 +73,13 @@ func main() {
 	plugins := pluginMap{
 		slotMap: make(map[string]map[string]int),
 		slots:   make([]i3bar.Msg, len(cfg.Plugins)),
-		input:   make(map[string]map[string]chan uber.Event, 1),
+		plugins: make(map[string]map[string]uber.PluginConfig),
 	}
 	for idx, pluginCfg := range cfg.Plugins {
 		log.Info("Loading plugin %s into slot %d: %+v", pluginCfg.Plugin, idx, pluginCfg)
 		if plugins.slotMap[pluginCfg.Name] == nil {
 			plugins.slotMap[pluginCfg.Name] = make(map[string]int)
-			plugins.input[pluginCfg.Name] = make(map[string]chan uber.Event)
+			plugins.plugins[pluginCfg.Name] = make(map[string]uber.PluginConfig)
 		}
 		//		if len(pluginCfg.Instance) == 0 {
 		//			pluginCfg.Instance = pluginCfg.Name
@@ -88,7 +87,7 @@ func main() {
 
 		plugins.slotMap[pluginCfg.Name][pluginCfg.Instance] = idx
 		plugins.slots[idx] = i3bar.NewMsg()
-		plugins.input[pluginCfg.Name][pluginCfg.Instance] = plugin.NewPlugin(pluginCfg.Name, pluginCfg.Instance, pluginCfg.Plugin, pluginCfg.Config, updates)
+		plugins.plugins[pluginCfg.Name][pluginCfg.Instance] = plugin.NewPlugin(pluginCfg.Name, pluginCfg.Instance, pluginCfg.Plugin, pluginCfg.Config, updates)
 	}
 
 	// fmt.Println("\n[")
@@ -142,8 +141,8 @@ func (plugins *pluginMap) parseUpdate(update uber.Update) {
 }
 
 func (plugins *pluginMap) parseEvent(ev uber.Event) {
-	if val, ok := plugins.input[ev.Name][ev.Instance]; ok {
-		val <- ev
+	if val, ok := plugins.plugins[ev.Name][ev.Instance]; ok {
+		val.Events <- ev
 		//plugin
 	} else {
 		log.Info("rejected event %+v", ev)
