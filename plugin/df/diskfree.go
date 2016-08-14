@@ -100,13 +100,13 @@ func loadConfig(c map[string]interface{}) config {
 	cfg.dfCriticalPercent = 5
 	for key, value := range c {
 		converted, ok := value.(string)
-		log.Warning(`key [%+v] v: [%T]`, converted, value)
+		log.Warningf(`key [%+v] v: [%T]`, converted, value)
 		if ok {
 			switch {
 			case key == `prefix`:
 				cfg.prefix = converted
 			default:
-				log.Warning("unknown config key: [%s]", key)
+				log.Warningf("unknown config key: [%s]", key)
 
 			}
 		} else if converted, ok := value.([]interface{}); ok {
@@ -117,7 +117,7 @@ func loadConfig(c map[string]interface{}) config {
 					cfg.mounts[i] = v.(string)
 				}
 			default:
-				log.Warning("unknown config key: [%s]", key)
+				log.Warningf("unknown config key: [%s]", key)
 			}
 		} else {
 			converted, ok := value.(int)
@@ -126,10 +126,10 @@ func loadConfig(c map[string]interface{}) config {
 				case key == `interval`:
 					cfg.interval = converted
 				default:
-					log.Warning("unknown config key: [%s]", key)
+					log.Warningf("unknown config key: [%s]", key)
 				}
 			} else {
-				log.Error("Cant interpret value of config key [%s]", key)
+				log.Errorf("Cant interpret value of config key [%s]", key)
 			}
 		}
 	}

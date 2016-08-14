@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"github.com/op/go-logging"
 	"gopkg.in/yaml.v1"
 	"io/ioutil"
@@ -45,14 +44,14 @@ func LoadConfig() Config {
 		}
 	}
 	if cfgFile == "" {
-		log.Panic("could not find config file: %v", cfgFiles)
+		log.Panicf("could not find config file: %v", cfgFiles)
 	}
-	log.Info(fmt.Sprintf("Loading config file: %s", cfgFile))
+	log.Infof("Loading config file: %s", cfgFile)
 	raw_cfg, err := ioutil.ReadFile(cfgFile)
 	err = yaml.Unmarshal([]byte(raw_cfg), &cfg)
 	_ = err
 	str, _ := yaml.Marshal(cfg)
-	log.Warning(string(str))
+	log.Debug(string(str))
 
 	return cfg
 }

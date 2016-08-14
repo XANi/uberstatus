@@ -38,7 +38,7 @@ func NewPlugin(
 	events := make(chan uber.Event, 1)
 	update := make(chan uber.Update, 1)
 	trigger := make(chan uber.Trigger, 1)
-	log.Info("Adding plugin %s, instance %s", name, instance)
+	log.Infof("Adding plugin %s, instance %s", name, instance)
 	str, _ := yaml.Marshal(config)
 	log.Warning(string(str))
 	plugin := uber.PluginConfig{
@@ -54,7 +54,7 @@ func NewPlugin(
 		go filterUpdate(name, instance, update, update_filtered)
 		return plugin
 	} else {
-		log.Error(fmt.Sprintf("no plugin named %s", backend))
+		log.Errorf("no plugin named %s", backend)
 		panic(fmt.Sprintf("no plugin named %s", backend))
 	}
 }

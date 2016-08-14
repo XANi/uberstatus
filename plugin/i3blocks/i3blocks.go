@@ -57,10 +57,10 @@ func loadConfig(raw map[string]interface{}) config {
 			case key == `color`:
 				c.color = converted
 			default:
-				log.Warning("unknown config key: [%s]", key)
+				log.Warningf("unknown config key: [%s]", key)
 
 			}
-			log.Warning("t: %s %s", key, converted)
+			log.Warningf("t: %s %s", key, converted)
 		} else {
 			converted, ok := value.(int)
 			if ok {
@@ -68,10 +68,10 @@ func loadConfig(raw map[string]interface{}) config {
 				case key == `interval`:
 					c.interval = converted
 				default:
-					log.Warning("unknown config key: [%s]", key)
+					log.Warningf("unknown config key: [%s]", key)
 				}
 			} else {
-				log.Error("Cant interpret value of config key [%s]", key)
+				log.Errorf("Cant interpret value of config key [%s]", key)
 			}
 		}
 	}
@@ -132,7 +132,7 @@ func (c *config) Update(update chan uber.Update, cfg config, ev uber.Event) {
 	}
 	// len of 1 means there was nothing to split, no \n probably means invalid input
 	if st_len <= 1 {
-		log.Warning("Command %s returned nothing", cfg.command)
+		log.Warningf("Command %s returned nothing", cfg.command)
 		return
 	} else {
 		upd.FullText = fmt.Sprint(cfg.prefix, st[0])

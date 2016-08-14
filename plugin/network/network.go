@@ -5,7 +5,6 @@ import (
 	"github.com/VividCortex/ewma"
 	"github.com/XANi/uberstatus/uber"
 	"github.com/op/go-logging"
-	"gopkg.in/yaml.v1"
 	"io/ioutil"
 	"net"
 	"strconv"
@@ -37,8 +36,6 @@ const ShowAllAddr = -1
 
 func Run(cfg uber.PluginConfig) {
 	c := loadConfig(cfg.Config)
-	str, _ := yaml.Marshal(cfg.Config)
-	log.Warning(string(str))
 	var stats netStats
 	stats.ewmaRx = ewma.NewMovingAverage(5)
 	stats.ewmaTx = ewma.NewMovingAverage(5)
@@ -82,11 +79,11 @@ func loadConfig(raw map[string]interface{}) Config {
 			switch {
 			case key == `iface`:
 				c.iface = converted
-				log.Warning("-- %s %s--", key, c.iface)
+				log.Warningf("-- %s %s--", key, c.iface)
 
 			}
 		} else {
-			log.Warning("-- %s--", key)
+			log.Warningf("-- %s--", key)
 			_ = ok
 		}
 	}

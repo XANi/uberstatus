@@ -42,7 +42,7 @@ func main() {
 	flag.Parse()
 	if *debug {
 		go func() {
-			log.Error("%+v", http.ListenAndServe("127.0.0.1:6060", nil))
+			log.Errorf("%+v", http.ListenAndServe("127.0.0.1:6060", nil))
 		}()
 	}
 	logBackend := logging.NewLogBackend(os.Stderr, "", 0)
@@ -74,7 +74,7 @@ func main() {
 		plugins: make(map[string]map[string]uber.PluginConfig),
 	}
 	for idx, pluginCfg := range cfg.Plugins {
-		log.Info("Loading plugin %s into slot %d: %+v", pluginCfg.Plugin, idx, pluginCfg)
+		log.Infof("Loading plugin %s into slot %d: %+v", pluginCfg.Plugin, idx, pluginCfg)
 		if plugins.slotMap[pluginCfg.Name] == nil {
 			plugins.slotMap[pluginCfg.Name] = make(map[string]int)
 			plugins.plugins[pluginCfg.Name] = make(map[string]uber.PluginConfig)
@@ -123,7 +123,7 @@ func (plugins *pluginMap) parseUpdate(update uber.Update) {
 	if val, ok := plugins.slotMap[update.Name][update.Instance]; ok {
 		plugins.slots[val] = i3bar.CreateMsg(update)
 	} else {
-		log.Warning("Got msg from unknown place, name: %s, instance: %s", update.Name, update.Instance)
+		log.Warningf("Got msg from unknown place, name: %s, instance: %s", update.Name, update.Instance)
 	}
 }
 
@@ -131,7 +131,7 @@ func (plugins *pluginMap) parseEvent(ev uber.Event) {
 	if val, ok := plugins.plugins[ev.Name][ev.Instance]; ok {
 		val.Events <- ev
 	} else {
-		log.Info("rejected event %+v", ev)
+		log.Infof("rejected event %+v", ev)
 	}
 
 }

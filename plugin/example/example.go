@@ -84,7 +84,7 @@ func loadConfig(c map[string]interface{}) config {
 			case key == `prefix`:
 				cfg.prefix = converted
 			default:
-				log.Warning("unknown config key: [%s]", key)
+				log.Warningf("unknown config key: [%s]", key)
 
 			}
 		} else {
@@ -94,10 +94,10 @@ func loadConfig(c map[string]interface{}) config {
 				case key == `interval`:
 					cfg.interval = converted
 				default:
-					log.Warning("unknown config key: [%s]", key)
+					log.Warningf("unknown config key: [%s]", key)
 				}
 			} else {
-				log.Error("Cant interpret value of config key [%s]", key)
+				log.Errorf("Cant interpret value of config key [%s]", key)
 			}
 		}
 	}

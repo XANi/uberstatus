@@ -54,10 +54,10 @@ func loadConfig(raw map[string]interface{}) Config {
 			case key == `short_format`:
 				c.short_format = converted
 			default:
-				log.Warning("unknown config key: [%s]", key)
+				log.Warningf("unknown config key: [%s]", key)
 
 			}
-			log.Warning("t: %s", key)
+			log.Warningf("t: %s", key)
 		} else {
 			converted, ok := value.(int)
 			if ok {
@@ -65,10 +65,10 @@ func loadConfig(raw map[string]interface{}) Config {
 				case key == `interval`:
 					c.interval = converted
 				default:
-					log.Warning("unknown config key: [%s]", key)
+					log.Warningf("unknown config key: [%s]", key)
 				}
 			} else {
-				log.Error("Cant interpret value of config key [%s]", key)
+				log.Errorf("Cant interpret value of config key [%s]", key)
 			}
 		}
 	}
