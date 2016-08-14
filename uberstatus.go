@@ -50,7 +50,6 @@ func main() {
 	_ = logBackendFormatter
 	logBackendLeveled := logging.AddModuleLevel(logBackendFormatter)
 	logBackendLeveled.SetLevel(logging.NOTICE, "")
-	//	logBackendLeveled.SetLevel(logging.NOTICE, "")
 	logging.SetBackend(logBackendLeveled)
 
 	log.Info("Starting")
@@ -62,7 +61,6 @@ func main() {
 		fmt.Println("error:", err)
 	}
 	os.Stdout.Write(b)
-	//c, err := json.Marshal(msg)
 
 	i3input := i3bar.EventReader()
 	// FIXME
@@ -81,23 +79,12 @@ func main() {
 			plugins.slotMap[pluginCfg.Name] = make(map[string]int)
 			plugins.plugins[pluginCfg.Name] = make(map[string]uber.PluginConfig)
 		}
-		//		if len(pluginCfg.Instance) == 0 {
-		//			pluginCfg.Instance = pluginCfg.Name
-		//		}
 
 		plugins.slotMap[pluginCfg.Name][pluginCfg.Instance] = idx
 		plugins.slots[idx] = i3bar.NewMsg()
 		plugins.plugins[pluginCfg.Name][pluginCfg.Instance] = plugin.NewPlugin(pluginCfg.Name, pluginCfg.Instance, pluginCfg.Plugin, pluginCfg.Config, updates)
 	}
 
-	// fmt.Println("\n[")
-
-	// plugins := config.Plugins
-	// ifd := (*plugins)[`clock`] //.(map[string]interface{})
-	// net := (*plugins)[`clock`] //.(map[string]interface{})
-	// //	_ = plugin.NewPlugin("clock", "", &ifd, updates)
-	// _ = plugin.NewPlugin("network", "", &net, updates)
-	// _ = ifd
 	fmt.Println(`[`)
 	ow := make(chan string, 32)
 	go outputWriter(ow)
@@ -143,10 +130,8 @@ func (plugins *pluginMap) parseUpdate(update uber.Update) {
 func (plugins *pluginMap) parseEvent(ev uber.Event) {
 	if val, ok := plugins.plugins[ev.Name][ev.Instance]; ok {
 		val.Events <- ev
-		//plugin
 	} else {
 		log.Info("rejected event %+v", ev)
-		//		log.Info("map: %+v", plugins)
 	}
 
 }
