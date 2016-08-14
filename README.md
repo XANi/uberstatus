@@ -12,14 +12,26 @@ Goals:
 
 # Installation
 
+Needs go installed in OS
+
+Easy install:
+
+    $ export GOPATH="/tmp/src/go" # skip if you have go already set up
+    $ go get github.com/XANi/uberstatus
+    $ mkdir -p ~/.config/uberstatus
+    $ cp $GOPATH/src/github.com/XANi/uberstatus/cfg/uberstatus.default.conf ~/.config/uberstatus/uberstatus.conf # copy default config
+
+Your binary will be in `$GOPATH/bin/uberstatus`. Copy it to non-temporary path or set GOPATH to something permanent before build
+
+Dev install:
+
+    $ export GOPATH="/tmp/src/go" # skip if you have go already set up
+    $ export PATH="$PATH:$GOPATH/bin" # skip if you have go already set up
     $ go get github.com/mattn/gom
     $ make
     downloading github.com/op/go-logging
     downloading gopkg.in/yaml.v1
     downloading github.com/VividCortex/ewma
-    # Hack around go's retarded way of dealing with "global" package naming
-    mkdir -p _vendor/src/github.com/XANi
-    ln -s . _vendor/src/github.com/XANi/uberstatus >/dev/null 2>&1 || true
     gom exec go build -ldflags "-X main.version=0.0.1-0-gfbdadf3" [a-z]*go
     go fmt
 

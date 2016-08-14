@@ -5,10 +5,11 @@ all: dep
 	go fmt
 
 dep:
-	gom install
-	# Hack around go's retarded way of dealing with "global" package naming
 	mkdir -p _vendor/src/github.com/XANi
-	ln -s . _vendor/src/github.com/XANi/uberstatus >/dev/null 2>&1 || true
+	# hack around go package weirdness
+	ln -s ../../../.. _vendor/src/github.com/XANi/uberstatus >/dev/null 2>&1 || true
+	gom install
+
 
 gccgo: dep
 	gom exec go build -compiler gccgo -gccgoflags "-O3" uberstatus.go
