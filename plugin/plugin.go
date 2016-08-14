@@ -27,6 +27,7 @@ var plugins = map[string]func(uber.PluginConfig){
 	"example":  example.Run,
 }
 
+
 func NewPlugin(
 	name string, // Plugin name
 	instance string, // Plugin instance
@@ -36,6 +37,7 @@ func NewPlugin(
 ) chan uber.Event {
 	events := make(chan uber.Event, 1)
 	update := make(chan uber.Update, 1)
+	trigger := make(chan uber.Trigger, 1)
 	log.Info("Adding plugin %s, instance %s", name, instance)
 	str, _ := yaml.Marshal(config)
 	log.Warning(string(str))
@@ -46,6 +48,7 @@ func NewPlugin(
 			Config:   config,
 			Events:   events,
 			Update:   update,
+			Trigger:  trigger,
 		})
 	} else {
 		log.Error(fmt.Sprintf("no plugin named %s", backend))

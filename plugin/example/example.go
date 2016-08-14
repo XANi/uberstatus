@@ -32,15 +32,21 @@ func Run(cfg uber.PluginConfig) {
 	cfg.Update <- st.updatePeriodic()
 	for {
 		select {
+		// call update when user clicked on the plugin
 		case updateEvent := (<-cfg.Events):
 			cfg.Update <- st.updateFromEvent(updateEvent)
 			// that will wait 10 seconds on no event a
 			// and it will "eat" next event to switch to "normal" display
+			// basically making it "toggle" between two different views
 			select {
 			case _ = <-cfg.Events:
 				cfg.Update <- st.updatePeriodic()
 			case <-time.After(10 * time.Second):
 			}
+		// update on trigger from main code, this can be used to make all widgets update at the same time if that way is preferred over async
+		case _ = <-cfg.Trigger:
+			cfg.Update <- st.updatePeriodic()
+		// update every interval if nothing triggered update before tat
 		case <-time.After(time.Duration(st.cfg.interval) * time.Millisecond):
 			cfg.Update <- st.updatePeriodic()
 		}

@@ -49,6 +49,8 @@ func Run(cfg uber.PluginConfig) {
 		case updateEvent := (<-cfg.Events):
 			//			cfg.Update <- st.updateFromEvent(updateEvent)
 			_ = updateEvent
+		case _ = <-cfg.Trigger:
+			cfg.Update <- st.updatePeriodic()
 		case <-time.After(time.Duration(st.cfg.interval) * time.Millisecond):
 			cfg.Update <- st.updatePeriodic()
 		}

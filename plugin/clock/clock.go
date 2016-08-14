@@ -31,6 +31,8 @@ func Run(cfg uber.PluginConfig) {
 			case _ = <-cfg.Events:
 			case <-time.After(2 * time.Second):
 			}
+		case _ = <-cfg.Trigger:
+			Update(cfg.Update, c.long_format)
 		case <-time.After(time.Duration(c.interval) * time.Millisecond):
 			Update(cfg.Update, c.long_format)
 		}

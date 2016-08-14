@@ -22,6 +22,8 @@ type Update struct {
 	Urgent          bool   `json:"urgent"` // urgent flag, will update (assuming backend allows) immediately if that flag is present
 }
 
+type Trigger int8
+
 type Tag struct {
 	Name     string
 	Instance string
@@ -36,6 +38,7 @@ type PluginConfig struct {
 	Name     string
 	Instance string
 	Config   map[string]interface{}
-	Events   chan Event
-	Update   chan Update
+	Events   chan Event // chan to receive inputs from user
+	Update   chan Update // chan to send panel updates
+	Trigger  chan Trigger  // chan to trigger updates
 }
