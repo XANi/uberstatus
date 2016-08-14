@@ -1,5 +1,7 @@
 # Uberstatus
 
+![](doc/uberstatus.gif)
+
 Status line generator for i3wm and (eventually) other WMs
 
 Goals:
