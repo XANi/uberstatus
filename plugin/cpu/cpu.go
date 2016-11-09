@@ -18,6 +18,7 @@ var log = logging.MustGetLogger("main")
 type config struct {
 	prefix   string
 	interval int
+	zero     bool
 }
 
 type state struct {
@@ -70,7 +71,11 @@ func (state *state) updatePeriodic() uber.Update {
 		bars = bars + ltBar[int8(d.GetCpuUsagePercent())]
 	}
 
-	update.FullText = fmt.Sprintf("%05.2f%%%s", usagePct, bars)
+	if state.cfg.zero {
+		update.FullText = fmt.Sprintf("%05.2f%%%s", usagePct, bars)
+	} else {
+		update.FullText = fmt.Sprintf("% 5.2f%%%s", usagePct, bars)
+	}
 	update.ShortText = fmt.Sprintf("%s", util.GetBarChar(int(usagePct)))
 	update.Color = util.GetColorPct(int(usagePct))
 	update.Markup = `pango`
@@ -102,6 +107,7 @@ func loadConfig(c map[string]interface{}) config {
 	var cfg config
 	cfg.interval = 1000
 	cfg.prefix = "ex: "
+	cfg.zero = true
 	for key, value := range c {
 		converted, ok := value.(string)
 		if ok {
@@ -122,7 +128,17 @@ func loadConfig(c map[string]interface{}) config {
 					log.Warningf("unknown config key: [%s]", key)
 				}
 			} else {
-				log.Errorf("Cant interpret value of config key [%s]", key)
+				converted, ok := value.(bool)
+				if ok {
+					switch {
+					case key == `zero`:
+						cfg.zero = converted
+					default:
+						log.Warningf("unknown config key: [%s]", key)
+					}
+				} else {
+					log.Errorf("Cant interpret value of config key [%s]", key)
+				}
 			}
 		}
 	}
