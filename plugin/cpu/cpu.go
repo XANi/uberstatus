@@ -72,9 +72,9 @@ func (state *state) updatePeriodic() uber.Update {
 	}
 
 	if state.cfg.zero {
-		update.FullText = fmt.Sprintf("%05.2f%%%s", usagePct, bars)
+		update.FullText = fmt.Sprintf(state.cfg.prefix, "%05.2f%%%s", usagePct, bars)
 	} else {
-		update.FullText = fmt.Sprintf("% 5.2f%%%s", usagePct, bars)
+		update.FullText = fmt.Sprintf(state.cfg.prefix, "% 5.2f%%%s", usagePct, bars)
 	}
 	update.ShortText = fmt.Sprintf("%s", util.GetBarChar(int(usagePct)))
 	update.Color = util.GetColorPct(int(usagePct))
