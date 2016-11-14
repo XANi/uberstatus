@@ -12,6 +12,7 @@ import (
 	"github.com/XANi/uberstatus/plugin/i3blocks"
 	"github.com/XANi/uberstatus/plugin/memory"
 	"github.com/XANi/uberstatus/plugin/network"
+	"github.com/XANi/uberstatus/plugin/weather"
 	"github.com/XANi/uberstatus/uber"
 )
 
@@ -25,6 +26,7 @@ var plugins = map[string]func(uber.PluginConfig){
 	"network":  network.Run,
 	"i3blocks": i3blocks.Run,
 	"example":  example.Run,
+	"weather":  weather.Run,
 }
 
 

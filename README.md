@@ -1,6 +1,6 @@
 # Uberstatus
 
-![](doc/uberstatus.gif)
+![byzanz-record -x 3065 -y 0 -h 22 -w 775 uberstatus.gif](doc/uberstatus.gif)
 
 Status line generator for i3wm and (eventually) other WMs
 
@@ -95,3 +95,7 @@ Example:
       config:
         command: /usr/share/i3blocks/volume
 ```
+
+## Weather
+
+first, get you token [here](http://www.ncdc.noaa.gov/cdo-web/token)
