@@ -72,7 +72,13 @@ Parameters:
 
 `prefix` will be added at beginning of the status bar. name and instance are just to distinguis between different instances
 
+## Memory
+
+Click to get detailed stats
+
 ## Network
+
+Left click for interface's IP, right click for secondary IP (usually IPv6), middle click to display all addresses.
 
 Parameters:
 
@@ -93,12 +99,14 @@ Example:
     - name: volume
       plugin: i3blocks
       config:
-        command: /usr/share/i3blocks/volume
+        command: /path/to/i3blocks/volume
 ```
 
 ## Weather
 
-first, get you token [here](https://openweathermap.org/), then get city name or id and set it in location
+Displays temperature, left click for more detailed weather data
+
+To set it up first, get you token [here](https://openweathermap.org/), then get city name or id and set it in location
 
 Example:
 
@@ -110,4 +118,4 @@ Example:
         openweather_location: London
 ```
 
-weather will automatically update every 10 minutes which is way below their free tier
+weather will automatically update every 10 minutes which is way below their free tier ratelimit
