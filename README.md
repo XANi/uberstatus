@@ -98,4 +98,16 @@ Example:
 
 ## Weather
 
-first, get you token [here](http://www.ncdc.noaa.gov/cdo-web/token)
+first, get you token [here](https://openweathermap.org/), then get city name or id and set it in location
+
+Example:
+
+```yaml
+    - name: weather
+      plugin: weather
+      config:
+        openweather_api_key: 1111cccccccc11111111
+        openweather_location: London
+```
+
+weather will automatically update every 10 minutes which is way below their free tier
