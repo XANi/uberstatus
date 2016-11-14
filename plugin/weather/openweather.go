@@ -143,42 +143,13 @@ func (state *state)  getOpenweatherPrognosis () uber.Update {
 
 func parseTemperature(atmosphere *openweatherAtmosphere) string {
 	var temperature string
-	tInC := atmosphere.Temperature - 273.15
-	var temperatureColor string
-	switch  {
-	case tInC < -10:
-		temperatureColor = "#4444ff"; break
-	case tInC < 0:
-		temperatureColor = "#9999ff"; break
-	case tInC < 5:
-		temperatureColor = "#bbbbff"; break
-	case tInC < 10:
-		temperatureColor = "#cccccc"; break
-	case tInC < 15:
-		temperatureColor = "#00aa00"; break
-	case tInC < 25:
-		temperatureColor = "#00dd00"; break
-	case tInC < 30:
-		temperatureColor = "#bbaa00"; break
-	case tInC < 35:
-		temperatureColor = "#aa4400"; break
-	case tInC < 40:
-		temperatureColor = "#aa0000"; break
-	case tInC < 60:
-		temperatureColor = "#ff0000"; break
-	default: // we're on sun, yaay
-		temperatureColor = "#aa00aa"; break
-	}
-	if int( atmosphere.TemperatureMin) == int(atmosphere.TemperatureMax) {
-		temperature = fmt.Sprintf(`<span color="%s">%2.2f</span>℃`,
-			temperatureColor,
-			atmosphere.Temperature - 273.15,
-		)
+	if (atmosphere.TemperatureMax - atmosphere.TemperatureMin) < 1 {
+		temperature = colorizeTemperature(atmosphere.Temperature - 273.15) + "℃"
 	} else {
-		temperature = fmt.Sprintf(`<span color="#aaaaff">%2.2f</span>/%2.2f/<span color="#eecc00">%2.2f</span>℃`,
-			atmosphere.TemperatureMin - 273.15,
-			atmosphere.Temperature - 273.15,
-			atmosphere.TemperatureMax - 273.15,
+		temperature = fmt.Sprintf(`%s/%s/%s℃`,
+			colorizeTemperature(atmosphere.TemperatureMin - 273.15),
+			colorizeTemperature(atmosphere.Temperature - 273.15),
+			colorizeTemperature(atmosphere.TemperatureMax - 273.15),
 		)
 	}
 	return temperature
