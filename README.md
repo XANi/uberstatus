@@ -1,6 +1,6 @@
 # Uberstatus
 
-![](doc/uberstatus.gif)
+![byzanz-record -x 3065 -y 0 -h 22 -w 775 uberstatus.gif](doc/uberstatus.gif)
 
 Status line generator for i3wm and (eventually) other WMs
 
@@ -72,7 +72,13 @@ Parameters:
 
 `prefix` will be added at beginning of the status bar. name and instance are just to distinguis between different instances
 
+## Memory
+
+Click to get detailed stats
+
 ## Network
+
+Left click for interface's IP, right click for secondary IP (usually IPv6), middle click to display all addresses.
 
 Parameters:
 
@@ -93,5 +99,23 @@ Example:
     - name: volume
       plugin: i3blocks
       config:
-        command: /usr/share/i3blocks/volume
+        command: /path/to/i3blocks/volume
 ```
+
+## Weather
+
+Displays temperature, left click for more detailed weather data
+
+To set it up first, get you token [here](https://openweathermap.org/), then get city name or id and set it in location
+
+Example:
+
+```yaml
+    - name: weather
+      plugin: weather
+      config:
+        openweather_api_key: 1111cccccccc11111111
+        openweather_location: London
+```
+
+weather will automatically update every 10 minutes which is way below their free tier ratelimit

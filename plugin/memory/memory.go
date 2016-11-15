@@ -66,7 +66,12 @@ func (state *state) updatePeriodic() uber.Update {
 	} else {
 		memFreePctForCalc = float64(memFree) / float64(memTotalForCalc) * 100
 	}
-	swapPct := 100 - ((mem.SwapFree * 100) / mem.SwapTotal)
+	var swapPct int64
+	if mem.SwapTotal == 0 {
+		swapPct = 0
+	} else {
+		swapPct = 100 - ((mem.SwapFree * 100) / mem.SwapTotal)
+	}
 	update.FullText = fmt.Sprintf(`%s<span color="%s">%s</span><span color="%s">%s</span>`,
 		state.cfg.prefix,
 		util.GetColorPct(int(swapPct)),
@@ -84,14 +89,20 @@ func (state *state) updateFromEvent(e uber.Event) uber.Update {
 	var update uber.Update
 	update.Markup = "pango"
 	mem := getMemInfo()
-	update.FullText = fmt.Sprintf(`<span color="#bbbbbb">Tot:</span> %s <span color="#bbbbbb">Buf:</span> %s <span color="#bbbbbb">Cache:</span> %s <span color="#bbbbbb">Swap U/C/T</span> %s/%s/%s`,
+	update.FullText = fmt.Sprintf(`<span color="#bbbbbb">Tot:</span> %s <span color="#bbbbbb">Buf:</span> %s <span color="#bbbbbb">Cache:</span> %s`,
 		util.FormatUnitBytes(mem.Total),
 		util.FormatUnitBytes(mem.Buffers),
 		util.FormatUnitBytes(mem.Cached),
-		util.FormatUnitBytes(mem.SwapTotal-mem.SwapFree),
-		util.FormatUnitBytes(mem.SwapCached),
-		util.FormatUnitBytes(mem.SwapTotal),
 	)
+	if mem.SwapTotal > 0 {
+		update.FullText = update.FullText + fmt.Sprintf(` <span color="#bbbbbb">Swap U/C/T</span> %s/%s/%s`,
+			util.FormatUnitBytes(mem.SwapTotal-mem.SwapFree),
+			util.FormatUnitBytes(mem.SwapCached),
+			util.FormatUnitBytes(mem.SwapTotal),
+		)
+	} else {
+		update.FullText = update.FullText + ` <span color="#bb0000">Swap off</span>`
+	}
 	update.Color = `#999999`
 	return update
 }
