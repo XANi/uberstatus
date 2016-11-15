@@ -47,3 +47,7 @@ _testmain.go
 # local test data
 
 t-data/*local
+
+#IntelliJ IDEA
+.idea/
+*.iws
