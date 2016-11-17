@@ -106,7 +106,7 @@ func generateLookupTables() {
 func loadConfig(c map[string]interface{}) config {
 	var cfg config
 	cfg.interval = 1000
-	cfg.prefix = "ex: "
+	cfg.prefix = ""
 	cfg.zero = true
 	for key, value := range c {
 		converted, ok := value.(string)
