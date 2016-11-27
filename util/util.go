@@ -2,6 +2,7 @@ package util
 
 import (
 	"fmt"
+	"text/template"
 )
 
 // calculate divider and unit for bytes
@@ -62,4 +63,13 @@ func GetColorPct(pct int) string {
 		return `#66cc66`
 	}
 	return `#666666`
+}
+
+func NewTemplate(name string, tpl string) (*template.Template, error) {
+	funcMap := template.FuncMap{
+		"percentToColor": GetColorPct,
+		"percentToBar": GetBarChar,
+		"formatBytes": FormatUnitBytes,
+	}
+	return template.New(name).Funcs(funcMap).Parse(tpl)
 }
