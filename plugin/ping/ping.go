@@ -3,6 +3,7 @@ package ping
 import (
 	"github.com/XANi/uberstatus/uber"
 	"github.com/XANi/uberstatus/util"
+	"github.com/XANi/golibs/ewma"
 	//	"gopkg.in/yaml.v1"
 	"fmt"
 	"github.com/op/go-logging"
@@ -23,6 +24,7 @@ type config struct {
 type state struct {
 	cfg config
 	pingCh chan *pingResult
+	dropRate *ewma.Ewma
 	cnt int
 	ev  int
 }
@@ -32,11 +34,15 @@ type pingResult struct {
 	Duration time.Duration
 	OkCount uint64
 	FailCount uint64
+	DropRate float64
 }
 
 func Run(cfg uber.PluginConfig) {
 	var st state
 	st.cfg = loadConfig(cfg.Config)
+	st.dropRate = ewma.NewEwma(time.Duration(3 * time.Second))
+	var zero time.Time
+	st.dropRate.Update(100000000,zero)
 	st.pingCh = make(chan *pingResult)
 	go tcpPing("127.0.0.1:22", st.pingCh)
 	_ = fmt.Sprintf("",cfg)
@@ -69,8 +75,14 @@ func (state *state) updatePeriodic() uber.Update {
 	var update uber.Update
 
 	ping := <- state.pingCh
+	if ping.Ok {
+		ping.DropRate = state.dropRate.UpdateNow(0)
+	} else  {
+		ping.DropRate = state.dropRate.UpdateNow(100)
+	}
 	// TODO precompile and preallcate
-	tpl, _ := util.NewTemplate("uberEvent",`ping: {{printf "%9s" .Duration}}`)
+	log.Errorf("D: %f", ping.DropRate)
+	tpl, _ := util.NewTemplate("uberEvent",`ping: {{printf "%9s" .Duration}} {{printf "%2.2f" .DropRate}}%`)
 	update.FullText =  tpl.ExecuteString(ping)
 	update.Markup = `pango`
 	update.ShortText = `nope`

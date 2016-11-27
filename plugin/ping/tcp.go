@@ -13,8 +13,8 @@ func tcpPing(addr string, out chan *pingResult) {
 		timeStart := time.Now()
 		c, err := net.Dial("tcp", addr)
 		timeEnd := time.Now()
-		c.Close()
 		if err == nil {
+			c.Close()
 			okCount = okCount + 1
 			ping.Duration = timeEnd.Sub(timeStart)
 			ping.Ok = true
