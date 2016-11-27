@@ -1,12 +1,12 @@
 package weather
 
 import (
-	"github.com/XANi/uberstatus/uber"
-	"time"
-	"net/http"
-	"net/url"
 	"encoding/json"
 	"fmt"
+	"github.com/XANi/uberstatus/uber"
+	"net/http"
+	"net/url"
+	"time"
 )
 
 // Current weather API
@@ -62,27 +62,27 @@ import (
 
 type openweatherCurrentWeather struct {
 	Weather []struct {
-		Id int `json:"id"`
-		Name string `json:"name"`
+		Id          int    `json:"id"`
+		Name        string `json:"name"`
 		Description string `json:"description"`
-		Icon string `json:"icon"`
+		Icon        string `json:"icon"`
 	} `json:"weather"`
 	Atmosphere openweatherAtmosphere `json:"main"`
-	Wind struct {
-		Speed float64 `json:"speed"`
+	Wind       struct {
+		Speed     float64 `json:"speed"`
 		Direction float64 `json:"deg"`
 	}
 }
 
 type openweatherAtmosphere struct {
-	Temperature float64 `json:"temp"`
-	Pressure float64 `json:"pressure"`
-	Humidity float64 `json:"humidity"`
+	Temperature    float64 `json:"temp"`
+	Pressure       float64 `json:"pressure"`
+	Humidity       float64 `json:"humidity"`
 	TemperatureMin float64 `json:"temp_min"`
 	TemperatureMax float64 `json:"temp_max"`
 }
 
-func (state *state) updateWeather () {
+func (state *state) updateWeather() {
 	timeout := time.Duration(60 * time.Second)
 	client := http.Client{
 		Timeout: timeout,
@@ -95,9 +95,9 @@ func (state *state) updateWeather () {
 		log.Warningf("Weather get error: %s", err)
 		return
 	}
-    defer r.Body.Close()
+	defer r.Body.Close()
 	var weather openweatherCurrentWeather
-	err =  json.NewDecoder(r.Body).Decode(&weather)
+	err = json.NewDecoder(r.Body).Decode(&weather)
 	if err != nil {
 		log.Warningf("Weather JSON decode error: %s", err)
 	}
@@ -105,7 +105,7 @@ func (state *state) updateWeather () {
 	state.lastWeatherUpdate = time.Now()
 }
 
-func (state *state)  getOpenweatherCurrent () uber.Update {
+func (state *state) getOpenweatherCurrent() uber.Update {
 	var update uber.Update
 	if !time.Now().Before(state.lastWeatherUpdate.Add(10 * time.Minute)) {
 		state.updateWeather()
@@ -114,8 +114,8 @@ func (state *state)  getOpenweatherCurrent () uber.Update {
 	// TODO discard old data
 	if state.currentWeather != nil {
 		update.FullText = parseTemperature(&state.currentWeather.Atmosphere)
-		if len ( state.currentWeather.Weather ) > 0 {
-			update.FullText = update.FullText + " - " +  state.currentWeather.Weather[0].Description
+		if len(state.currentWeather.Weather) > 0 {
+			update.FullText = update.FullText + " - " + state.currentWeather.Weather[0].Description
 		}
 	} else {
 		update.FullText = "cant get weather"
@@ -123,7 +123,7 @@ func (state *state)  getOpenweatherCurrent () uber.Update {
 	return update
 }
 
-func (state *state)  getOpenweatherPrognosis () uber.Update {
+func (state *state) getOpenweatherPrognosis() uber.Update {
 	var update uber.Update
 	update.Markup = `pango`
 	if state.currentWeather != nil {
@@ -144,12 +144,12 @@ func (state *state)  getOpenweatherPrognosis () uber.Update {
 func parseTemperature(atmosphere *openweatherAtmosphere) string {
 	var temperature string
 	if (atmosphere.TemperatureMax - atmosphere.TemperatureMin) < 1 {
-		temperature = colorizeTemperature(atmosphere.Temperature - 273.15) + "℃"
+		temperature = colorizeTemperature(atmosphere.Temperature-273.15) + "℃"
 	} else {
 		temperature = fmt.Sprintf(`%s/%s/%s℃`,
-			colorizeTemperature(atmosphere.TemperatureMin - 273.15),
-			colorizeTemperature(atmosphere.Temperature - 273.15),
-			colorizeTemperature(atmosphere.TemperatureMax - 273.15),
+			colorizeTemperature(atmosphere.TemperatureMin-273.15),
+			colorizeTemperature(atmosphere.Temperature-273.15),
+			colorizeTemperature(atmosphere.TemperatureMax-273.15),
 		)
 	}
 	return temperature

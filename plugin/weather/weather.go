@@ -14,22 +14,21 @@ var log = logging.MustGetLogger("main")
 
 // set up a config struct
 type config struct {
-	openWeatherApiKey string
+	openWeatherApiKey   string
 	openWeatherLocation string
-	prefix string
-	interval int
+	prefix              string
+	interval            int
 }
 
 type state struct {
-	cfg config
-	cnt int
-	ev  int
-	currentWeather *openweatherCurrentWeather
+	cfg               config
+	cnt               int
+	ev                int
+	currentWeather    *openweatherCurrentWeather
 	lastWeatherUpdate time.Time
 }
 
 type OpenWeatherMapWeather struct {
-
 }
 
 func Run(cfg uber.PluginConfig) {
