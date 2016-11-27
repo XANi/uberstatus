@@ -32,10 +32,16 @@ type Config struct {
 }
 
 
-func LoadConfig() Config {
+func LoadConfig(file ...string) Config {
 	var cfg Config
 	var cfgFile string
-	for _,element := range cfgFiles {
+	var cfgFileList []string
+	if len(file) < 1 {
+		cfgFileList = cfgFiles
+	} else {
+		cfgFileList = file
+	}
+	for _,element := range cfgFileList {
 		filename, _ := filepath.Abs(os.ExpandEnv(element))
 		log.Warning(filename)
 		if _, err := os.Stat(filename); err == nil {

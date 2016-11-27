@@ -25,6 +25,8 @@ type Config struct {
 }
 
 var debug = flag.Bool("d", false, "enable debug server on port 6060[pprof]")
+var configFile = flag.String("config", "", "path to config file")
+
 var version string
 var log = logging.MustGetLogger("main")
 var logFormat = logging.MustStringFormatter(
@@ -51,6 +53,12 @@ func main() {
 	logBackendLeveled := logging.AddModuleLevel(logBackendFormatter)
 	logBackendLeveled.SetLevel(logging.NOTICE, "")
 	logging.SetBackend(logBackendLeveled)
+	var cfg config.Config
+	if *configFile == "" {
+		cfg = config.LoadConfig()
+	} else {
+		cfg = config.LoadConfig(*configFile)
+	}
 
 	log.Info("Starting")
 	header := i3bar.NewHeader()
@@ -67,7 +75,6 @@ func main() {
 	// it looks like i3bar blocks stdout when stdin is not handled
 	// which feedbacks into plugins if channel does
 	updates := make(chan uber.Update, 100)
-	cfg := config.LoadConfig()
 	plugins := pluginMap{
 		slotMap: make(map[string]map[string]int),
 		slots:   make([]i3bar.Msg, len(cfg.Plugins)),
