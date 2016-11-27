@@ -42,6 +42,12 @@ Each of plugins operates asynchronously and can send update of its status at any
 
 Each plugin have a name (by default plugin name) and instance (in case of plugins that will be used multiple times, like network interfaces).
 
+# Commandline options
+
+* `-config file/name` - use alternate config file
+* `-d` - enable remote debugging on localhost:6060
+
+
 
 # Plugins
 

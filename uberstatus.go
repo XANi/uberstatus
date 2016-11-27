@@ -12,6 +12,7 @@ import (
 	_ "net/http/pprof"
 	"os"
 	"regexp"
+	"runtime"
 	"time"
 	//
 	"github.com/XANi/uberstatus/config"
@@ -44,6 +45,7 @@ func main() {
 	flag.Parse()
 	if *debug {
 		go func() {
+			runtime.SetCPUProfileRate(10000)
 			log.Errorf("%+v", http.ListenAndServe("127.0.0.1:6060", nil))
 		}()
 	}
