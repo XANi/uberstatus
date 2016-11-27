@@ -70,6 +70,10 @@ func NewTemplate(name string, tpl string) (*template.Template, error) {
 		"percentToColor": GetColorPct,
 		"percentToBar": GetBarChar,
 		"formatBytes": FormatUnitBytes,
+		"color": func (color string, text string) string{
+			return `<span color="` + color + `">` + text + `</span>`
+		},
+
 	}
 	return template.New(name).Funcs(funcMap).Parse(tpl)
 }

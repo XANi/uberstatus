@@ -2,10 +2,12 @@ package example
 
 import (
 	"github.com/XANi/uberstatus/uber"
+	"github.com/XANi/uberstatus/util"
 	//	"gopkg.in/yaml.v1"
 	"fmt"
 	"github.com/op/go-logging"
 	"time"
+	"bytes"
 )
 
 // Example plugin for uberstatus
@@ -28,6 +30,7 @@ type state struct {
 func Run(cfg uber.PluginConfig) {
 	var st state
 	st.cfg = loadConfig(cfg.Config)
+	_ = fmt.Sprintf("",cfg)
 	// initial update on start
 	cfg.Update <- st.updatePeriodic()
 	for {
@@ -55,8 +58,17 @@ func Run(cfg uber.PluginConfig) {
 
 func (state *state) updatePeriodic() uber.Update {
 	var update uber.Update
+	// TODO precompile and preallcate
+	buf := new(bytes.Buffer)
+	tpl, err := util.NewTemplate("uberEvent",`{{color "#00aa00" "Example plugin"}}`)
+	err = tpl.Execute(buf,nil)
+	if err != nil {
+		update.FullText = fmt.Sprintf("tpl error: %s",err)
+	} else {
+		update.FullText =  buf.String()
+	}
 	update.Markup = `pango`
-	update.FullText = fmt.Sprintf(`<span color="#ffaaaa">[%s]</span> %d %d`, state.cfg.prefix, state.cnt, state.ev)
+	update.FullText =  buf.String()
 	update.ShortText = `nope`
 	update.Color = `#66cc66`
 	state.cnt++
@@ -65,7 +77,14 @@ func (state *state) updatePeriodic() uber.Update {
 
 func (state *state) updateFromEvent(e uber.Event) uber.Update {
 	var update uber.Update
-	update.FullText = fmt.Sprintf("%s %+v", state.cfg.prefix, e)
+	buf := new(bytes.Buffer)
+	tpl, err := util.NewTemplate("uberEvent",`{{printf "%+v" .}}`)
+	err = tpl.Execute(buf,e)
+	if err != nil {
+		update.FullText = fmt.Sprintf("tpl error: %s",err)
+	} else {
+		update.FullText =  buf.String()
+	}
 	update.ShortText = `upd`
 	update.Color = `#cccc66`
 	state.ev++
