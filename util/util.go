@@ -3,6 +3,7 @@ package util
 import (
 	"fmt"
 	"text/template"
+	"bytes"
 )
 
 // calculate divider and unit for bytes
@@ -65,7 +66,13 @@ func GetColorPct(pct int) string {
 	return `#666666`
 }
 
-func NewTemplate(name string, tpl string) (*template.Template, error) {
+type Template struct{
+	*template.Template
+	buf *bytes.Buffer
+}
+
+
+func NewTemplate(name string, tpl string) (*Template, error) {
 	funcMap := template.FuncMap{
 		"percentToColor": GetColorPct,
 		"percentToBar": GetBarChar,
@@ -75,5 +82,16 @@ func NewTemplate(name string, tpl string) (*template.Template, error) {
 		},
 
 	}
-	return template.New(name).Funcs(funcMap).Parse(tpl)
+	t, err := template.New(name).Funcs(funcMap).Parse(tpl)
+	return &Template{t, new(bytes.Buffer)}, err
+}
+
+func (t Template)ExecuteString(i interface{}) (string) {
+	t.buf.Reset()
+	err := t.Execute(t.buf,i)
+	if err != nil {
+		return fmt.Sprintf("tpl [%s] error: %s", err)
+	} else {
+		return t.buf.String()
+	}
 }

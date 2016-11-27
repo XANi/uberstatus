@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/op/go-logging"
 	"time"
-	"bytes"
 )
 
 // Example plugin for uberstatus
@@ -59,16 +58,9 @@ func Run(cfg uber.PluginConfig) {
 func (state *state) updatePeriodic() uber.Update {
 	var update uber.Update
 	// TODO precompile and preallcate
-	buf := new(bytes.Buffer)
-	tpl, err := util.NewTemplate("uberEvent",`{{color "#00aa00" "Example plugin"}}`)
-	err = tpl.Execute(buf,nil)
-	if err != nil {
-		update.FullText = fmt.Sprintf("tpl error: %s",err)
-	} else {
-		update.FullText =  buf.String()
-	}
+	tpl, _ := util.NewTemplate("uberEvent",`{{color "#00aa00" "Example plugin"}}`)
+	update.FullText =  tpl.ExecuteString(nil)
 	update.Markup = `pango`
-	update.FullText =  buf.String()
 	update.ShortText = `nope`
 	update.Color = `#66cc66`
 	state.cnt++
@@ -77,14 +69,8 @@ func (state *state) updatePeriodic() uber.Update {
 
 func (state *state) updateFromEvent(e uber.Event) uber.Update {
 	var update uber.Update
-	buf := new(bytes.Buffer)
-	tpl, err := util.NewTemplate("uberEvent",`{{printf "%+v" .}}`)
-	err = tpl.Execute(buf,e)
-	if err != nil {
-		update.FullText = fmt.Sprintf("tpl error: %s",err)
-	} else {
-		update.FullText =  buf.String()
-	}
+	tpl, _ := util.NewTemplate("uberEvent",`{{printf "%+v" .}}`)
+	update.FullText =  tpl.ExecuteString(e)
 	update.ShortText = `upd`
 	update.Color = `#cccc66`
 	state.ev++
