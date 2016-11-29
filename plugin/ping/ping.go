@@ -5,7 +5,6 @@ import (
 	"github.com/XANi/uberstatus/util"
 	"github.com/XANi/golibs/ewma"
 	//	"gopkg.in/yaml.v1"
-	"fmt"
 	"github.com/op/go-logging"
 	"time"
 )
@@ -19,6 +18,8 @@ var log = logging.MustGetLogger("main")
 type config struct {
 	prefix   string
 	interval int
+	addrType string
+	addr     string
 }
 
 type state struct {
@@ -44,8 +45,14 @@ func Run(cfg uber.PluginConfig) {
 	var zero time.Time
 	st.dropRate.Update(100000000,zero)
 	st.pingCh = make(chan *pingResult)
-	go tcpPing("127.0.0.1:22", st.pingCh)
-	_ = fmt.Sprintf("",cfg)
+	switch st.cfg.addrType {
+	case "tcp":
+		go tcpPing(st.cfg.addr, st.pingCh)
+	case "http":
+		go httpPing(st.cfg.addr, st.pingCh)
+	default:
+		log.Panicf("ping: protocol %s not supported", st.cfg.addrType)
+	}
 	// initial update on start
 	cfg.Update <- st.updatePeriodic()
 	for {
@@ -105,12 +112,18 @@ func (state *state) updateFromEvent(e uber.Event) uber.Update {
 func loadConfig(c map[string]interface{}) config {
 	var cfg config
 	cfg.interval = 1000
+	cfg.addrType = "tcp"
+	cfg.addr = "localhost:22"
 	for key, value := range c {
 		converted, ok := value.(string)
 		if ok {
 			switch {
-			case key == `prefix`:
+			case key == "prefix":
 				cfg.prefix = converted
+			case key == "type":
+				cfg.addrType = converted
+			case key == "addr":
+				cfg.addr = converted
 			default:
 				log.Warningf("unknown config key: [%s]", key)
 
