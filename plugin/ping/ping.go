@@ -89,7 +89,7 @@ func (state *state) updatePeriodic() uber.Update {
 	}
 	// TODO precompile and preallcate
 	log.Errorf("D: %f", ping.DropRate)
-	tpl, _ := util.NewTemplate("uberEvent",`ping: {{printf "%9s" .Duration}} {{printf "%2.2f" .DropRate}}%`)
+	tpl, _ := util.NewTemplate("uberEvent",`ping: {{formatDuration .Duration}} {{printf "%2.2f" .DropRate}}%`)
 	update.FullText =  tpl.ExecuteString(ping)
 	update.Markup = `pango`
 	update.ShortText = `nope`

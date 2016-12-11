@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"text/template"
 	"bytes"
+	"time"
 )
 
 // calculate divider and unit for bytes
@@ -77,6 +78,7 @@ func NewTemplate(name string, tpl string) (*Template, error) {
 		"percentToColor": GetColorPct,
 		"percentToBar": GetBarChar,
 		"formatBytes": FormatUnitBytes,
+		"formatDuration": FormatDuration,
 		"color": func (color string, text string) string{
 			return `<span color="` + color + `">` + text + `</span>`
 		},
@@ -94,4 +96,37 @@ func (t Template)ExecuteString(i interface{}) (string) {
 	} else {
 		return t.buf.String()
 	}
+}
+
+func FormatDuration(t time.Duration) string {
+	if t.Hours() > 1 {
+		return fmt.Sprintf("%5.2fh ",t.Hours())
+	}
+	if t.Minutes() > 1 {
+		return fmt.Sprintf("%5.0fm ",t.Minutes())
+	}
+	if t.Seconds() > 4 {
+		return fmt.Sprintf("%5.2fs ",t.Seconds())
+	}
+	if t.Seconds() >= 1 {
+		return fmt.Sprintf("%5.0fms",t.Seconds() * 1000)
+	}
+	if t.Seconds() >= 0.1 {
+		return fmt.Sprintf("%5.1fms",t.Seconds() * 1000)
+	}
+	if t.Seconds() > 0.001 {
+		return fmt.Sprintf("%5.2fms",t.Seconds() * 1000)
+	}
+	if t.Nanoseconds() >= 100000 { //100us
+		return fmt.Sprintf("%5.1fµs",float64(t.Nanoseconds())/1000)
+	}
+	if t.Nanoseconds() >= 10000 { // 10us
+		return fmt.Sprintf("%5.2fµs",float64(t.Nanoseconds())/1000)
+	}
+	if t.Nanoseconds() >= 1000 { // 1us
+		return fmt.Sprintf("%5.2fµs",float64(t.Nanoseconds())/1000)
+	} else {
+		return fmt.Sprintf("%5dns",t.Nanoseconds())
+	}
+
 }
