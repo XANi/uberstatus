@@ -7,6 +7,7 @@ import (
 	//	"gopkg.in/yaml.v1"
 	"github.com/op/go-logging"
 	"time"
+	"sync"
 )
 
 // Example plugin for uberstatus
@@ -20,12 +21,15 @@ type config struct {
 	interval int
 	addrType string
 	addr     string
+	inflight int
 }
 
 type state struct {
 	cfg config
 	pingCh chan *pingResult
 	dropRate *ewma.Ewma
+	pingAvg *ewma.Ewma
+	stats pingStat
 	cnt int
 	ev  int
 }
@@ -38,21 +42,37 @@ type pingResult struct {
 	DropRate float64
 }
 
+type pingStat struct {
+	Ok bool
+	LastPing time.Duration
+	AvgPing time.Duration
+	DropRate float64
+	sync.Mutex
+}
+
 func Run(cfg uber.PluginConfig) {
 	var st state
 	st.cfg = loadConfig(cfg.Config)
-	st.dropRate = ewma.NewEwma(time.Duration(3 * time.Second))
-	var zero time.Time
-	st.dropRate.Update(100000000,zero)
-	st.pingCh = make(chan *pingResult)
-	switch st.cfg.addrType {
-	case "tcp":
-		go tcpPing(st.cfg.addr, st.pingCh)
-	case "http":
-		go httpPing(st.cfg.addr, st.pingCh)
-	default:
-		log.Panicf("ping: protocol %s not supported", st.cfg.addrType)
+	st.dropRate = ewma.NewEwma(time.Duration(15 * time.Second))
+	st.pingAvg = ewma.NewEwma(time.Duration(60 * time.Second))
+	st.pingCh = make(chan *pingResult,30)
+	t := time.Duration(time.Second)
+	for i := 0; i < st.cfg.inflight; i++ {
+		switch st.cfg.addrType {
+		case "tcp":
+			go tcpPing(st.cfg.addr, st.pingCh, t)
+		case "http":
+			go httpPing(st.cfg.addr, st.pingCh, t)
+		default:
+			log.Panicf("ping: protocol %s not supported", st.cfg.addrType)
+		}
 	}
+	go func() {
+		for {
+			ping := <- st.pingCh
+			st.updateState(ping)
+		}
+	}()
 	// initial update on start
 	cfg.Update <- st.updatePeriodic()
 	for {
@@ -80,40 +100,48 @@ func Run(cfg uber.PluginConfig) {
 
 func (state *state) updatePeriodic() uber.Update {
 	var update uber.Update
-
-	ping := <- state.pingCh
-	if ping.Ok {
-		ping.DropRate = state.dropRate.UpdateNow(0)
-	} else  {
-		ping.DropRate = state.dropRate.UpdateNow(100)
-	}
-	// TODO precompile and preallcate
-	log.Errorf("D: %f", ping.DropRate)
-	tpl, _ := util.NewTemplate("uberEvent",`ping: {{formatDuration .Duration}} {{printf "%2.2f" .DropRate}}%`)
-	update.FullText =  tpl.ExecuteString(ping)
+	//TODO: cache tpl
+	tpl, _ := util.NewTemplate("uberEvent",`{{if not .Ok}}{{color "#aa0000" "png!"}}{{ else }}ping{{end}}: {{formatDuration .LastPing}} {{printf "%2.2f" .DropRate}}%`)
+	update.FullText =  tpl.ExecuteString(state.stats)
 	update.Markup = `pango`
 	update.ShortText = `nope`
-	update.Color = `#66cc66`
+	update.Color = util.GetColorPct(int(state.stats.DropRate))
 	state.cnt++
 	return update
 }
 
 func (state *state) updateFromEvent(e uber.Event) uber.Update {
 	var update uber.Update
-	tpl, _ := util.NewTemplate("uberEvent",`{{printf "%+v" .}}`)
-	update.FullText =  tpl.ExecuteString(e)
+
+	tpl, _ := util.NewTemplate("uberEvent",`avg: {{formatDuration .AvgPing}}`)
+	update.FullText =  tpl.ExecuteString(state.stats)
 	update.ShortText = `upd`
 	update.Color = `#cccc66`
 	state.ev++
 	return update
 }
 
+func (state *state)updateState(p *pingResult) {
+	state.stats.Lock()
+	if p.Ok {
+		state.stats.DropRate = state.dropRate.UpdateNow(0)
+		state.stats.LastPing = p.Duration
+		state.stats.AvgPing = time.Duration(int64(state.pingAvg.UpdateNow(float64(p.Duration.Nanoseconds()))))
+		state.stats.Ok = p.Ok
+	} else  {
+		state.stats.DropRate = state.dropRate.UpdateNow(100)
+		state.stats.Ok = p.Ok
+	}
+	state.stats.Unlock()
+
+}
 // parse received structure into config
 func loadConfig(c map[string]interface{}) config {
 	var cfg config
 	cfg.interval = 1000
 	cfg.addrType = "tcp"
 	cfg.addr = "localhost:22"
+	cfg.inflight = 10
 	for key, value := range c {
 		converted, ok := value.(string)
 		if ok {

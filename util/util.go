@@ -63,8 +63,10 @@ func GetColorPct(pct int) string {
 		return `#cccc66`
 	case pct > 15:
 		return `#66cc66`
+	case pct > 5:
+		return `#669966`
 	}
-	return `#666666`
+	return `#667766`
 }
 
 type Template struct{

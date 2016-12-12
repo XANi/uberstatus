@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-func httpPing(addr string, out chan *pingResult) {
+func httpPing(addr string, out chan *pingResult,t time.Duration) {
 	var okCount uint64
 	var failCount uint64
 	for {
@@ -24,6 +24,7 @@ func httpPing(addr string, out chan *pingResult) {
 		ping.OkCount = okCount
 		ping.FailCount = failCount
 		out <- &ping
+		time.Sleep(t)
 	}
 
 }

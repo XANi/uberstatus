@@ -5,13 +5,14 @@ import (
 	"net"
 )
 
-func tcpPing(addr string, out chan *pingResult) {
+func tcpPing(addr string, out chan *pingResult,t time.Duration) {
 	var okCount uint64
 	var failCount uint64
 	for {
 		var ping pingResult
 		timeStart := time.Now()
-		c, err := net.Dial("tcp", addr)
+		dial := net.Dialer{Timeout: time.Duration(time.Second * 10)}
+		c, err := dial.Dial("tcp", addr)
 		timeEnd := time.Now()
 		if err == nil {
 			c.Close()
@@ -25,6 +26,7 @@ func tcpPing(addr string, out chan *pingResult) {
 		ping.OkCount = okCount
 		ping.FailCount = failCount
 		out <- &ping
+		time.Sleep(t)
 	}
 
 }
