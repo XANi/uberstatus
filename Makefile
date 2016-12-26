@@ -1,16 +1,21 @@
 version=$(shell git describe --tags --long --always|sed 's/^v//')
+binfile=uberstatus
 
-all: dep
-	gom exec go build -ldflags "-X main.version=$(version)" uberstatus.go
-	go fmt
+all: glide.lock vendor
+	rm -rf _vendor
+	go build -ldflags "-X main.version=$(version)" $(binfile).go
+	-@go fmt
 
-dep:
-	mkdir -p _vendor/src/github.com/XANi
-	# hack around go package weirdness
-	ln -s ../../../.. _vendor/src/github.com/XANi/uberstatus >/dev/null 2>&1 || true
-	gom install
+static: glide.lock vendor
+	go build -ldflags "-X main.version=$(version) -extldflags \"-static\"" -o $(binfile).static $(binfile).go
 
-
-gccgo: dep
-	gom exec go build -compiler gccgo -gccgoflags "-O3" uberstatus.go
-	go fmt
+clean:
+	rm -rf vendor
+	rm -rf _vendor
+vendor: glide.lock
+	glide install && touch vendor
+glide.lock: glide.yaml
+	glide update && touch glide.lock
+glide.yaml:
+version:
+	@echo $(version)

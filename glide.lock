@@ -1,0 +1,31 @@
+hash: 9167951c7452d089024ae08f06f61852df309ba8b42a3ddece8486d034049568
+updated: 2016-12-26T23:55:25.867103312+01:00
+imports:
+- name: github.com/op/go-logging
+  version: 970db520ece77730c7e4724c61121037378659d9
+- name: github.com/VividCortex/ewma
+  version: c595cd886c223c6c28fc9ae2727a61b5e4693d85
+- name: github.com/XANi/golibs
+  version: 439a8243526ae2b3d675b1c3e11ae33716a13c3c
+  subpackages:
+  - ewma
+- name: gopkg.in/yaml.v1
+  version: 9f9df34309c04878acc86042b16630b0f696e1de
+testImports:
+- name: github.com/gopherjs/gopherjs
+  version: db2cfff3878815d744fb4a4bd07cba0596eaf2a5
+  subpackages:
+  - js
+- name: github.com/jtolds/gls
+  version: 8ddce2a84170772b95dd5d576c48d517b22cac63
+- name: github.com/smartystreets/assertions
+  version: 26acb9229f421449ac63d014995b282d59261a8b
+  subpackages:
+  - internal/go-render/render
+  - internal/oglematchers
+- name: github.com/smartystreets/goconvey
+  version: 3c2572876754c4669ae7417b219f0b30a29b32c7
+  subpackages:
+  - convey
+  - convey/gotest
+  - convey/reporting
