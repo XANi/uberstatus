@@ -1,6 +1,6 @@
 # Uberstatus
 
-![byzanz-record -x 3065 -y 0 -h 22 -w 775 uberstatus.gif](doc/uberstatus.gif)
+![byzanz-record -x 3065 -y 0 -h 22 -w 775 uberstatus.gif](uberstatus.gif)
 
 Status line generator for i3wm and (eventually) other WMs
 
@@ -12,29 +12,22 @@ Goals:
 
 # Installation
 
-Needs go installed in OS
+Needs go >= 1.7 installed in OS
 
-Easy install:
+If you have go set up already then *usually* just `go get github.com/XANi/uberstatus` (if any of upstream deps didn't break) if not:
+
+Install with stable deps:
 
     $ export GOPATH="/tmp/src/go" # skip if you have go already set up
+    $ export PATH="$PATH:$GOPATH/bin" # skip if you have go already set up
+    $ go get github.com/Masterminds/glide # go dep manager
     $ go get github.com/XANi/uberstatus
+    $ cd $GOPATH/src/github.com/XANi/uberstatus
+    $ make # will make binary in application root
     $ mkdir -p ~/.config/uberstatus
     $ cp $GOPATH/src/github.com/XANi/uberstatus/cfg/uberstatus.default.conf ~/.config/uberstatus/uberstatus.conf # copy default config
 
 Your binary will be in `$GOPATH/bin/uberstatus`. Copy it to non-temporary path or set GOPATH to something permanent before build
-
-Dev install:
-
-    $ export GOPATH="/tmp/src/go" # skip if you have go already set up
-    $ export PATH="$PATH:$GOPATH/bin" # skip if you have go already set up
-    $ go get github.com/mattn/gom
-    $ make
-    downloading github.com/op/go-logging
-    downloading gopkg.in/yaml.v1
-    downloading github.com/VividCortex/ewma
-    gom exec go build -ldflags "-X main.version=0.0.1-0-gfbdadf3" [a-z]*go
-    go fmt
-
 
 # Operation
 

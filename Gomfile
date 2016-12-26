@@ -1,3 +1,0 @@
-gom 'github.com/op/go-logging'
-gom 'gopkg.in/yaml.v1'
-gom 'github.com/VividCortex/ewma'

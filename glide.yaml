@@ -1,0 +1,16 @@
+package: github.com/XANi/uberstatus
+import:
+- package: github.com/VividCortex/ewma
+  version: master
+- package: github.com/XANi/golibs
+  version: master
+  subpackages:
+  - ewma
+- package: github.com/op/go-logging
+  version: master
+- package: gopkg.in/yaml.v1
+testImport:
+- package: github.com/smartystreets/goconvey
+  version: master
+  subpackages:
+  - convey
