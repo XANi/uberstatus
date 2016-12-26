@@ -2,7 +2,6 @@ version=$(shell git describe --tags --long --always|sed 's/^v//')
 binfile=uberstatus
 
 all: glide.lock vendor
-	rm -rf _vendor
 	go build -ldflags "-X main.version=$(version)" $(binfile).go
 	-@go fmt
 
@@ -13,6 +12,7 @@ clean:
 	rm -rf vendor
 	rm -rf _vendor
 vendor: glide.lock
+	rm -rf _vendor
 	glide install && touch vendor
 glide.lock: glide.yaml
 	glide update && touch glide.lock
