@@ -18,16 +18,17 @@ If you have go set up already then *usually* just `go get github.com/XANi/uberst
 
 Install with stable deps:
 
-    $ export GOPATH="/tmp/src/go" # skip if you have go already set up
-    $ export PATH="$PATH:$GOPATH/bin" # skip if you have go already set up
-    $ go get github.com/Masterminds/glide # go dep manager
-    $ go get github.com/XANi/uberstatus
-    $ cd $GOPATH/src/github.com/XANi/uberstatus
-    $ make # will make binary in application root
-    $ mkdir -p ~/.config/uberstatus
-    $ cp $GOPATH/src/github.com/XANi/uberstatus/cfg/uberstatus.default.conf ~/.config/uberstatus/uberstatus.conf # copy default config
+    export GOPATH="/tmp/src/go" # skip if you have go already set up
+    export PATH="$PATH:$GOPATH/bin" # skip if you have go already set up
+    go get github.com/Masterminds/glide # go dep manager
+    go get github.com/XANi/uberstatus
+    cd $GOPATH/src/github.com/XANi/uberstatus
+    make # will make binary in application root
+    mkdir -p ~/.config/uberstatus
 
-Your binary will be in `$GOPATH/bin/uberstatus`. Copy it to non-temporary path or set GOPATH to something permanent before build
+Binaries will be made in current directory. If you dont have config already, copy one:
+
+    cp $GOPATH/src/github.com/XANi/uberstatus/cfg/uberstatus.default.conf ~/.config/uberstatus/uberstatus.conf # copy default config
 
 # Operation
 
@@ -39,8 +40,6 @@ Each plugin have a name (by default plugin name) and instance (in case of plugin
 
 * `-config file/name` - use alternate config file
 * `-d` - enable remote debugging on localhost:6060
-
-
 
 # Plugins
 
