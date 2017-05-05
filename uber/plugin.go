@@ -7,7 +7,7 @@ type Plugin interface {
 	// of config or environment you need
 	// Plugin should run any validation checks it needs in that function and return error if it fails, it is also good place to do stuff like precompiling templates (especially if they can be wrong from user input)
 	//
-	Init(chan Update, PluginConfig) error
+	Init() error
 	// UpdatePeriodic will run on each tick of timer in interval specified, and also will be run once to pre-populate  data
 	// note that any switch-state handling (like displaying different kind of message when you click it) is still on plugin to do
 	// This have to return state, even if it was previous one

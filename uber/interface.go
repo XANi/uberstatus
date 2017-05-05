@@ -38,7 +38,5 @@ type PluginConfig struct {
 	Name     string
 	Instance string
 	Config   map[string]interface{}
-	Events   chan Event // chan to receive inputs from user
 	Update   chan Update // chan to send panel updates
-	Trigger  chan Trigger  // chan to trigger updates
 }
