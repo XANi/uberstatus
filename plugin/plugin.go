@@ -5,8 +5,8 @@ import (
 	"github.com/op/go-logging"
 	"gopkg.in/yaml.v1"
 	//
-	// "github.com/XANi/uberstatus/plugin/clock"
-	// "github.com/XANi/uberstatus/plugin/cpu"
+	 "github.com/XANi/uberstatus/plugin/clock"
+	//"github.com/XANi/uberstatus/plugin/cpu"
 	// "github.com/XANi/uberstatus/plugin/df"
 	"github.com/XANi/uberstatus/plugin/example"
 	// "github.com/XANi/uberstatus/plugin/i3blocks"
@@ -21,7 +21,7 @@ import (
 var log = logging.MustGetLogger("main")
 
 var plugins = map[string]func(uber.PluginConfig)(uber.Plugin,error){
-	"clock":    example.New,
+	"clock":    clock.New,
 	"cpu":      example.New,
 	"df":       example.New,
 	"example":  example.New,
@@ -80,17 +80,27 @@ func NewPlugin(
 }
 
 func run(interval int, events chan uber.Event, update chan uber.Update, trigger chan uber.Trigger, p uber.Plugin) {
+	//initial update so we have something to display when main loop runs first time
 	update <- p.UpdatePeriodic()
+	// run periodic updates independenely of on-demand ones
+	go func() {
+		for {
+			select {
+			case _ = <-trigger:
+				update <- p.UpdatePeriodic()
+			case <-time.After(time.Duration(interval) * time.Millisecond):
+				update <- p.UpdatePeriodic()
+			}
+		}
+	}()
+
 	for {
 		select {
 		case updateEv := <-events:
 			update <- p.UpdateFromEvent(updateEv)
-		case _ = <-trigger:
-			update <- p.UpdatePeriodic()
-		case <-time.After(time.Duration(interval) * time.Millisecond):
-			update <- p.UpdatePeriodic()
 		}
 	}
+
 }
 
 func filterUpdate(
