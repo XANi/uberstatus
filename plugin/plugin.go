@@ -5,8 +5,8 @@ import (
 	"github.com/op/go-logging"
 	"gopkg.in/yaml.v1"
 	//
-	 "github.com/XANi/uberstatus/plugin/clock"
-	//"github.com/XANi/uberstatus/plugin/cpu"
+	"github.com/XANi/uberstatus/plugin/clock"
+	"github.com/XANi/uberstatus/plugin/cpu"
 	// "github.com/XANi/uberstatus/plugin/df"
 	"github.com/XANi/uberstatus/plugin/example"
 	// "github.com/XANi/uberstatus/plugin/i3blocks"
@@ -22,7 +22,7 @@ var log = logging.MustGetLogger("main")
 
 var plugins = map[string]func(uber.PluginConfig)(uber.Plugin,error){
 	"clock":    clock.New,
-	"cpu":      example.New,
+	"cpu":      cpu.New,
 	"df":       example.New,
 	"example":  example.New,
 	"i3blocks": example.New,
