@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/op/go-logging"
 	"syscall"
-	"time"
 )
 
 // Example plugin for uberstatus
@@ -29,32 +28,16 @@ type config struct {
 type state struct {
 	cfg config
 }
-
-func Run(cfg uber.PluginConfig) {
-	var st state
-	st.cfg = loadConfig(cfg.Config)
-	// initial update on start
-	cfg.Update <- st.updatePeriodic()
-	for {
-		select {
-		case updateEvent := (<-cfg.Events):
-			cfg.Update <- st.updateFromEvent(updateEvent)
-			// that will wait 10 seconds on no event a
-			// and it will "eat" next event to switch to "normal" display
-			select {
-			case _ = <-cfg.Events:
-				cfg.Update <- st.updatePeriodic()
-			case <-time.After(10 * time.Second):
-			}
-		case _ = <-cfg.Trigger:
-			cfg.Update <- st.updatePeriodic()
-		case <-time.After(time.Duration(st.cfg.interval) * time.Millisecond):
-			cfg.Update <- st.updatePeriodic()
-		}
-	}
+func New(cfg uber.PluginConfig) (uber.Plugin, error) {
+	p := &state{}
+	p.cfg = loadConfig(cfg.Config)
+	return  p, nil
+}
+func (st *state)Init() error {
+	return nil
 }
 
-func (state *state) updatePeriodic() uber.Update {
+func (state *state) UpdatePeriodic() uber.Update {
 	var update uber.Update
 	update.Markup = `pango`
 	update.FullText = fmt.Sprintf(`<span color="#cccccc">%s</span>`, state.cfg.prefix)
@@ -74,7 +57,7 @@ func (state *state) updatePeriodic() uber.Update {
 	return update
 }
 
-func (state *state) updateFromEvent(e uber.Event) uber.Update {
+func (state *state) UpdateFromEvent(e uber.Event) uber.Update {
 	var update uber.Update
 	update.FullText = fmt.Sprintf("%s %+v", state.cfg.prefix, e)
 	update.ShortText = `upd`
