@@ -139,8 +139,7 @@ func WaitForTs(nextTs *time.Time) {
 		diff :=nextTs.Sub(t)
 		// cap sleeping at 10s in case date changes between ticks
 		if diff > time.Second * 10  {
-			//time.Sleep(time.Second * 10)
-			time.Sleep(diff)
+			time.Sleep(time.Second * 10)
 		} else {
 			time.Sleep(diff)
 		}
