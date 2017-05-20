@@ -11,7 +11,7 @@ import (
 	"github.com/XANi/uberstatus/plugin/example"
 	"github.com/XANi/uberstatus/plugin/i3blocks"
 	"github.com/XANi/uberstatus/plugin/memory"
-	// "github.com/XANi/uberstatus/plugin/network"
+	 "github.com/XANi/uberstatus/plugin/network"
 	// "github.com/XANi/uberstatus/plugin/ping"
 	// "github.com/XANi/uberstatus/plugin/weather"
 	"github.com/XANi/uberstatus/uber"
@@ -27,7 +27,7 @@ var plugins = map[string]func(uber.PluginConfig)(uber.Plugin,error){
 	"example":  example.New,
 	"i3blocks": i3blocks.New,
 	"memory":   memory.New,
-	"network":  example.New,
+	"network":  network.New,
 	"ping":     example.New,
 	"weather":  example.New,
 }
