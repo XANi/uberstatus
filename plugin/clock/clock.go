@@ -2,6 +2,7 @@ package clock
 
 import (
 	"github.com/XANi/uberstatus/uber"
+	"github.com/XANi/uberstatus/util"
 	//	"gopkg.in/yaml.v1"
 	"github.com/op/go-logging"
 	"time"
@@ -34,18 +35,7 @@ func (p *plugin) Init() error {
 func (p *plugin) UpdatePeriodic() uber.Update {
 	t := time.Now()
 	var	ev uber.Update
-	// sleep if we are still displaying event data
-	for p.nextTs.After(t) {
-		diff :=p.nextTs.Sub(t)
-		// cap sleeping at 10s in case date changes between ticks
-		if diff > time.Second * 10  {
-			//time.Sleep(time.Second * 10)
-			time.Sleep(diff)
-		} else {
-			time.Sleep(diff)
-		}
-		t = time.Now()
-	}
+	util.WaitForTs(&p.nextTs)
 	ev = p.GetTimeEvent(t.Local(), p.cfg.long_format)
 	t = time.Now().Local()
 	//ev := GetTimeEvent(t, p.cfg.long_format)
