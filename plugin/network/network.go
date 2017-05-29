@@ -17,6 +17,7 @@ var log = logging.MustGetLogger("main")
 
 type Config struct {
 	iface string
+	interval int
 }
 
 type netStats struct {
@@ -31,6 +32,7 @@ type netStats struct {
 	ts     time.Time
 	nextTs time.Time
 	iface string
+	interval int
 }
 
 const ShowFirstAddr = 0
@@ -46,11 +48,16 @@ func New(c uber.PluginConfig) (uber.Plugin, error) {
 	stats.oldTs = time.Now()
 	stats.ts = time.Now()
 	stats.iface = cfg.iface
+	stats.interval = cfg.interval
 
 	return  stats, nil
 }
 
 func (s *netStats) Init() error {return nil}
+
+func (s *netStats) GetUpdateInterval() int {
+	return s.interval
+}
 
 func (s *netStats) UpdatePeriodic() uber.Update {
 	ev, _ := s.Update()
@@ -80,9 +87,18 @@ func loadConfig(raw map[string]interface{}) Config {
 				log.Warningf("-- %s %s--", key, c.iface)
 
 			}
-		} else {
-			log.Warningf("-- %s--", key)
-			_ = ok
+	} else {
+			converted, ok := value.(int)
+			if ok {
+				switch {
+				case key == `interval`:
+					c.interval = converted
+				default:
+					log.Warningf("unknown config key: [%s]", key)
+				}
+			} else {
+				log.Errorf("Cant interpret value of config key [%s]", key)
+			}
 		}
 	}
 	return c

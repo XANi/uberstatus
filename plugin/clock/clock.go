@@ -32,6 +32,10 @@ func (p *plugin) Init() error {
 	return nil
 }
 
+func (p *plugin) GetUpdateInterval() int {
+	return p.cfg.interval
+}
+
 func (p *plugin) UpdatePeriodic() uber.Update {
 	t := time.Now()
 	var	ev uber.Update

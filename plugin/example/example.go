@@ -34,6 +34,9 @@ func (p *plugin) Init() error {
 	return nil
 }
 
+func (p *plugin) GetUpdateInterval() int {
+	return p.cfg.interval
+}
 func (p *plugin) UpdatePeriodic() uber.Update {
 	var update uber.Update
 	// TODO precompile and preallcate

@@ -36,7 +36,9 @@ func New(cfg uber.PluginConfig) (uber.Plugin, error) {
 func (st *state)Init() error {
 	return nil
 }
-
+func (st *state) GetUpdateInterval() int {
+	return st.cfg.interval
+}
 func (state *state) UpdatePeriodic() uber.Update {
 	var update uber.Update
 	update.Markup = `pango`

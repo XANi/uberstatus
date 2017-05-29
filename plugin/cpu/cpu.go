@@ -47,7 +47,9 @@ func (st *state)Init() error {
 	st.ticksDiff, _ = GetCpuTicks()
 	return nil
 }
-
+func (st *state) GetUpdateInterval() int {
+	return st.cfg.interval
+}
 
 func (state *state) UpdatePeriodic() uber.Update {
 	var update uber.Update

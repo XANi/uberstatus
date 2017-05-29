@@ -16,4 +16,6 @@ type Plugin interface {
 	UpdatePeriodic() Update
 	// UpdateFromEvent is ran on each user-initiated event. If for some reason update can't be generated or doesn't make sense, return empty update
 	UpdateFromEvent(Event) Update
+	// GetUpdateInterval returns interval in milliseconds that will be used to run UpdatePeriodic() function by main gor
+	GetUpdateInterval() int
 }

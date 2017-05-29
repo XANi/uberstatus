@@ -30,7 +30,9 @@ func New(cfg uber.PluginConfig) (uber.Plugin, error) {
 func (c *config) Init() error {
 	return nil
 }
-
+func (c *config) GetUpdateInterval() int {
+	return c.interval
+}
 func (c *config) UpdatePeriodic() uber.Update {
 	return c.Update(uber.Event{})
 }

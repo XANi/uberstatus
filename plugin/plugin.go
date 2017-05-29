@@ -11,8 +11,8 @@ import (
 	"github.com/XANi/uberstatus/plugin/example"
 	"github.com/XANi/uberstatus/plugin/i3blocks"
 	"github.com/XANi/uberstatus/plugin/memory"
-	 "github.com/XANi/uberstatus/plugin/network"
-	// "github.com/XANi/uberstatus/plugin/ping"
+	"github.com/XANi/uberstatus/plugin/network"
+	"github.com/XANi/uberstatus/plugin/ping"
 	// "github.com/XANi/uberstatus/plugin/weather"
 	"github.com/XANi/uberstatus/uber"
 	"time"
@@ -28,7 +28,7 @@ var plugins = map[string]func(uber.PluginConfig)(uber.Plugin,error){
 	"i3blocks": i3blocks.New,
 	"memory":   memory.New,
 	"network":  network.New,
-	"ping":     example.New,
+	"ping":     ping.New,
 	"weather":  example.New,
 }
 
@@ -53,15 +53,15 @@ func NewPlugin(
 		Update:   update,
 	}
 	// TODO make it global somehow
-	interval := 10000
-	if val, ok := config["interval"]; ok {
-		if ok {
-			converted, ok := val.(int)
-			if ok {
-				interval = converted
-			}
-		}
-	}
+	// interval := 1000
+	// if val, ok := config["interval"]; ok {
+	// 	if ok {
+	// 		converted, ok := val.(int)
+	// 		if ok {
+	// 			interval = converted
+	// 		}
+	// 	}
+	// }
 	if p, ok := plugins[backend]; ok {
 		plugin, err := p(pluginCfg)
 		if err != nil {
@@ -72,7 +72,7 @@ func NewPlugin(
 			return nil, err
 		}
 		go filterUpdate(name, instance, update, update_filtered)
-		go run(interval, events, update, trigger, plugin)
+		go run(plugin.GetUpdateInterval(), events, update, trigger, plugin)
 		return plugin, nil
 	} else {
 		return nil, fmt.Errorf("no plugin named %s", backend)
@@ -85,11 +85,18 @@ func run(interval int, events chan uber.Event, update chan uber.Update, trigger 
 	// run periodic updates independenely of on-demand ones
 	go func() {
 		for {
-			select {
-			case _ = <-trigger:
-				update <- p.UpdatePeriodic()
-			case <-time.After(time.Duration(interval) * time.Millisecond):
-				update <- p.UpdatePeriodic()
+			if interval > 0 {
+				select {
+				case _ = <-trigger:
+					update <- p.UpdatePeriodic()
+				case <-time.After(time.Duration(interval) * time.Millisecond):
+					update <- p.UpdatePeriodic()
+				}
+			} else {
+				select {
+				case _ = <-trigger:
+					update <- p.UpdatePeriodic()
+				}
 			}
 		}
 	}()

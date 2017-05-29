@@ -25,15 +25,17 @@ type state struct {
 	nextTs time.Time
 }
 
-
-
-
 func New(cfg uber.PluginConfig) (uber.Plugin, error) {
 	s := &state{}
 	s.cfg = loadConfig(cfg.Config)
 	return  s, nil
 }
 func (state *state) Init() error {return nil}
+
+func (state *state) GetUpdateInterval() int {
+	return state.cfg.interval
+}
+
 func (state *state) UpdatePeriodic() uber.Update {
 	util.WaitForTs(&state.nextTs)
 	var update uber.Update
