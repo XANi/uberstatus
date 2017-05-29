@@ -26,44 +26,31 @@ type state struct {
 	ev                int
 	currentWeather    *openweatherCurrentWeather
 	lastWeatherUpdate time.Time
+
 }
 
 type OpenWeatherMapWeather struct {
 }
 
-func Run(cfg uber.PluginConfig) {
+func New(cfg uber.PluginConfig) (uber.Plugin, error) {
 	var st state
 	st.cfg = loadConfig(cfg.Config)
-	// initial update on start
-	cfg.Update <- st.updatePeriodic()
-	for {
-		select {
-		// call update when user clicked on the plugin
-		case updateEvent := (<-cfg.Events):
-			cfg.Update <- st.updateFromEvent(updateEvent)
-			// that will wait 10 seconds on no event a
-			// and it will "eat" next event to switch to "normal" display
-			// basically making it "toggle" between two different views
-			select {
-			case _ = <-cfg.Events:
-				cfg.Update <- st.updatePeriodic()
-			case <-time.After(10 * time.Second):
-			}
-		// update on trigger from main code, this can be used to make all widgets update at the same time if that way is preferred over async
-		case _ = <-cfg.Trigger:
-			cfg.Update <- st.updatePeriodic()
-		// update every interval if nothing triggered update before tat
-		case <-time.After(time.Duration(st.cfg.interval) * time.Millisecond):
-			cfg.Update <- st.updatePeriodic()
-		}
-	}
+	return &st, nil
 }
 
-func (state *state) updatePeriodic() uber.Update {
+func (state *state) Init() error {
+	return nil
+}
+
+func (state *state) GetUpdateInterval() int {
+	return state.cfg.interval
+}
+
+func (state *state) UpdatePeriodic() uber.Update {
 	return state.getOpenweatherCurrent()
 }
 
-func (state *state) updateFromEvent(e uber.Event) uber.Update {
+func (state *state) UpdateFromEvent(e uber.Event) uber.Update {
 	return state.getOpenweatherPrognosis()
 }
 

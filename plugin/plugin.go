@@ -13,7 +13,7 @@ import (
 	"github.com/XANi/uberstatus/plugin/memory"
 	"github.com/XANi/uberstatus/plugin/network"
 	"github.com/XANi/uberstatus/plugin/ping"
-	// "github.com/XANi/uberstatus/plugin/weather"
+	"github.com/XANi/uberstatus/plugin/weather"
 	"github.com/XANi/uberstatus/uber"
 	"time"
 )
@@ -29,7 +29,7 @@ var plugins = map[string]func(uber.PluginConfig)(uber.Plugin,error){
 	"memory":   memory.New,
 	"network":  network.New,
 	"ping":     ping.New,
-	"weather":  example.New,
+	"weather":  weather.New,
 }
 
 

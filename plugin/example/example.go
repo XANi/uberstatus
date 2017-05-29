@@ -5,6 +5,7 @@ import (
 	"github.com/XANi/uberstatus/util"
 	//	"gopkg.in/yaml.v1"
 	"github.com/op/go-logging"
+	"time"
 )
 
 // Example plugin for uberstatus
@@ -22,6 +23,7 @@ type plugin struct {
 	cfg config
 	cnt int
 	ev  int
+	nextTs time.Time
 }
 
 func New(cfg uber.PluginConfig) (uber.Plugin, error) {
@@ -41,6 +43,10 @@ func (p *plugin) UpdatePeriodic() uber.Update {
 	var update uber.Update
 	// TODO precompile and preallcate
 	tpl, _ := util.NewTemplate("uberEvent",`{{color "#00aa00" "Example plugin"}}{{.}}`)
+	// example on how to allow UpdateFromEvent to display for some time
+	// without being overwritten by periodic updates.
+	// We set up ts in our plugin, update it in UpdateFromEvent() and just wait if it is in future via helper function
+	util.WaitForTs(&p.nextTs)
 	update.FullText =  tpl.ExecuteString(p.cnt)
 	update.Markup = `pango`
 	update.ShortText = `nope`
@@ -56,6 +62,8 @@ func (p *plugin) UpdateFromEvent(e uber.Event) uber.Update {
 	update.ShortText = `upd`
 	update.Color = `#cccc66`
 	p.ev++
+	// set next TS updatePeriodic will wait to.
+	p.nextTs = time.Now().Add(time.Second * 3)
 	return update
 }
 

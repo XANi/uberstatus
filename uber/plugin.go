@@ -17,5 +17,7 @@ type Plugin interface {
 	// UpdateFromEvent is ran on each user-initiated event. If for some reason update can't be generated or doesn't make sense, return empty update
 	UpdateFromEvent(Event) Update
 	// GetUpdateInterval returns interval in milliseconds that will be used to run UpdatePeriodic() function by main gor
+	// return < 1 if you do not want UpdatePeriodic to be run.
+	// Normally it should just return interval in config, however in some cases you might want to limit it, for example, updating disk space every 100ms might not be very useful
 	GetUpdateInterval() int
 }
