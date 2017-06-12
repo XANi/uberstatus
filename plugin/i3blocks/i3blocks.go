@@ -9,7 +9,6 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
-	"time"
 	//
 	"github.com/XANi/uberstatus/uber"
 )
@@ -24,22 +23,23 @@ type config struct {
 	name     string
 	instance string
 }
-
-func Run(cfg uber.PluginConfig) {
-	c := loadConfig(cfg.Config)
-	var nullEv uber.Event
-	for {
-		select {
-		case ev := (<-cfg.Events):
-			c.Update(cfg.Update, c, ev)
-		case _ = <-cfg.Trigger:
-			c.Update(cfg.Update, c, nullEv)
-		case <-time.After(time.Duration(c.interval) * time.Millisecond):
-			c.Update(cfg.Update, c, nullEv)
-		}
-	}
-
+func New(cfg uber.PluginConfig) (uber.Plugin, error) {
+	p := loadConfig(cfg.Config)
+	return  &p, nil
 }
+func (c *config) Init() error {
+	return nil
+}
+func (c *config) GetUpdateInterval() int {
+	return c.interval
+}
+func (c *config) UpdatePeriodic() uber.Update {
+	return c.Update(uber.Event{})
+}
+func (c *config) UpdateFromEvent(ev uber.Event) uber.Update {
+	return c.Update(ev)
+}
+
 
 func loadConfig(raw map[string]interface{}) config {
 	var c config
@@ -90,11 +90,11 @@ func loadConfig(raw map[string]interface{}) config {
 //       BLOCK_X and BLOCK_Y
 //              Coordinates where the click occurred, if the block was clicked.
 
-func (c *config) Update(update chan uber.Update, cfg config, ev uber.Event) {
+func (cfg *config) Update(ev uber.Event) uber.Update {
 	var upd uber.Update
 
-	os.Setenv("BLOCK_NAME", c.name)
-	os.Setenv("BLOCK_NAME", c.instance)
+	os.Setenv("BLOCK_NAME", cfg.name)
+	os.Setenv("BLOCK_NAME", cfg.instance)
 	// no event
 	if ev.Button == 0 {
 		os.Unsetenv("BLOCK_BUTTON")
@@ -133,9 +133,9 @@ func (c *config) Update(update chan uber.Update, cfg config, ev uber.Event) {
 	// len of 1 means there was nothing to split, no \n probably means invalid input
 	if st_len <= 1 {
 		log.Warningf("Command %s returned nothing", cfg.command)
-		return
+		return upd
 	} else {
 		upd.FullText = fmt.Sprint(cfg.prefix, st[0])
 	}
-	update <- upd
+	return upd
 }

@@ -6,7 +6,7 @@ import (
 	//	"gopkg.in/yaml.v1"
 	"fmt"
 	"github.com/op/go-logging"
-	"time"
+//	"time"
 )
 
 // Example plugin for uberstatus
@@ -36,29 +36,22 @@ var ltColor = make(map[int8]string)
 func init() {
 	generateLookupTables()
 }
-
-func Run(cfg uber.PluginConfig) {
-	var st state
-	st.cfg = loadConfig(cfg.Config)
-	// init with current's total
-	st.previousTicks, _ = GetCpuTicks()
-	st.ticksDiff, _ = GetCpuTicks()
-	// initial update on start
-	cfg.Update <- st.updatePeriodic()
-	for {
-		select {
-		case updateEvent := (<-cfg.Events):
-			//			cfg.Update <- st.updateFromEvent(updateEvent)
-			_ = updateEvent
-		case _ = <-cfg.Trigger:
-			cfg.Update <- st.updatePeriodic()
-		case <-time.After(time.Duration(st.cfg.interval) * time.Millisecond):
-			cfg.Update <- st.updatePeriodic()
-		}
-	}
+func New(cfg uber.PluginConfig) (uber.Plugin, error) {
+	p := &state{}
+	p.cfg = loadConfig(cfg.Config)
+	return  p, nil
 }
 
-func (state *state) updatePeriodic() uber.Update {
+func (st *state)Init() error {
+	st.previousTicks, _ = GetCpuTicks()
+	st.ticksDiff, _ = GetCpuTicks()
+	return nil
+}
+func (st *state) GetUpdateInterval() int {
+	return st.cfg.interval
+}
+
+func (state *state) UpdatePeriodic() uber.Update {
 	var update uber.Update
 	currentTicks, _ := GetCpuTicks()
 	for i, ticks := range currentTicks {
@@ -83,10 +76,10 @@ func (state *state) updatePeriodic() uber.Update {
 	return update
 }
 
-func (state *state) updateFromEvent(e uber.Event) uber.Update {
+func (state *state) UpdateFromEvent(e uber.Event) uber.Update {
 	var update uber.Update
 	update.FullText = fmt.Sprintf("%s %+v", state.cfg.prefix, state.previousTicks)
-	update.ShortText = `upd`
+	update.ShortText = fmt.Sprintf("%s %+v", state.cfg.prefix, state.previousTicks)
 	update.Color = `#cccc66`
 	state.ev++
 	return update

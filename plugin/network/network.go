@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/VividCortex/ewma"
 	"github.com/XANi/uberstatus/uber"
+	"github.com/XANi/uberstatus/util"
 	"github.com/op/go-logging"
 	"io/ioutil"
 	"net"
@@ -16,6 +17,7 @@ var log = logging.MustGetLogger("main")
 
 type Config struct {
 	iface string
+	interval int
 }
 
 type netStats struct {
@@ -28,46 +30,49 @@ type netStats struct {
 	ewmaRx ewma.MovingAverage
 	oldTs  time.Time
 	ts     time.Time
+	nextTs time.Time
+	iface string
+	interval int
 }
 
 const ShowFirstAddr = 0
 const ShowSecondAddr = 1
 const ShowAllAddr = -1
 
-func Run(cfg uber.PluginConfig) {
-	c := loadConfig(cfg.Config)
-	var stats netStats
+
+func New(c uber.PluginConfig) (uber.Plugin, error) {
+	stats := &netStats{}
+	cfg := loadConfig(c.Config)
 	stats.ewmaRx = ewma.NewMovingAverage(5)
 	stats.ewmaTx = ewma.NewMovingAverage(5)
 	stats.oldTs = time.Now()
 	stats.ts = time.Now()
-	var ev uber.Update
-	//send sth at start of plugin, in case we dont get anything useful (like interface with no traffic)
-	ev.FullText = fmt.Sprintf("%s??", c.iface)
-	ev.Color = "#999999"
-	cfg.Update <- ev
-	Update(cfg.Update, c, &stats)
-	for {
-		select {
-		case ev := <-cfg.Events:
-			if ev.Button == 1 {
-				UpdateAddr(cfg.Update, c.iface, ShowFirstAddr)
-			} else if ev.Button == 3 {
-				UpdateAddr(cfg.Update, c.iface, ShowSecondAddr)
-			} else {
-				UpdateAddr(cfg.Update, c.iface, ShowAllAddr)
-			}
-			select {
-			case _ = <-cfg.Events:
-			case <-time.After(10 * time.Second):
-			}
-		case _ = <-cfg.Trigger:
-			Update(cfg.Update, c, &stats)
-		case <-time.After(time.Second):
-			Update(cfg.Update, c, &stats)
-		}
-	}
+	stats.iface = cfg.iface
+	stats.interval = cfg.interval
 
+	return  stats, nil
+}
+
+func (s *netStats) Init() error {return nil}
+
+func (s *netStats) GetUpdateInterval() int {
+	return s.interval
+}
+
+func (s *netStats) UpdatePeriodic() uber.Update {
+	ev, _ := s.Update()
+	return ev
+}
+
+func (n *netStats) UpdateFromEvent(ev uber.Event) uber.Update {
+	n.nextTs = time.Now().Add(time.Second * 3)
+	if ev.Button == 1 {
+		return n.UpdateAddr(ShowFirstAddr)
+	} else if ev.Button == 3 {
+		return n.UpdateAddr(ShowSecondAddr)
+	} else {
+		return n.UpdateAddr(ShowAllAddr)
+	}
 }
 
 func loadConfig(raw map[string]interface{}) Config {
@@ -82,21 +87,29 @@ func loadConfig(raw map[string]interface{}) Config {
 				log.Warningf("-- %s %s--", key, c.iface)
 
 			}
-		} else {
-			log.Warningf("-- %s--", key)
-			_ = ok
+	} else {
+			converted, ok := value.(int)
+			if ok {
+				switch {
+				case key == `interval`:
+					c.interval = converted
+				default:
+					log.Warningf("unknown config key: [%s]", key)
+				}
+			} else {
+				log.Errorf("Cant interpret value of config key [%s]", key)
+			}
 		}
 	}
 	return c
 }
 
-func UpdateAddr(update chan uber.Update, ifname string, addr_id int) {
-	var ev uber.Update
+func (stats *netStats) UpdateAddr(addr_id int) (ev uber.Update) {
 	ev.Color = `#aaffaa`
 	ifaces, _ := net.Interfaces()
 end:
 	for _, iface := range ifaces {
-		if iface.Name == ifname {
+		if iface.Name == stats.iface {
 			v, _ := iface.Addrs()
 			if len(v) <= addr_id {
 				break end
@@ -106,29 +119,28 @@ end:
 			} else {
 				ev.FullText = fmt.Sprintf("%+v", v[addr_id])
 			}
-			update <- ev
-			return
+			return ev
 		}
 	}
 
-	ev.FullText = fmt.Sprintf("%s??", ifname)
-	update <- ev
+	ev.FullText = fmt.Sprintf("%s??", stats.iface)
+	return ev
 }
 
-func Update(update chan uber.Update, cfg Config, stats *netStats) {
-	var ev uber.Update
+func (stats *netStats) Update() (ev uber.Update, ok bool) {
+	util.WaitForTs(&stats.nextTs)
 	ev.Color = `#666666`
 	ev.Markup = `pango`
-	ev.FullText = fmt.Sprintf(`<span color="#666666">%s!!</span>`, cfg.iface)
+	ev.FullText = fmt.Sprintf(`<span color="#666666">%s!!</span>`, stats.iface)
 	stats.oldTs = stats.ts
-	rx, tx := getStats(cfg.iface)
+	rx, tx := getStats(stats.iface)
 	stats.ts = time.Now()
 
 	// TODO: do same on bigger time diff
 	if stats.ts.UnixNano() < stats.oldTs.UnixNano() {
 		// we are in time machine.. or ntp changed clock
 		stats.oldTs = stats.ts
-		return
+		return ev, false
 	}
 
 	// either interface never seen packets, or it got recreated, reset it
@@ -137,8 +149,7 @@ func Update(update chan uber.Update, cfg Config, stats *netStats) {
 		stats.tx = 0
 		stats.oldRx = 0
 		stats.oldTx = 0
-		update <- ev
-		return
+		return ev, true
 	}
 
 	// counter flipped, or interface recreated, reset to current value
@@ -147,7 +158,7 @@ func Update(update chan uber.Update, cfg Config, stats *netStats) {
 		stats.tx = tx
 		stats.oldRx = rx
 		stats.oldTx = tx
-		return
+		return ev, false
 	}
 	//  init on first probe on empty interface
 	if stats.rx == 0 && rx > 0 {
@@ -164,7 +175,7 @@ func Update(update chan uber.Update, cfg Config, stats *netStats) {
 	tsDiff := float64(stats.ts.UnixNano() - stats.oldTs.UnixNano())
 	tsDiff = tsDiff / 1000000000 //float64(time.Duration(time.Second).Nanoseconds()) // normalize
 	if tsDiff < 0.01 {
-		return // quicker probing doesnt make sense, no div by 0, should probably return an error...
+		return ev,false // quicker probing doesnt make sense, no div by 0, should probably return an error...
 	}
 	rxBw := float64(rxDiff) / tsDiff
 	txBw := float64(txDiff) / tsDiff
@@ -180,8 +191,9 @@ func Update(update chan uber.Update, cfg Config, stats *netStats) {
 	if txAvg < 0.1 {
 		txAvg = 0
 	}
+
 	ev.FullText = fmt.Sprintf(`<span color="#aaffaa">%s</span>:<span color="%s">%6.3g</span>/<span color="%s">%6.3g</span><span color="%s"> %s</span>`,
-		cfg.iface,
+		stats.iface,
 		getBwColor(rxAvg),
 		rxAvg/divider,
 		getBwColor(txAvg),
@@ -189,8 +201,8 @@ func Update(update chan uber.Update, cfg Config, stats *netStats) {
 		getBwColor(txAvg+rxAvg),
 		unit,
 	)
-	ev.ShortText = fmt.Sprintf(`-%s-`, cfg.iface)
-	update <- ev
+	ev.ShortText = fmt.Sprintf(`-%s-`, stats.iface)
+	return ev,true
 }
 
 func getStats(iface string) (uint64, uint64) {

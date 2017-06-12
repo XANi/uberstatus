@@ -4,7 +4,6 @@ import (
 	"github.com/XANi/uberstatus/uber"
 	"github.com/XANi/uberstatus/util"
 	//	"gopkg.in/yaml.v1"
-	"fmt"
 	"github.com/op/go-logging"
 	"time"
 )
@@ -20,60 +19,51 @@ type config struct {
 	interval int
 }
 
-type state struct {
+type plugin struct {
 	cfg config
 	cnt int
 	ev  int
+	nextTs time.Time
 }
 
-func Run(cfg uber.PluginConfig) {
-	var st state
-	st.cfg = loadConfig(cfg.Config)
-	_ = fmt.Sprintf("",cfg)
-	// initial update on start
-	cfg.Update <- st.updatePeriodic()
-	for {
-		select {
-		// call update when user clicked on the plugin
-		case updateEvent := (<-cfg.Events):
-			cfg.Update <- st.updateFromEvent(updateEvent)
-			// that will wait 10 seconds on no event a
-			// and it will "eat" next event to switch to "normal" display
-			// basically making it "toggle" between two different views
-			select {
-			case _ = <-cfg.Events:
-				cfg.Update <- st.updatePeriodic()
-			case <-time.After(10 * time.Second):
-			}
-		// update on trigger from main code, this can be used to make all widgets update at the same time if that way is preferred over async
-		case _ = <-cfg.Trigger:
-			cfg.Update <- st.updatePeriodic()
-		// update every interval if nothing triggered update before tat
-		case <-time.After(time.Duration(st.cfg.interval) * time.Millisecond):
-			cfg.Update <- st.updatePeriodic()
-		}
-	}
+func New(cfg uber.PluginConfig) (uber.Plugin, error) {
+	p := &plugin{}
+	p.cfg = loadConfig(cfg.Config)
+	return  p, nil
 }
 
-func (state *state) updatePeriodic() uber.Update {
+func (p *plugin) Init() error {
+	return nil
+}
+
+func (p *plugin) GetUpdateInterval() int {
+	return p.cfg.interval
+}
+func (p *plugin) UpdatePeriodic() uber.Update {
 	var update uber.Update
 	// TODO precompile and preallcate
-	tpl, _ := util.NewTemplate("uberEvent",`{{color "#00aa00" "Example plugin"}}`)
-	update.FullText =  tpl.ExecuteString(nil)
+	tpl, _ := util.NewTemplate("uberEvent",`{{color "#00aa00" "Example plugin"}}{{.}}`)
+	// example on how to allow UpdateFromEvent to display for some time
+	// without being overwritten by periodic updates.
+	// We set up ts in our plugin, update it in UpdateFromEvent() and just wait if it is in future via helper function
+	util.WaitForTs(&p.nextTs)
+	update.FullText =  tpl.ExecuteString(p.cnt)
 	update.Markup = `pango`
 	update.ShortText = `nope`
 	update.Color = `#66cc66`
-	state.cnt++
+	p.cnt++
 	return update
 }
 
-func (state *state) updateFromEvent(e uber.Event) uber.Update {
+func (p *plugin) UpdateFromEvent(e uber.Event) uber.Update {
 	var update uber.Update
 	tpl, _ := util.NewTemplate("uberEvent",`{{printf "%+v" .}}`)
 	update.FullText =  tpl.ExecuteString(e)
 	update.ShortText = `upd`
 	update.Color = `#cccc66`
-	state.ev++
+	p.ev++
+	// set next TS updatePeriodic will wait to.
+	p.nextTs = time.Now().Add(time.Second * 3)
 	return update
 }
 

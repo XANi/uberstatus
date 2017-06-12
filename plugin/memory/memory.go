@@ -22,31 +22,22 @@ type config struct {
 
 type state struct {
 	cfg config
+	nextTs time.Time
 }
 
-func Run(cfg uber.PluginConfig) {
-	var st state
-	st.cfg = loadConfig(cfg.Config)
-	// initial update on start
-	cfg.Update <- st.updatePeriodic()
-	for {
-		select {
-		case updateEvent := (<-cfg.Events):
-			cfg.Update <- st.updateFromEvent(updateEvent)
-			select {
-			case _ = <-cfg.Events:
-				cfg.Update <- st.updatePeriodic()
-			case <-time.After(10 * time.Second):
-			}
-		case _ = <-cfg.Trigger:
-			cfg.Update <- st.updatePeriodic()
-		case <-time.After(time.Duration(st.cfg.interval) * time.Millisecond):
-			cfg.Update <- st.updatePeriodic()
-		}
-	}
+func New(cfg uber.PluginConfig) (uber.Plugin, error) {
+	s := &state{}
+	s.cfg = loadConfig(cfg.Config)
+	return  s, nil
+}
+func (state *state) Init() error {return nil}
+
+func (state *state) GetUpdateInterval() int {
+	return state.cfg.interval
 }
 
-func (state *state) updatePeriodic() uber.Update {
+func (state *state) UpdatePeriodic() uber.Update {
+	util.WaitForTs(&state.nextTs)
 	var update uber.Update
 	update.Markup = "pango"
 	mem := getMemInfo()
@@ -85,7 +76,7 @@ func (state *state) updatePeriodic() uber.Update {
 	return update
 }
 
-func (state *state) updateFromEvent(e uber.Event) uber.Update {
+func (state *state) UpdateFromEvent(e uber.Event) uber.Update {
 	var update uber.Update
 	update.Markup = "pango"
 	mem := getMemInfo()
@@ -104,6 +95,7 @@ func (state *state) updateFromEvent(e uber.Event) uber.Update {
 		update.FullText = update.FullText + ` <span color="#bb0000">Swap off</span>`
 	}
 	update.Color = `#999999`
+	state.nextTs = time.Now().Add(time.Second * 3)
 	return update
 }
 

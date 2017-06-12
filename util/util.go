@@ -132,3 +132,17 @@ func FormatDuration(t time.Duration) string {
 	}
 
 }
+
+func WaitForTs(nextTs *time.Time) {
+	t := time.Now()
+	for nextTs.After(t) {
+		diff :=nextTs.Sub(t)
+		// cap sleeping at 10s in case date changes between ticks
+		if diff > time.Second * 10  {
+			time.Sleep(time.Second * 10)
+		} else {
+			time.Sleep(diff)
+		}
+		t = time.Now()
+	}
+}

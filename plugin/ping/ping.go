@@ -8,6 +8,7 @@ import (
 	"github.com/op/go-logging"
 	"time"
 	"sync"
+	"fmt"
 )
 
 // Example plugin for uberstatus
@@ -19,6 +20,7 @@ var log = logging.MustGetLogger("main")
 type config struct {
 	prefix   string
 	interval int
+	pingInterval int
 	addrType string
 	addr     string
 	inflight int
@@ -26,12 +28,14 @@ type config struct {
 
 type state struct {
 	cfg config
-	pingCh chan *pingResult
 	dropRate *ewma.Ewma
 	pingAvg *ewma.Ewma
-	stats pingStat
+	stats *pingStat
 	cnt int
 	ev  int
+	ping func(addr string) pingResult
+	nextTs time.Time
+	tpl *util.Template
 }
 
 type pingResult struct {
@@ -50,59 +54,50 @@ type pingStat struct {
 	sync.Mutex
 }
 
-func Run(cfg uber.PluginConfig) {
+type pinger interface {
+	Ping(addr string) *pingResult
+}
+
+func New(cfg uber.PluginConfig) (uber.Plugin, error) {
 	var st state
 	st.cfg = loadConfig(cfg.Config)
 	st.dropRate = ewma.NewEwma(time.Duration(15 * time.Second))
 	st.pingAvg = ewma.NewEwma(time.Duration(60 * time.Second))
-	st.pingCh = make(chan *pingResult,30)
-	t := time.Duration(time.Second)
-	for i := 0; i < st.cfg.inflight; i++ {
-		switch st.cfg.addrType {
-		case "tcp":
-			go tcpPing(st.cfg.addr, st.pingCh, t)
-		case "http":
-			go httpPing(st.cfg.addr, st.pingCh, t)
-		default:
-			log.Panicf("ping: protocol %s not supported", st.cfg.addrType)
-		}
+	st.stats = &pingStat{}
+	switch st.cfg.addrType {
+	case "tcp":
+		st.ping = tcpPing
+	case "http":
+		st.ping = httpPing
+	default:
+		return &st, fmt.Errorf("ping: protocol %s not supported", st.cfg.addrType)
 	}
+	var err error
+	st.tpl, err = util.NewTemplate("uberEvent",`{{if not .Ok}}{{color "#aa0000" "png!"}}{{ else }}ping{{end}}: {{formatDuration .LastPing}} {{printf "%2.2f" .DropRate}}%`)
+	return &st, err
+}
+func (st *state)Init() error {
 	go func() {
 		for {
-			ping := <- st.pingCh
-			st.updateState(ping)
+			pingUpd := st.ping(st.cfg.addr)
+			st.updateState(&pingUpd)
+			if st.cfg.pingInterval > 0 {
+				time.Sleep(time.Duration(st.cfg.pingInterval) * time.Millisecond)
+			} else {
+				time.Sleep(time.Duration(st.cfg.interval) * time.Millisecond)
+			}
 		}
 	}()
-	// initial update on start
-	cfg.Update <- st.updatePeriodic()
-	for {
-		select {
-		// call update when user clicked on the plugin
-		case updateEvent := (<-cfg.Events):
-			cfg.Update <- st.updateFromEvent(updateEvent)
-			// that will wait 10 seconds on no event a
-			// and it will "eat" next event to switch to "normal" display
-			// basically making it "toggle" between two different views
-			select {
-			case _ = <-cfg.Events:
-				cfg.Update <- st.updatePeriodic()
-			case <-time.After(10 * time.Second):
-			}
-		// update on trigger from main code, this can be used to make all widgets update at the same time if that way is preferred over async
-		case _ = <-cfg.Trigger:
-			cfg.Update <- st.updatePeriodic()
-		// update every interval if nothing triggered update before tat
-		case <-time.After(time.Duration(st.cfg.interval) * time.Millisecond):
-			cfg.Update <- st.updatePeriodic()
-		}
-	}
+	return nil
 }
-
-func (state *state) updatePeriodic() uber.Update {
+func (st *state) GetUpdateInterval() int {
+	return st.cfg.interval
+}
+func (state *state) UpdatePeriodic() uber.Update {
 	var update uber.Update
+	util.WaitForTs(&state.nextTs)
 	//TODO: cache tpl
-	tpl, _ := util.NewTemplate("uberEvent",`{{if not .Ok}}{{color "#aa0000" "png!"}}{{ else }}ping{{end}}: {{formatDuration .LastPing}} {{printf "%2.2f" .DropRate}}%`)
-	update.FullText =  tpl.ExecuteString(state.stats)
+	update.FullText =  state.tpl.ExecuteString(state.stats)
 	update.Markup = `pango`
 	update.ShortText = `nope`
 	update.Color = util.GetColorPct(int(state.stats.DropRate))
@@ -110,7 +105,7 @@ func (state *state) updatePeriodic() uber.Update {
 	return update
 }
 
-func (state *state) updateFromEvent(e uber.Event) uber.Update {
+func (state *state) UpdateFromEvent(e uber.Event) uber.Update {
 	var update uber.Update
 
 	tpl, _ := util.NewTemplate("uberEvent",`avg: {{formatDuration .AvgPing}}`)
@@ -118,6 +113,8 @@ func (state *state) updateFromEvent(e uber.Event) uber.Update {
 	update.ShortText = `upd`
 	update.Color = `#cccc66`
 	state.ev++
+	// display state for at least few seconds before getting to normal update
+	state.nextTs = time.Now().Add(time.Second * 3)
 	return update
 }
 
@@ -162,6 +159,8 @@ func loadConfig(c map[string]interface{}) config {
 				switch {
 				case key == `interval`:
 					cfg.interval = converted
+				case key == `ping_interval`:
+					cfg.pingInterval = converted
 				default:
 					log.Warningf("unknown config key: [%s]", key)
 				}

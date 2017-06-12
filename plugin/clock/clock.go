@@ -2,6 +2,7 @@ package clock
 
 import (
 	"github.com/XANi/uberstatus/uber"
+	"github.com/XANi/uberstatus/util"
 	//	"gopkg.in/yaml.v1"
 	"github.com/op/go-logging"
 	"time"
@@ -10,34 +11,51 @@ import (
 
 var log = logging.MustGetLogger("main")
 
+type plugin struct {
+	cfg Config
+	nextTs time.Time
+}
+
 type Config struct {
 	long_format  string
 	short_format string
 	interval     int
 }
 
-func Run(cfg uber.PluginConfig) {
-	c := loadConfig(cfg.Config)
-	for {
-		select {
-		case ev := <-cfg.Events:
-			if ev.Button == 3 {
-				UpdateWithMonth(cfg.Update)
-			} else {
-				UpdateWithDate(cfg.Update)
-			}
-			select {
-			// after next click "normal" (time) handler will fire
-			case _ = <-cfg.Events:
-			case <-time.After(2 * time.Second):
-			}
-		case _ = <-cfg.Trigger:
-			Update(cfg.Update, c.long_format)
-		case <-time.After(time.Duration(c.interval) * time.Millisecond):
-			Update(cfg.Update, c.long_format)
-		}
-	}
+func New(cfg uber.PluginConfig) (uber.Plugin, error) {
+	p := &plugin{}
+	p.cfg = loadConfig(cfg.Config)
+	return  p, nil
+}
 
+func (p *plugin) Init() error {
+	return nil
+}
+
+func (p *plugin) GetUpdateInterval() int {
+	return p.cfg.interval
+}
+
+func (p *plugin) UpdatePeriodic() uber.Update {
+	t := time.Now()
+	var	ev uber.Update
+	util.WaitForTs(&p.nextTs)
+	ev = p.GetTimeEvent(t.Local(), p.cfg.long_format)
+	t = time.Now().Local()
+	//ev := GetTimeEvent(t, p.cfg.long_format)
+	ev.Color = `#DDDDFF`
+	return ev
+}
+func (p *plugin) UpdateFromEvent(ev uber.Event) uber.Update {
+	var upd uber.Update
+	t := time.Now()
+	if ev.Button == 3 {
+		upd = p.GetTimeEvent(t.Local(),"2006-01-02")
+	} else {
+		upd = p.GetTimeEvent(t.Local(),"Mon Jan MST")
+	}
+	p.nextTs = t.Add(time.Second * 3)
+	return upd
 }
 
 func loadConfig(raw map[string]interface{}) Config {
@@ -75,24 +93,9 @@ func loadConfig(raw map[string]interface{}) Config {
 	return c
 }
 
-func UpdateWithDate(update chan uber.Update) {
-	Update(update, "2006-01-02")
-}
-
-func UpdateWithMonth(update chan uber.Update) {
-	Update(update, "Mon Jan MST")
-}
-
-func Update(update chan uber.Update, format string) {
-	time := GetTimeEvent(format)
-	time.Color = `#DDDDFF`
-	update <- time
-}
-
-func GetTimeEvent(format string) uber.Update {
-	t := time.Now().Local()
+func (p *plugin) GetTimeEvent(t time.Time, format string) uber.Update {
 	var ev uber.Update
 	ev.FullText = t.Format(format)
-	ev.ShortText = t.Format(`15:04:05`)
+	ev.ShortText = t.Format(p.cfg.short_format)
 	return ev
 }
