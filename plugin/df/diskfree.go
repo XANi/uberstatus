@@ -45,6 +45,10 @@ func (state *state) UpdatePeriodic() uber.Update {
 	update.FullText = fmt.Sprintf(`<span color="#cccccc">%s</span>`, state.cfg.prefix)
 	for _, part := range state.cfg.mounts {
 		diskFree, diskTotal := getDiskStats(part)
+		if diskTotal == 0 {
+			update.FullText = update.FullText + fmt.Sprintf(`<span color="#ffcccc">%s:NaN</span>`,part)
+			continue
+		}
 		diskFreePercent := (diskFree * 100) / diskTotal
 		diskColor := `#aaffaa`
 		if diskFree < state.cfg.dfCriticalMB*1024*1024 || diskFreePercent < state.cfg.dfCriticalPercent {
