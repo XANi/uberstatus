@@ -15,6 +15,7 @@ import (
 	"runtime"
 	"time"
 	//
+	"github.com/XANi/go-yamlcfg"
 	"github.com/XANi/uberstatus/config"
 	"github.com/XANi/uberstatus/i3bar"
 	"github.com/XANi/uberstatus/plugin"
@@ -56,10 +57,10 @@ func main() {
 	logBackendLeveled.SetLevel(logging.NOTICE, "")
 	logging.SetBackend(logBackendLeveled)
 	var cfg config.Config
-	if *configFile == "" {
-		cfg = config.LoadConfig()
-	} else {
-		cfg = config.LoadConfig(*configFile)
+	err := yamlcfg.LoadConfig(config.CfgFiles, &cfg)
+	if err != nil {
+		log.Errorf("Can't load config: %s", err)
+		os.Exit(1)
 	}
 
 	log.Info("Starting")

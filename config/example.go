@@ -1,0 +1,55 @@
+package config
+
+var exampleConfig = `---
+plugins:
+    - name: example
+      plugin: example
+    - name: volume
+      plugin: i3blocks
+      config:
+        command: /usr/share/i3blocks/volume
+    - name: memory
+      plugin: memory
+      config:
+        interval: 1001
+        prefix: "mem:"
+    - name: disk-root
+      instance: df
+      plugin: df
+      config:
+       prefix: "💾"
+       mounts:
+         - /
+         - /var
+         - /home
+    - name: network
+      instance: eth0
+      plugin: network
+      config:
+        iface: eth0
+    - name: network
+      instance: tun0
+      plugin: network
+      config:
+        iface: tun0
+    - name: cpu
+      plugin: cpu
+      config:
+        interval: 500
+    - name: weather
+      plugin: weather
+      config:
+        openweather_api_key: api_key
+        openweather_location: London
+    - name: ping
+      plugin: ping
+      config:
+         type: "tcp"
+         address: "localhost:22"
+    - name: clock
+      plugin: clock
+      config:
+        long_format: 15:04:05.0
+        short_format: 15:04
+        interval: 100
+`

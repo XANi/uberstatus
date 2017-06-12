@@ -8,6 +8,8 @@ import:
   - ewma
 - package: github.com/op/go-logging
   version: master
+- package: github.com/XANi/go-yamlcfg
+  version: v0.0.1
 - package: gopkg.in/yaml.v1
 testImport:
 - package: github.com/smartystreets/goconvey
