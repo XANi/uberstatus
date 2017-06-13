@@ -36,9 +36,10 @@ type plugin struct {
 const (
 	stopped = iota
 	inPomodor
-	inWaiting
+	inBreakStart
 	inShortBreak
 	inLongBreak
+	inBreakEnd
 )
 
 func New(cfg uber.PluginConfig) (uber.Plugin, error) {
@@ -74,8 +75,10 @@ func (p *plugin) UpdatePeriodic() uber.Update {
 		diff := p.pomodoroEnd.Sub(time.Now())
 		update.FullText = fmt.Sprintf(`<span foreground="#ff0000">🍅</span>: %s`, util.FormatDuration(diff))
 		update.Color = `#ccccff`
-	case inWaiting:
+	case inBreakStart:
 		update.FullText = fmt.Sprintf(`<span foreground="#000000" background="#aa0000">%d🍅</span><span background="#aa0000">BREAK:</span>`, p.pomodoros)
+	case inBreakEnd:
+		update.FullText = `<span foreground="#000000" background="#aa0000">⌛</span><span background="#aa0000">END</span>`
 	case inShortBreak:
 		diff := p.breakEnd.Sub(time.Now())
 		update.FullText = fmt.Sprintf("⌛: %s", util.FormatDuration(diff))
@@ -105,12 +108,11 @@ func (p *plugin) UpdateFromEvent(e uber.Event) uber.Update {
 			update.FullText = "pomodoro ended!"
 			update.Color = `#cccc66`
 		} else {
-			diff := p.pomodoroEnd.Sub(time.Now())
-			update.FullText = fmt.Sprintf(`<span foreground="#ff0000">🍅</span>: %s`, util.FormatDuration(diff))
+			update.FullText = fmt.Sprintf(`<span foreground="#ff0000">🍅</span>: %d`, p.pomodoros)
 			update.Color = `#ccccff`
 		}
 	case inShortBreak:
-			update.FullText = "short break start"
+		update.FullText = "short break start"
 	case inLongBreak:
 		update.FullText = "long break start"
 	default:
@@ -127,7 +129,7 @@ func (p *plugin) nextStateFromClick() {
 		p.state = inPomodor
 		p.pomodoroEnd = time.Now().Add(time.Duration(p.cfg.pomodoroTime) * time.Minute)
 	case inPomodor:
-	case inWaiting:
+	case inBreakStart:
 		if (p.pomodoros % 4) == 3 {
 			p.breakEnd = time.Now().Add(time.Duration(p.cfg.longBreakTime) * time.Minute)
 			p.state = inLongBreak
@@ -135,6 +137,9 @@ func (p *plugin) nextStateFromClick() {
 			p.breakEnd = time.Now().Add(time.Duration(p.cfg.shortBreakTime)* time.Minute)
 			p.state = inShortBreak
 		}
+	case inBreakEnd:
+		p.pomodoroEnd = time.Now().Add(time.Duration(p.cfg.pomodoroTime) * time.Minute)
+		p.state=inPomodor
 	case inShortBreak:
 	case inLongBreak:
 	default:
@@ -148,17 +153,15 @@ func (p *plugin) nextStateFromTime() {
 	case inPomodor:
 		if time.Now().After(p.pomodoroEnd) {
 			p.pomodoros++
-			p.state = inWaiting
+			p.state = inBreakStart
 		}
 	case inShortBreak:
 		if time.Now().After(p.breakEnd) {
-			p.pomodoroEnd = time.Now().Add(time.Duration(p.cfg.pomodoroTime) * time.Minute)
-			p.state=inPomodor
+			p.state=inBreakEnd
 		}
 	case inLongBreak:
 		if time.Now().After(p.breakEnd) {
-			p.pomodoroEnd = time.Now().Add(time.Duration(p.cfg.pomodoroTime) * time.Minute)
-			p.state=inPomodor
+			p.state=inBreakEnd
 		}
 	}
 }
