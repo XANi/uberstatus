@@ -6,7 +6,7 @@ import (
 	//	"gopkg.in/yaml.v1"
 	"fmt"
 	"github.com/op/go-logging"
-//	"time"
+	"time"
 )
 
 // Example plugin for uberstatus
@@ -25,6 +25,7 @@ type state struct {
 	cfg           config
 	cnt           int
 	ev            int
+	nextTs        time.Time
 	previousTicks []cpuTicks
 	ticksDiff     []cpuTicks
 }
@@ -53,6 +54,7 @@ func (st *state) GetUpdateInterval() int {
 
 func (state *state) UpdatePeriodic() uber.Update {
 	var update uber.Update
+	util.WaitForTs(&state.nextTs)
 	currentTicks, _ := GetCpuTicks()
 	for i, ticks := range currentTicks {
 		state.ticksDiff[i] = ticks.Sub(state.previousTicks[i])
@@ -82,6 +84,7 @@ func (state *state) UpdateFromEvent(e uber.Event) uber.Update {
 	update.ShortText = fmt.Sprintf("%s %+v", state.cfg.prefix, state.previousTicks)
 	update.Color = `#cccc66`
 	state.ev++
+	state.nextTs = time.Now().Add(time.Second * 5)
 	return update
 }
 
