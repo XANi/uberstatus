@@ -108,7 +108,9 @@ func FormatDuration(t time.Duration) string {
 		return fmt.Sprintf("%5.0fm ",t.Minutes())
 	}
 	if t.Minutes() > 1 {
-		return fmt.Sprintf("%5.2fm ",t.Minutes())
+		minutes := int(t.Minutes())
+		seconds := int(t.Seconds() - float64(minutes*60))
+		return fmt.Sprintf("%2d:%02d ",minutes,seconds)
 	}
 	if t.Seconds() > 4 {
 		return fmt.Sprintf("%5.2fs ",t.Seconds())
