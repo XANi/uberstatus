@@ -78,6 +78,7 @@ func (n *netStats) UpdateFromEvent(ev uber.Event) uber.Update {
 func loadConfig(raw map[string]interface{}) Config {
 	var c Config
 	c.iface = `lo`
+	c.interval = 1000
 	for key, value := range raw {
 		converted, ok := value.(string)
 		if ok {

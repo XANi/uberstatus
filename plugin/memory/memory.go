@@ -94,6 +94,7 @@ func (state *state) UpdateFromEvent(e uber.Event) uber.Update {
 	} else {
 		update.FullText = update.FullText + ` <span color="#bb0000">Swap off</span>`
 	}
+	update.ShortText = update.FullText
 	update.Color = `#999999`
 	state.nextTs = time.Now().Add(time.Second * 3)
 	return update
