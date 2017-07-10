@@ -57,12 +57,17 @@ func main() {
 	logBackendLeveled.SetLevel(logging.NOTICE, "")
 	logging.SetBackend(logBackendLeveled)
 	var cfg config.Config
-	err := yamlcfg.LoadConfig(config.CfgFiles, &cfg)
+	var err error
+	if len(*configFile) > 0 {
+		err = yamlcfg.LoadConfig([]string{*configFile}, &cfg)
+	} else {
+		err = yamlcfg.LoadConfig(config.CfgFiles, &cfg)
+	}
 	if err != nil {
 		log.Errorf("Can't load config: %s", err)
 		os.Exit(1)
 	}
-
+	log.Debug("config: %+v", &cfg)
 	log.Info("Starting")
 	header := i3bar.NewHeader()
 	msg := i3bar.NewMsg()
