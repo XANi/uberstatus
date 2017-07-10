@@ -90,6 +90,10 @@ Parameters:
 * `type` - tcp/http
 * `addr` - address of a target, host:port format for tcp, url for http(s)
 
+## Pomodoro
+
+Simple pomodoro timer. Click button 1 (left) to start/acknowledge break, button 2 to display stats
+
 ## I3blocks
 
 i3blocks-compatible input. It will also pass events in compatible way so plugins like volume can be used
