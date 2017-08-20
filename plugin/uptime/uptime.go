@@ -6,8 +6,6 @@ import (
 	//	"gopkg.in/yaml.v1"
 	"github.com/op/go-logging"
 	"time"
-	"os"
-	"sync"
 	"bufio"
 )
 
@@ -24,13 +22,12 @@ type config struct {
 
 type plugin struct {
 	cfg config
-	uptimeFile *os.File
+	uptimeReader uptimeReader
 	uptimeFileScanner *bufio.Scanner
 	uptimeTpl *util.Template
 	uptimeTplShort *util.Template
 	dynamicInterval int
 	nextTs time.Time
-	sync.Mutex
 }
 
 type uptimeTpl struct {
@@ -46,7 +43,7 @@ func New(cfg uber.PluginConfig) (uber.Plugin, error) {
 }
 
 func (p *plugin) Init() (err error) {
-	p.uptimeTpl, err = util.NewTemplate("upt",`{{printf "%s %s" .Prefix .Uptime}}`)
+	p.uptimeTpl, err = util.NewTemplate("uptime",`{{printf "%s %s" .Prefix .Uptime}}`)
 	if err != nil { return }
 	p.uptimeTplShort, err = util.NewTemplate("uptimeShort",`u:{{.UptimeShort}}`)
 	return
@@ -80,7 +77,7 @@ func (p *plugin) UpdateFromEvent(e uber.Event) uber.Update {
 func loadConfig(c map[string]interface{}) config {
 	var cfg config
 	cfg.interval = 60 * 1000 - 50
-	cfg.prefix = "ex: "
+	cfg.prefix = "u: "
 	for key, value := range c {
 		converted, ok := value.(string)
 		if ok {
