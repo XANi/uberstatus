@@ -9,7 +9,8 @@ import (
 // TODO H/min should probably be in 30:40 format
 var formatList = map[string]time.Duration {
 	"4.00h ": time.Duration(time.Hour * 4),
-	"  39m ": time.Duration(time.Minute * 39),
+	"44.9m ": time.Duration(time.Minute * 44 +  time.Second * 54),
+	"39.0m ": time.Duration(time.Minute * 39),
 	"4.21s ": time.Duration(time.Second * 4 + time.Millisecond * 210),
 	"3763ms": time.Duration(time.Millisecond * 3763),
 	"763.0ms": time.Duration(time.Millisecond * 763),
