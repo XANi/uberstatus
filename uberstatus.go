@@ -122,7 +122,7 @@ func main() {
 				out = out + `,`
 			}
 		}
-		out = out + `],`
+		out = out + "],\n"
 		select {
 		case ow <- out:
 		default:

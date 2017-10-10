@@ -71,7 +71,7 @@ func (state *state) UpdatePeriodic() uber.Update {
 		util.FormatUnitBytes(memFree),
 	)
 	//		util.GetColorPct(
-	update.ShortText = fmt.Sprintf(`<span color="%s">%s%</span>`, util.GetColorPct(int(100-memFreePct)), memFreePct)
+	update.ShortText = fmt.Sprintf(`<span color="%s">%2.f%%</span>`, util.GetColorPct(int(100-memFreePct)), memFreePct)
 	update.Color = `#999999`
 	return update
 }
