@@ -49,6 +49,8 @@ All plugins have `interval` option defining refresh rate in miliseconds
 
 * `prefix`
 
+## CPUFreq
+
 
 ## Clock
 

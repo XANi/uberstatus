@@ -149,3 +149,15 @@ func WaitForTs(nextTs *time.Time) {
 		t = time.Now()
 	}
 }
+
+func GenerateColorBarLookupTable() (colorTable map[int8]string, barTable map[int8]string) {
+	var i int8
+	var ltBar = make(map[int8]string)
+	var ltColor = make(map[int8]string)
+	for i = -1; i <= 101; i++ {
+		color := GetColorPct(int(i))
+		ltColor[i] = color
+		ltBar[i] = `<span color="` + color + `">` + GetBarChar(int(i)) + `</span>`
+	}
+	return ltColor, ltBar
+}
