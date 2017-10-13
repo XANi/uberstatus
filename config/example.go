@@ -36,6 +36,10 @@ plugins:
       plugin: cpu
       config:
         interval: 500
+    - name: cpufreq
+      plugin: cpufreq
+      config:
+        interval: 500
     - name: weather
       plugin: weather
       config:

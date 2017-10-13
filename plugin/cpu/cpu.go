@@ -14,6 +14,7 @@ import (
 
 var log = logging.MustGetLogger("main")
 
+
 // set up a config struct
 type config struct {
 	prefix   string
@@ -31,12 +32,8 @@ type state struct {
 }
 
 // pregenerate lookup table at start
-var ltBar = make(map[int8]string)
-var ltColor = make(map[int8]string)
+var ltColor, ltBar = util.GenerateColorBarLookupTable()
 
-func init() {
-	generateLookupTables()
-}
 func New(cfg uber.PluginConfig) (uber.Plugin, error) {
 	p := &state{}
 	p.cfg = loadConfig(cfg.Config)
