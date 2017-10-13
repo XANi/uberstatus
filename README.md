@@ -112,6 +112,12 @@ Example:
         command: /path/to/i3blocks/volume
 ```
 
+## Uptime
+
+System uptime. Parameters:
+
+* `prefix`
+
 ## Weather
 
 Displays temperature, left click for more detailed weather data
