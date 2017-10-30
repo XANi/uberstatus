@@ -68,7 +68,7 @@ func (p *plugin) UpdateFromEvent(e uber.Event) uber.Update {
 	var update uber.Update
 //	tpl, _ := util.NewTemplate("uberEvent",`{{printf "%+v" .}}`)
 //	tpl.ExecuteString(e)
-	update.FullText =  fmt.Sprintf("min: %d, max: %d MHz", p.lowestFreq/1000,p.highestFreq/1000)
+	update.FullText =  fmt.Sprintf("min: %d, max: %d MHz", p.lowestFreq/1000/1000,p.highestFreq/1000/1000)
 	update.ShortText = `upd`
 	update.Color = `#cccc66`
 	// set next TS updatePeriodic will wait to.
