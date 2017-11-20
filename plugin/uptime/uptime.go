@@ -70,7 +70,12 @@ func (p *plugin) UpdatePeriodic() uber.Update {
 func (p *plugin) UpdateFromEvent(e uber.Event) uber.Update {
 	// set next TS updatePeriodic will wait to.
 	p.nextTs = time.Now().Add(time.Second * 3)
-	return p.UpdatePeriodic()
+	var update uber.Update
+	uptime := p.getUptime()
+	ts := time.Now().Add(uptime * -1)
+	update.FullText = ts.Format(`2006-01-02 MST 15:04:05.00`)
+	update.ShortText = ts.Format(`15:04:05`)
+	return update
 }
 
 // parse received structure into config
