@@ -24,6 +24,8 @@ type memInfo struct {
 	Free       int64
 	Buffers    int64
 	Cached     int64
+	Available  int64 // since 3.14
+	HasAvailable bool
 	SwapTotal  int64
 	SwapFree   int64
 	SwapCached int64
@@ -59,6 +61,9 @@ func getMemInfo() (mem memInfo) {
 			mem.Buffers = i
 		case match[1] == `Cached`:
 			mem.Cached = i
+		case match[1] == `MemAvailable`:
+			mem.Available = i
+			mem.HasAvailable = true
 		case match[1] == `SwapCached`:
 			mem.SwapCached = i
 		case match[1] == `SwapFree`:

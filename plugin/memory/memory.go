@@ -23,6 +23,7 @@ type config struct {
 type state struct {
 	cfg config
 	nextTs time.Time
+	hasMemAvailable bool //only newer kernels have it
 }
 
 func New(cfg uber.PluginConfig) (uber.Plugin, error) {
@@ -30,7 +31,13 @@ func New(cfg uber.PluginConfig) (uber.Plugin, error) {
 	s.cfg = loadConfig(cfg.Config)
 	return  s, nil
 }
-func (state *state) Init() error {return nil}
+func (state *state) Init() error {
+	mem := getMemInfo()
+	if mem.HasAvailable {
+		log.Notice(`has MemAvailable in /proc/meminfo, using that as source for "free" memory`)
+	}
+	return nil
+}
 
 func (state *state) GetUpdateInterval() int {
 	return state.cfg.interval
@@ -41,7 +48,12 @@ func (state *state) UpdatePeriodic() uber.Update {
 	var update uber.Update
 	update.Markup = "pango"
 	mem := getMemInfo()
-	memFree := mem.Free + mem.Cached + mem.Buffers
+	var memFree int64
+	if mem.HasAvailable {
+		memFree = mem.Available
+	} else {
+		memFree = mem.Free + mem.Cached + mem.Buffers
+	}
 	// some adjustments for high/low mem systems
 	// rescale % scale based on total memory
 	var memFreePctForCalc float64
