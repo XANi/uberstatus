@@ -81,6 +81,7 @@ func NewTemplate(name string, tpl string) (*Template, error) {
 		"percentToBar": GetBarChar,
 		"formatBytes": FormatUnitBytes,
 		"formatDuration": FormatDuration,
+		"formatDurationPadded": FormatDurationPadded,
 		"color": func (color string, text string) string{
 			return `<span color="` + color + `">` + text + `</span>`
 		},
@@ -99,19 +100,21 @@ func (t Template)ExecuteString(i interface{}) (string) {
 		return t.buf.String()
 	}
 }
-
+// Formats duration. Does not go over 7 characters till 9999+h
 func FormatDuration(t time.Duration) string {
 	if t.Hours() > 1 {
-		return fmt.Sprintf("%5.2fh ",t.Hours())
+		hours := int(t.Hours())
+		minutes := int( int(t.Minutes()) - (hours * 60) )
+		return fmt.Sprintf("%dh%0.2dm",hours,minutes)
 	}
 	if t.Hours() == 1 {
-		return fmt.Sprintf("%5.0fm ",t.Minutes())
+		return fmt.Sprintf("%5.0fm",t.Minutes())
 	}
 	if t.Minutes() > 1 {
-		return fmt.Sprintf("%5.1fm ",t.Minutes())
+		return fmt.Sprintf("%5.1fm",t.Minutes())
 	}
 	if t.Seconds() > 4 {
-		return fmt.Sprintf("%5.2fs ",t.Seconds())
+		return fmt.Sprintf("%5.2fs",t.Seconds())
 	}
 	if t.Seconds() >= 1 {
 		return fmt.Sprintf("%5.0fms",t.Seconds() * 1000)
@@ -133,7 +136,11 @@ func FormatDuration(t time.Duration) string {
 	} else {
 		return fmt.Sprintf("%5dns",t.Nanoseconds())
 	}
+}
 
+// FormatDuration with added padding to 7 (
+func FormatDurationPadded(t time.Duration) string {
+	return fmt.Sprintf("%7s", FormatDuration(t))
 }
 
 func WaitForTs(nextTs *time.Time) {

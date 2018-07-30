@@ -1,4 +1,4 @@
-package uptime
+package debug
 
 import (
 	"github.com/XANi/uberstatus/uber"
@@ -6,8 +6,7 @@ import (
 	//	"gopkg.in/yaml.v1"
 	"github.com/op/go-logging"
 	"time"
-	"bufio"
-	"fmt"
+	"github.com/efigence/go-mon"
 )
 
 // Example plugin for uberstatus
@@ -23,18 +22,9 @@ type config struct {
 
 type plugin struct {
 	cfg config
-	uptimeReader uptimeReader
-	uptimeFileScanner *bufio.Scanner
-	uptimeTpl *util.Template
-	uptimeTplShort *util.Template
-	dynamicInterval int
+	cnt int
+	ev  int
 	nextTs time.Time
-}
-
-type uptimeTpl struct {
-	Prefix string
-	Uptime string
-	UptimeShort string
 }
 
 func New(cfg uber.PluginConfig) (uber.Plugin, error) {
@@ -43,11 +33,9 @@ func New(cfg uber.PluginConfig) (uber.Plugin, error) {
 	return  p, nil
 }
 
-func (p *plugin) Init() (err error) {
-	p.uptimeTpl, err = util.NewTemplate("uptime",`{{printf "%s %s" .Prefix .Uptime}}`)
-	if err != nil { return }
-	p.uptimeTplShort, err = util.NewTemplate("uptimeShort",`u:{{.UptimeShort}}`)
-	return
+func (p *plugin) Init() error {
+	mon.RegisterGcStats()
+	return nil
 }
 
 func (p *plugin) GetUpdateInterval() int {
@@ -55,35 +43,37 @@ func (p *plugin) GetUpdateInterval() int {
 }
 func (p *plugin) UpdatePeriodic() uber.Update {
 	var update uber.Update
-	uptime := p.getUptime()
-	uptimeValue :=  uptimeTpl {
-		Prefix: p.cfg.prefix,
-		Uptime: fmt.Sprintf("%7s", util.FormatDuration(uptime)),
-		UptimeShort: util.FormatDuration(uptime),
-	}
-	update.FullText =  p.uptimeTpl.ExecuteString(&uptimeValue)
-	update.ShortText = p.uptimeTplShort.ExecuteString(&uptimeValue)
+	// TODO precompile and preallcate
+	tpl, _ := util.NewTemplate("uberEvent",`{{color "#00aa00" "Example plugin"}}{{.}}`)
+	// example on how to allow UpdateFromEvent to display for some time
+	// without being overwritten by periodic updates.
+	// We set up ts in our plugin, update it in UpdateFromEvent() and just wait if it is in future via helper function
+	util.WaitForTs(&p.nextTs)
+	update.FullText =  tpl.ExecuteString(p.cnt)
 	update.Markup = `pango`
+	update.ShortText = `nope`
 	update.Color = `#66cc66`
+	p.cnt++
 	return update
 }
 
 func (p *plugin) UpdateFromEvent(e uber.Event) uber.Update {
+	var update uber.Update
+	tpl, _ := util.NewTemplate("uberEvent",`{{printf "%+v" .}}`)
+	update.FullText =  tpl.ExecuteString(e)
+	update.ShortText = `upd`
+	update.Color = `#cccc66`
+	p.ev++
 	// set next TS updatePeriodic will wait to.
 	p.nextTs = time.Now().Add(time.Second * 3)
-	var update uber.Update
-	uptime := p.getUptime()
-	ts := time.Now().Add(uptime * -1)
-	update.FullText = ts.Format(`2006-01-02 MST 15:04:05.00`)
-	update.ShortText = ts.Format(`15:04:05`)
 	return update
 }
 
 // parse received structure into config
 func loadConfig(c map[string]interface{}) config {
 	var cfg config
-	cfg.interval = 60 * 1000 - 50
-	cfg.prefix = "u:"
+	cfg.interval = 10000
+	cfg.prefix = "ex: "
 	for key, value := range c {
 		converted, ok := value.(string)
 		if ok {

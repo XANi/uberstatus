@@ -73,7 +73,7 @@ func New(cfg uber.PluginConfig) (uber.Plugin, error) {
 		return &st, fmt.Errorf("ping: protocol %s not supported", st.cfg.addrType)
 	}
 	var err error
-	st.tpl, err = util.NewTemplate("uberEvent",`{{if not .Ok}}{{color "#aa0000" "png!"}}{{ else }}ping{{end}}: {{formatDuration .LastPing}} {{printf "%2.2f" .DropRate}}%`)
+	st.tpl, err = util.NewTemplate("uberEvent",`{{if not .Ok}}{{color "#aa0000" "png!"}}{{ else }}ping{{end}}: {{formatDurationPadded .LastPing}} {{printf "%2.2f" .DropRate}}%`)
 	return &st, err
 }
 func (st *state)Init() error {

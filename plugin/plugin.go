@@ -8,7 +8,6 @@ import (
 	"github.com/XANi/uberstatus/plugin/clock"
 	"github.com/XANi/uberstatus/plugin/cpu"
 	"github.com/XANi/uberstatus/plugin/cpufreq"
-	"github.com/XANi/uberstatus/plugin/df"
 	"github.com/XANi/uberstatus/plugin/example"
 	"github.com/XANi/uberstatus/plugin/i3blocks"
 	"github.com/XANi/uberstatus/plugin/memory"
@@ -19,6 +18,8 @@ import (
 	"github.com/XANi/uberstatus/plugin/weather"
 	"github.com/XANi/uberstatus/uber"
 	"time"
+	"github.com/XANi/uberstatus/plugin/df"
+	"github.com/XANi/uberstatus/plugin/debug"
 )
 
 var log = logging.MustGetLogger("main")
@@ -27,6 +28,7 @@ var plugins = map[string]func(uber.PluginConfig)(uber.Plugin,error){
 	"clock":    clock.New,
 	"cpu":      cpu.New,
 	"cpufreq":  cpufreq.New,
+	"debug":    debug.New,
 	"df":       df.New,
 	"example":  example.New,
 	"i3blocks": i3blocks.New,
