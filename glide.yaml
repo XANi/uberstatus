@@ -10,6 +10,8 @@ import:
   version: master
 - package: github.com/XANi/go-yamlcfg
   version: v0.0.1
+- package: github.com/efigence/go-mon
+  version: ">= v0.1.0"
 - package: gopkg.in/yaml.v1
 testImport:
 - package: github.com/smartystreets/goconvey
