@@ -20,6 +20,7 @@ import (
 	"time"
 	"github.com/XANi/uberstatus/plugin/df"
 	"github.com/XANi/uberstatus/plugin/debug"
+	"github.com/XANi/uberstatus/plugin/pipe"
 )
 
 var log = logging.MustGetLogger("main")
@@ -34,6 +35,7 @@ var plugins = map[string]func(uber.PluginConfig)(uber.Plugin,error){
 	"i3blocks": i3blocks.New,
 	"memory":   memory.New,
 	"network":  network.New,
+	"pipe":     pipe.New,
 	"ping":     ping.New,
 	"pomodoro": pomodoro.New,
 	"uptime":   uptime.New,

@@ -5,6 +5,7 @@ import (
 	"text/template"
 	"bytes"
 	"time"
+	"html"
 )
 
 // calculate divider and unit for bytes
@@ -82,6 +83,7 @@ func NewTemplate(name string, tpl string) (*Template, error) {
 		"formatBytes": FormatUnitBytes,
 		"formatDuration": FormatDuration,
 		"formatDurationPadded": FormatDurationPadded,
+		"escape": html.EscapeString,
 		"color": func (color string, text string) string{
 			return `<span color="` + color + `">` + text + `</span>`
 		},

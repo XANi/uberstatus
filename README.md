@@ -73,7 +73,7 @@ Parameters:
          - /home
 ```
 
-`prefix` will be added at beginning of the status bar. name and instance are just to distinguis between different instances
+`prefix` will be added at beginning of the status bar. name and instance are just to distinguish between different instances
 
 ## Memory
 
@@ -91,6 +91,22 @@ Parameters:
 
 * `type` - tcp/http
 * `addr` - address of a target, host:port format for tcp, url for http(s)
+
+## Pipe
+
+Accepts data to display in pipe. Data is updated instantly.
+
+* `path` - path to named pipe (will be created if not exist
+* `parse_template` - enable template parsing, that allows for using template functions like `{{color #00ff00 "message"}}`. Note that some (like `color`) will only work/make sense with markup enabled 
+* `markup` - enable pango markup. Enabled by default
+* `interval` - regenerate message every x milliseconds. Only matters if you use templates that will change with time.
+
+This will pass data directly to i3 which means that any pango formatting it supports it works but also that you need to escape any HTMLisms (`<>` and such) on your own.
+
+You can also just disable markup (`markup: false`) or use escaping function in template (`{{escape "<title>hai</title>"}}`)
+
+ 
+
 
 ## Pomodoro
 
