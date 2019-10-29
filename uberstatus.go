@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/op/go-logging"
-	"gopkg.in/yaml.v1"
+	"gopkg.in/yaml.v3"
 	//	"runtime"
 	//	"io/ioutil"
 	"flag"
@@ -97,7 +97,7 @@ func main() {
 
 		plugins.slotMap[pluginCfg.Name][pluginCfg.Instance] = idx
 		plugins.slots[idx] = i3bar.NewMsg()
-		plugins.plugins[pluginCfg.Name][pluginCfg.Instance], err = plugin.NewPlugin(pluginCfg.Name, pluginCfg.Instance, pluginCfg.Plugin, pluginCfg.Config, updates)
+		plugins.plugins[pluginCfg.Name][pluginCfg.Instance], err = plugin.NewPlugin(pluginCfg, updates)
 		if err != nil {
 			log.Panicf("Can't initialize plugin: [%+v]", err)
 		}

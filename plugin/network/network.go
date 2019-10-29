@@ -3,6 +3,7 @@ package network
 import (
 	"fmt"
 	"github.com/VividCortex/ewma"
+	"github.com/XANi/uberstatus/config"
 	"github.com/XANi/uberstatus/uber"
 	"github.com/XANi/uberstatus/util"
 	"github.com/op/go-logging"
@@ -15,9 +16,9 @@ import (
 
 var log = logging.MustGetLogger("main")
 
-type Config struct {
-	iface string
-	interval int
+type pluginConfig struct {
+	Iface    string
+	Interval int
 }
 
 type netStats struct {
@@ -42,13 +43,14 @@ const ShowAllAddr = -1
 
 func New(c uber.PluginConfig) (uber.Plugin, error) {
 	stats := &netStats{}
-	cfg := loadConfig(c.Config)
+	cfg,err := loadConfig(c.Config)
+	if err != nil {return nil,err}
 	stats.ewmaRx = ewma.NewMovingAverage(5)
 	stats.ewmaTx = ewma.NewMovingAverage(5)
 	stats.oldTs = time.Now()
 	stats.ts = time.Now()
-	stats.iface = cfg.iface
-	stats.interval = cfg.interval
+	stats.iface = cfg.Iface
+	stats.interval = cfg.Interval
 
 	return  stats, nil
 }
@@ -74,35 +76,11 @@ func (n *netStats) UpdateFromEvent(ev uber.Event) uber.Update {
 		return n.UpdateAddr(ShowAllAddr)
 	}
 }
-
-func loadConfig(raw map[string]interface{}) Config {
-	var c Config
-	c.iface = `lo`
-	c.interval = 1000
-	for key, value := range raw {
-		converted, ok := value.(string)
-		if ok {
-			switch {
-			case key == `iface`:
-				c.iface = converted
-				log.Warningf("-- %s %s--", key, c.iface)
-
-			}
-	} else {
-			converted, ok := value.(int)
-			if ok {
-				switch {
-				case key == `interval`:
-					c.interval = converted
-				default:
-					log.Warningf("unknown config key: [%s]", key)
-				}
-			} else {
-				log.Errorf("Cant interpret value of config key [%s]", key)
-			}
-		}
-	}
-	return c
+func loadConfig(c config.PluginConfig) (pluginConfig,error) {
+	var cfg pluginConfig
+	cfg.Iface = `lo`
+	cfg.Interval = 1000
+		return cfg, c.GetConfig(&cfg)
 }
 
 func (stats *netStats) UpdateAddr(addr_id int) (ev uber.Update) {

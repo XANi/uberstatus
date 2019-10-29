@@ -1,5 +1,7 @@
 package uber
 
+import "github.com/XANi/uberstatus/config"
+
 // event passed from X/status bar manager
 type Event struct {
 	Name     string
@@ -35,8 +37,6 @@ type TaggedUpdate struct {
 }
 
 type PluginConfig struct {
-	Name     string
-	Instance string
-	Config   map[string]interface{}
+	Config config.PluginConfig
 	Update   chan Update // chan to send panel updates
 }

@@ -1,6 +1,7 @@
 package ping
 
 import (
+	"github.com/XANi/uberstatus/config"
 	"github.com/XANi/uberstatus/uber"
 	"github.com/XANi/uberstatus/util"
 	"github.com/XANi/golibs/ewma"
@@ -16,26 +17,26 @@ import (
 
 var log = logging.MustGetLogger("main")
 
-// set up a config struct
-type config struct {
-	prefix   string
-	interval int
-	pingInterval int
-	addrType string
-	addr     string
-	inflight int
+// set up a pluginConfig struct
+type pluginConfig struct {
+	Prefix       string
+	Interval     int
+	PingInterval int
+	AddrType     string
+	Addr         string
+	Inflight     int
 }
 
 type state struct {
-	cfg config
+	cfg      pluginConfig
 	dropRate *ewma.Ewma
-	pingAvg *ewma.Ewma
-	stats *pingStat
-	cnt int
-	ev  int
-	ping func(addr string) pingResult
-	nextTs time.Time
-	tpl *util.Template
+	pingAvg  *ewma.Ewma
+	stats    *pingStat
+	cnt      int
+	ev       int
+	ping     func(addr string) pingResult
+	nextTs   time.Time
+	tpl      *util.Template
 }
 
 type pingResult struct {
@@ -58,40 +59,40 @@ type pinger interface {
 	Ping(addr string) *pingResult
 }
 
-func New(cfg uber.PluginConfig) (uber.Plugin, error) {
+func New(cfg uber.PluginConfig) (z uber.Plugin, err error) {
 	var st state
-	st.cfg = loadConfig(cfg.Config)
+	st.cfg, err = loadConfig(cfg.Config)
+	if err != nil { return nil, err }
 	st.dropRate = ewma.NewEwma(time.Duration(15 * time.Second))
 	st.pingAvg = ewma.NewEwma(time.Duration(60 * time.Second))
 	st.stats = &pingStat{}
-	switch st.cfg.addrType {
+	switch st.cfg.AddrType {
 	case "tcp":
 		st.ping = tcpPing
 	case "http":
 		st.ping = httpPing
 	default:
-		return &st, fmt.Errorf("ping: protocol %s not supported", st.cfg.addrType)
+		return &st, fmt.Errorf("ping: protocol %s not supported", st.cfg.AddrType)
 	}
-	var err error
 	st.tpl, err = util.NewTemplate("uberEvent",`{{if not .Ok}}{{color "#aa0000" "png!"}}{{ else }}ping{{end}}: {{formatDurationPadded .LastPing}} {{printf "%2.2f" .DropRate}}%`)
 	return &st, err
 }
 func (st *state)Init() error {
 	go func() {
 		for {
-			pingUpd := st.ping(st.cfg.addr)
+			pingUpd := st.ping(st.cfg.Addr)
 			st.updateState(&pingUpd)
-			if st.cfg.pingInterval > 0 {
-				time.Sleep(time.Duration(st.cfg.pingInterval) * time.Millisecond)
+			if st.cfg.PingInterval > 0 {
+				time.Sleep(time.Duration(st.cfg.PingInterval) * time.Millisecond)
 			} else {
-				time.Sleep(time.Duration(st.cfg.interval) * time.Millisecond)
+				time.Sleep(time.Duration(st.cfg.Interval) * time.Millisecond)
 			}
 		}
 	}()
 	return nil
 }
 func (st *state) GetUpdateInterval() int {
-	return st.cfg.interval
+	return st.cfg.Interval
 }
 func (state *state) UpdatePeriodic() uber.Update {
 	var update uber.Update
@@ -132,42 +133,12 @@ func (state *state)updateState(p *pingResult) {
 	state.stats.Unlock()
 
 }
-// parse received structure into config
-func loadConfig(c map[string]interface{}) config {
-	var cfg config
-	cfg.interval = 1000
-	cfg.addrType = "tcp"
-	cfg.addr = "localhost:22"
-	cfg.inflight = 10
-	for key, value := range c {
-		converted, ok := value.(string)
-		if ok {
-			switch {
-			case key == "prefix":
-				cfg.prefix = converted
-			case key == "type":
-				cfg.addrType = converted
-			case key == "addr":
-				cfg.addr = converted
-			default:
-				log.Warningf("unknown config key: [%s]", key)
-
-			}
-		} else {
-			converted, ok := value.(int)
-			if ok {
-				switch {
-				case key == `interval`:
-					cfg.interval = converted
-				case key == `ping_interval`:
-					cfg.pingInterval = converted
-				default:
-					log.Warningf("unknown config key: [%s]", key)
-				}
-			} else {
-				log.Errorf("Cant interpret value of config key [%s]", key)
-			}
-		}
-	}
-	return cfg
+// parse received structure into pluginConfig
+func loadConfig(c config.PluginConfig) (pluginConfig,error) {
+	var cfg pluginConfig
+	cfg.Interval = 1000
+	cfg.AddrType = "tcp"
+	cfg.Addr = "localhost:22"
+	cfg.Inflight = 10
+	return cfg, c.GetConfig(&cfg)
 }

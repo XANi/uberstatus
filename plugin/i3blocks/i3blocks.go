@@ -4,6 +4,7 @@ import (
 	//	"gopkg.in/yaml.v1"
 	"bytes"
 	"fmt"
+	"github.com/XANi/uberstatus/config"
 	"github.com/op/go-logging"
 	"os"
 	"os/exec"
@@ -11,71 +12,41 @@ import (
 	"strings"
 	//
 	"github.com/XANi/uberstatus/uber"
+
 )
 
 var log = logging.MustGetLogger("main")
 
-type config struct {
+type pluginConfig struct {
 	prefix   string
-	command  string
-	interval int
-	color    string
+	Command  string
+	Interval int
+	Color    string
 	name     string
 	instance string
 }
 func New(cfg uber.PluginConfig) (uber.Plugin, error) {
-	p := loadConfig(cfg.Config)
-	return  &p, nil
+	p, err := loadConfig(cfg.Config)
+	return  &p, err
 }
-func (c *config) Init() error {
+func (c *pluginConfig) Init() error {
 	return nil
 }
-func (c *config) GetUpdateInterval() int {
-	return c.interval
+func (c *pluginConfig) GetUpdateInterval() int {
+	return c.Interval
 }
-func (c *config) UpdatePeriodic() uber.Update {
+func (c *pluginConfig) UpdatePeriodic() uber.Update {
 	return c.Update(uber.Event{})
 }
-func (c *config) UpdateFromEvent(ev uber.Event) uber.Update {
+func (c *pluginConfig) UpdateFromEvent(ev uber.Event) uber.Update {
 	return c.Update(ev)
 }
 
-
-func loadConfig(raw map[string]interface{}) config {
-	var c config
-	c.interval = 1000
-	c.color = `#ffffff`
-	log.Info("loading config")
-	for key, value := range raw {
-		converted, ok := value.(string)
-		if ok {
-			switch {
-			case key == `prefix`:
-				c.prefix = converted
-			case key == `command`:
-				c.command = converted
-			case key == `color`:
-				c.color = converted
-			default:
-				log.Warningf("unknown config key: [%s]", key)
-
-			}
-			log.Warningf("t: %s %s", key, converted)
-		} else {
-			converted, ok := value.(int)
-			if ok {
-				switch {
-				case key == `interval`:
-					c.interval = converted
-				default:
-					log.Warningf("unknown config key: [%s]", key)
-				}
-			} else {
-				log.Errorf("Cant interpret value of config key [%s]", key)
-			}
-		}
-	}
-	return c
+func loadConfig(c config.PluginConfig) (pluginConfig, error) {
+	var cfg pluginConfig
+	cfg.Interval = 1000
+	cfg.Color = `#ffffff`
+	return cfg, c.GetConfig(&cfg)
 }
 
 //   BLOCK_NAME
@@ -90,7 +61,7 @@ func loadConfig(raw map[string]interface{}) config {
 //       BLOCK_X and BLOCK_Y
 //              Coordinates where the click occurred, if the block was clicked.
 
-func (cfg *config) Update(ev uber.Event) uber.Update {
+func (cfg *pluginConfig) Update(ev uber.Event) uber.Update {
 	var upd uber.Update
 
 	os.Setenv("BLOCK_NAME", cfg.name)
@@ -105,14 +76,14 @@ func (cfg *config) Update(ev uber.Event) uber.Update {
 		os.Setenv("BLOCK_X", strconv.Itoa(ev.X))
 		os.Setenv("BLOCK_Y", strconv.Itoa(ev.Y))
 	}
-	cmd := exec.Command(cfg.command)
-	log.Debug(cfg.command)
+	cmd := exec.Command(cfg.Command)
+	log.Debug(cfg.Command)
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	err := cmd.Run()
 
 	if err != nil {
-		log.Fatal(err)
+		log.Errorf("Error running %s: %s",cfg.Command,err)
 	}
 	s := out.String()
 
@@ -122,7 +93,7 @@ func (cfg *config) Update(ev uber.Event) uber.Update {
 	if st_len >= 4 {
 		upd.Color = st[2]
 	} else {
-		upd.Color = cfg.color
+		upd.Color = cfg.Color
 	}
 	if st_len == 3 {
 		upd.ShortText = st[1]
@@ -132,7 +103,7 @@ func (cfg *config) Update(ev uber.Event) uber.Update {
 	}
 	// len of 1 means there was nothing to split, no \n probably means invalid input
 	if st_len <= 1 {
-		log.Warningf("Command %s returned nothing", cfg.command)
+		log.Warningf("Command %s returned nothing", cfg.Command)
 		return upd
 	} else {
 		upd.FullText = fmt.Sprint(cfg.prefix, st[0])

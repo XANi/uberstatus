@@ -1,6 +1,7 @@
 package cpufreq
 
 import (
+	"github.com/XANi/uberstatus/config"
 	"github.com/XANi/uberstatus/uber"
 	"github.com/XANi/uberstatus/util"
 	//	"gopkg.in/yaml.v1"
@@ -23,32 +24,31 @@ const MaxInt = int(MaxUint >> 1)
 // pregenerate lookup table at start
 var ltColor, ltBar = util.GenerateColorBarLookupTable()
 
-// set up a config struct
-type config struct {
-	prefix   string
-	interval int
+// set up a pluginConfig struct
+type pluginConfig struct {
+	Prefix   string
+	Interval int
 }
 
 type plugin struct {
-	cfg config
-	lowestFreq int
+	cfg         pluginConfig
+	lowestFreq  int
 	highestFreq int
-	nextTs time.Time
+	nextTs      time.Time
 }
-
-func New(cfg uber.PluginConfig) (uber.Plugin, error) {
+func New(cfg uber.PluginConfig) (z uber.Plugin,err error) {
 	p := &plugin{}
 	p.lowestFreq = MaxInt
-	p.cfg = loadConfig(cfg.Config)
-	return  p, nil
-}
+	p.cfg, err = loadConfig(cfg.Config)
+	return  p, err
+	}
 
 func (p *plugin) Init() error {
 	return nil
 }
 
 func (p *plugin) GetUpdateInterval() int {
-	return p.cfg.interval
+	return p.cfg.Interval
 }
 func (p *plugin) UpdatePeriodic() uber.Update {
 	var update uber.Update
@@ -95,36 +95,12 @@ func (p *plugin) getCpufreqBars() string {
 	}
 	return out
 }
-// parse received structure into config
-func loadConfig(c map[string]interface{}) config {
-	var cfg config
-	cfg.interval = 10000
-	cfg.prefix = "ex: "
-	for key, value := range c {
-		converted, ok := value.(string)
-		if ok {
-			switch {
-			case key == `prefix`:
-				cfg.prefix = converted
-			default:
-				log.Warningf("unknown config key: [%s]", key)
-
-			}
-		} else {
-			converted, ok := value.(int)
-			if ok {
-				switch {
-				case key == `interval`:
-					cfg.interval = converted
-				default:
-					log.Warningf("unknown config key: [%s]", key)
-				}
-			} else {
-				log.Errorf("Cant interpret value of config key [%s]", key)
-			}
-		}
-	}
-	return cfg
+// parse received structure into pluginConfig
+func loadConfig(c config.PluginConfig) (pluginConfig,error) {
+	var cfg pluginConfig
+	cfg.Interval = 10000
+	cfg.Prefix = "ex: "
+	return cfg, c.GetConfig(&cfg)
 }
 
 

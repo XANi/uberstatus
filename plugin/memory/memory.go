@@ -1,6 +1,7 @@
 package memory
 
 import (
+	"github.com/XANi/uberstatus/config"
 	"github.com/XANi/uberstatus/uber"
 	"github.com/XANi/uberstatus/util"
 	//	"gopkg.in/yaml.v1"
@@ -15,21 +16,21 @@ import (
 var log = logging.MustGetLogger("main")
 
 // set up a config struct
-type config struct {
-	interval int
-	prefix   string
+type pluginConfig struct {
+	Interval int
+	Prefix   string
 }
 
 type state struct {
-	cfg config
+	cfg pluginConfig
 	nextTs time.Time
 	hasMemAvailable bool //only newer kernels have it
 }
 
-func New(cfg uber.PluginConfig) (uber.Plugin, error) {
+func New(cfg uber.PluginConfig) (u uber.Plugin, err error) {
 	s := &state{}
-	s.cfg = loadConfig(cfg.Config)
-	return  s, nil
+	s.cfg, err = loadConfig(cfg.Config)
+	return  s, err
 }
 func (state *state) Init() error {
 	mem := getMemInfo()
@@ -40,7 +41,7 @@ func (state *state) Init() error {
 }
 
 func (state *state) GetUpdateInterval() int {
-	return state.cfg.interval
+	return state.cfg.Interval
 }
 
 func (state *state) UpdatePeriodic() uber.Update {
@@ -76,7 +77,7 @@ func (state *state) UpdatePeriodic() uber.Update {
 		swapPct = 100 - ((mem.SwapFree * 100) / mem.SwapTotal)
 	}
 	update.FullText = fmt.Sprintf(`%s<span color="%s">%s</span><span color="%s">%s</span>`,
-		state.cfg.prefix,
+		state.cfg.Prefix,
 		util.GetColorPct(int(swapPct)),
 		util.GetBarChar(int(swapPct)),
 		util.GetColorPct(int(100-memFreePctForCalc)),
@@ -113,33 +114,9 @@ func (state *state) UpdateFromEvent(e uber.Event) uber.Update {
 }
 
 // parse received structure into config
-func loadConfig(c map[string]interface{}) config {
-	var cfg config
-	cfg.interval = 10000
-	cfg.prefix = `MEM: `
-	for key, value := range c {
-		converted, ok := value.(string)
-		if ok {
-			switch {
-			case key == `prefix`:
-				cfg.prefix = converted
-			default:
-				log.Warningf("unknown config key: [%s]", key)
-
-			}
-		} else {
-			converted, ok := value.(int)
-			if ok {
-				switch {
-				case key == `interval`:
-					cfg.interval = converted
-				default:
-					log.Warningf("unknown config key: [%s]", key)
-				}
-			} else {
-				log.Errorf("Cant interpret value of config key [%s]", key)
-			}
-		}
-	}
-	return cfg
+func loadConfig(c config.PluginConfig) (pluginConfig, error) {
+	var cfg pluginConfig
+	cfg.Interval = 10000
+	cfg.Prefix = `MEM: `
+	return cfg, c.GetConfig(&cfg)
 }

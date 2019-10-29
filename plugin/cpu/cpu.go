@@ -1,6 +1,7 @@
 package cpu
 
 import (
+	"github.com/XANi/uberstatus/config"
 	"github.com/XANi/uberstatus/uber"
 	"github.com/XANi/uberstatus/util"
 	//	"gopkg.in/yaml.v1"
@@ -15,15 +16,15 @@ import (
 var log = logging.MustGetLogger("main")
 
 
-// set up a config struct
-type config struct {
-	prefix   string
-	interval int
-	zero     bool
+// set up a pluginConfig struct
+type pluginConfig struct {
+	Prefix   string
+	Interval int
+	Zero     bool
 }
 
 type state struct {
-	cfg           config
+	cfg           pluginConfig
 	cnt           int
 	ev            int
 	nextTs        time.Time
@@ -33,11 +34,10 @@ type state struct {
 
 // pregenerate lookup table at start
 var ltColor, ltBar = util.GenerateColorBarLookupTable()
-
-func New(cfg uber.PluginConfig) (uber.Plugin, error) {
+func New(cfg uber.PluginConfig) (z uber.Plugin,err error) {
 	p := &state{}
-	p.cfg = loadConfig(cfg.Config)
-	return  p, nil
+	p.cfg, err = loadConfig(cfg.Config)
+	return  p, err
 }
 
 func (st *state)Init() error {
@@ -46,7 +46,7 @@ func (st *state)Init() error {
 	return nil
 }
 func (st *state) GetUpdateInterval() int {
-	return st.cfg.interval
+	return st.cfg.Interval
 }
 
 func (state *state) UpdatePeriodic() uber.Update {
@@ -63,10 +63,10 @@ func (state *state) UpdatePeriodic() uber.Update {
 		bars = bars + ltBar[int8(d.GetCpuUsagePercent())]
 	}
 
-	if state.cfg.zero {
-		update.FullText = fmt.Sprintf("%s%05.2f%%%s", state.cfg.prefix, usagePct, bars)
+	if state.cfg.Zero {
+		update.FullText = fmt.Sprintf("%s%05.2f%%%s", state.cfg.Prefix, usagePct, bars)
 	} else {
-		update.FullText = fmt.Sprintf("%s%5.2f%%%s", state.cfg.prefix, usagePct, bars)
+		update.FullText = fmt.Sprintf("%s%5.2f%%%s", state.cfg.Prefix, usagePct, bars)
 	}
 	update.ShortText = fmt.Sprintf("%s", util.GetBarChar(int(usagePct)))
 	update.Color = util.GetColorPct(int(usagePct))
@@ -77,8 +77,8 @@ func (state *state) UpdatePeriodic() uber.Update {
 
 func (state *state) UpdateFromEvent(e uber.Event) uber.Update {
 	var update uber.Update
-	update.FullText = fmt.Sprintf("%s %+v", state.cfg.prefix, state.previousTicks)
-	update.ShortText = fmt.Sprintf("%s %+v", state.cfg.prefix, state.previousTicks)
+	update.FullText = fmt.Sprintf("%s %+v", state.cfg.Prefix, state.previousTicks)
+	update.ShortText = fmt.Sprintf("%s %+v", state.cfg.Prefix, state.previousTicks)
 	update.Color = `#cccc66`
 	state.ev++
 	state.nextTs = time.Now().Add(time.Second * 5)
@@ -95,45 +95,12 @@ func generateLookupTables() {
 
 }
 
-// parse received structure into config
-func loadConfig(c map[string]interface{}) config {
-	var cfg config
-	cfg.interval = 1000
-	cfg.prefix = ""
-	cfg.zero = true
-	for key, value := range c {
-		converted, ok := value.(string)
-		if ok {
-			switch {
-			case key == `prefix`:
-				cfg.prefix = converted
-			default:
-				log.Warningf("unknown config key: [%s]", key)
+// parse received structure into pluginConfig
+func loadConfig(c config.PluginConfig) (pluginConfig,error) {
 
-			}
-		} else {
-			converted, ok := value.(int)
-			if ok {
-				switch {
-				case key == `interval`:
-					cfg.interval = converted
-				default:
-					log.Warningf("unknown config key: [%s]", key)
-				}
-			} else {
-				converted, ok := value.(bool)
-				if ok {
-					switch {
-					case key == `zero`:
-						cfg.zero = converted
-					default:
-						log.Warningf("unknown config key: [%s]", key)
-					}
-				} else {
-					log.Errorf("Cant interpret value of config key [%s]", key)
-				}
-			}
-		}
-	}
-	return cfg
+	var cfg pluginConfig
+	cfg.Interval = 1000
+	cfg.Prefix = ""
+	cfg.Zero = true
+	return cfg, c.GetConfig(&cfg)
 }

@@ -2,6 +2,7 @@ package plugin
 
 import (
 	"fmt"
+	"github.com/XANi/uberstatus/config"
 	"github.com/op/go-logging"
 	"gopkg.in/yaml.v1"
 	//
@@ -44,21 +45,16 @@ var plugins = map[string]func(uber.PluginConfig)(uber.Plugin,error){
 
 
 func NewPlugin(
-	name string, // Plugin name
-	instance string, // Plugin instance
-	backend string, // Plugin backend
-	config map[string]interface{}, // Plugin config
+	config config.PluginConfig,
 	update_filtered chan uber.Update, // Update channel
 ) (uber.Plugin,error) {
 	events := make(chan uber.Event, 1)
 	update := make(chan uber.Update, 1)
 	trigger := make(chan uber.Trigger, 1)
-	log.Infof("Adding plugin %s, instance %s", name, instance)
+	log.Infof("Adding plugin %s, instance %s", config.Name, config.Instance)
 	str, _ := yaml.Marshal(config)
 	log.Warning(string(str))
 	pluginCfg := uber.PluginConfig{
-		Name:     name,
-		Instance: instance,
 		Config:   config,
 		Update:   update,
 	}
@@ -72,7 +68,7 @@ func NewPlugin(
 	// 		}
 	// 	}
 	// }
-	if p, ok := plugins[backend]; ok {
+	if p, ok := plugins[config.Plugin]; ok {
 		plugin, err := p(pluginCfg)
 		if err != nil {
 			return nil, err
@@ -81,11 +77,11 @@ func NewPlugin(
 		if err != nil {
 			return nil, err
 		}
-		go filterUpdate(name, instance, update, update_filtered)
+		go filterUpdate(config.Name, config.Instance, update, update_filtered)
 		go run(plugin.GetUpdateInterval(), events, update, trigger, plugin)
 		return plugin, nil
 	} else {
-		return nil, fmt.Errorf("no plugin named %s", backend)
+		return nil, fmt.Errorf("no plugin named %s", config.Plugin)
 	}
 }
 

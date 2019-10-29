@@ -1,6 +1,7 @@
 package uptime
 
 import (
+	"github.com/XANi/uberstatus/config"
 	"github.com/XANi/uberstatus/uber"
 	"github.com/XANi/uberstatus/util"
 	//	"gopkg.in/yaml.v1"
@@ -15,20 +16,20 @@ import (
 
 var log = logging.MustGetLogger("main")
 
-// set up a config struct
-type config struct {
-	prefix   string
-	interval int
+// set up a pluginConfig struct
+type pluginConfig struct {
+	Prefix   string
+	Interval int
 }
 
 type plugin struct {
-	cfg config
-	uptimeReader uptimeReader
+	cfg               pluginConfig
+	uptimeReader      uptimeReader
 	uptimeFileScanner *bufio.Scanner
-	uptimeTpl *util.Template
-	uptimeTplShort *util.Template
-	dynamicInterval int
-	nextTs time.Time
+	uptimeTpl         *util.Template
+	uptimeTplShort    *util.Template
+	dynamicInterval   int
+	nextTs            time.Time
 }
 
 type uptimeTpl struct {
@@ -37,9 +38,9 @@ type uptimeTpl struct {
 	UptimeShort string
 }
 
-func New(cfg uber.PluginConfig) (uber.Plugin, error) {
+func New(cfg uber.PluginConfig) (z uber.Plugin, err error) {
 	p := &plugin{}
-	p.cfg = loadConfig(cfg.Config)
+	p.cfg, err = loadConfig(cfg.Config)
 	return  p, nil
 }
 
@@ -51,13 +52,13 @@ func (p *plugin) Init() (err error) {
 }
 
 func (p *plugin) GetUpdateInterval() int {
-	return p.cfg.interval
+	return p.cfg.Interval
 }
 func (p *plugin) UpdatePeriodic() uber.Update {
 	var update uber.Update
 	uptime := p.getUptime()
 	uptimeValue :=  uptimeTpl {
-		Prefix: p.cfg.prefix,
+		Prefix: p.cfg.Prefix,
 		Uptime: fmt.Sprintf("%7s", util.FormatDuration(uptime)),
 		UptimeShort: util.FormatDuration(uptime),
 	}
@@ -79,34 +80,11 @@ func (p *plugin) UpdateFromEvent(e uber.Event) uber.Update {
 	return update
 }
 
-// parse received structure into config
-func loadConfig(c map[string]interface{}) config {
-	var cfg config
-	cfg.interval = 60 * 1000 - 50
-	cfg.prefix = "u:"
-	for key, value := range c {
-		converted, ok := value.(string)
-		if ok {
-			switch {
-			case key == `prefix`:
-				cfg.prefix = converted
-			default:
-				log.Warningf("unknown config key: [%s]", key)
+// parse received structure into pluginConfig
+func loadConfig(c config.PluginConfig) (pluginConfig,error) {
+	var cfg pluginConfig
+	cfg.Interval = 60 * 1000 - 50
+	cfg.Prefix = "u:"
 
-			}
-		} else {
-			converted, ok := value.(int)
-			if ok {
-				switch {
-				case key == `interval`:
-					cfg.interval = converted
-				default:
-					log.Warningf("unknown config key: [%s]", key)
-				}
-			} else {
-				log.Errorf("Cant interpret value of config key [%s]", key)
-			}
-		}
-	}
-	return cfg
+	return cfg, c.GetConfig(&cfg)
 }

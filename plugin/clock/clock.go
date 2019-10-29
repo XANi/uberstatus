@@ -1,6 +1,7 @@
 package clock
 
 import (
+	"github.com/XANi/uberstatus/config"
 	"github.com/XANi/uberstatus/uber"
 	"github.com/XANi/uberstatus/util"
 	//	"gopkg.in/yaml.v1"
@@ -12,37 +13,38 @@ import (
 var log = logging.MustGetLogger("main")
 
 type plugin struct {
-	cfg Config
+	cfg pluginConfig
 	nextTs time.Time
 }
 
-type Config struct {
-	long_format  string
-	short_format string
-	interval     int
+type pluginConfig struct {
+	Long_format  string
+	Short_format string
+	Interval     int
 }
 
-func New(cfg uber.PluginConfig) (uber.Plugin, error) {
+func New(cfg uber.PluginConfig) (z uber.Plugin, err error) {
 	p := &plugin{}
-	p.cfg = loadConfig(cfg.Config)
+	p.cfg, err = loadConfig(cfg.Config)
 	return  p, nil
 }
+
 
 func (p *plugin) Init() error {
 	return nil
 }
 
 func (p *plugin) GetUpdateInterval() int {
-	return p.cfg.interval
+	return p.cfg.Interval
 }
 
 func (p *plugin) UpdatePeriodic() uber.Update {
 	t := time.Now()
 	var	ev uber.Update
 	util.WaitForTs(&p.nextTs)
-	ev = p.GetTimeEvent(t.Local(), p.cfg.long_format)
+	ev = p.GetTimeEvent(t.Local(), p.cfg.Long_format)
 	t = time.Now().Local()
-	//ev := GetTimeEvent(t, p.cfg.long_format)
+	//ev := GetTimeEvent(t, p.cfg.Long_format)
 	ev.Color = `#DDDDFF`
 	return ev
 }
@@ -58,44 +60,17 @@ func (p *plugin) UpdateFromEvent(ev uber.Event) uber.Update {
 	return upd
 }
 
-func loadConfig(raw map[string]interface{}) Config {
-	var c Config
-	c.long_format = `2006-01-02 MST 15:04:05.00`
-	c.short_format = `15:04:05`
-	c.interval = 500
-	for key, value := range raw {
-		converted, ok := value.(string)
-		if ok {
-			switch {
-			case key == `long_format`:
-				c.long_format = converted
-			case key == `short_format`:
-				c.short_format = converted
-			default:
-				log.Warningf("unknown config key: [%s]", key)
-
-			}
-			log.Warningf("t: %s", key)
-		} else {
-			converted, ok := value.(int)
-			if ok {
-				switch {
-				case key == `interval`:
-					c.interval = converted
-				default:
-					log.Warningf("unknown config key: [%s]", key)
-				}
-			} else {
-				log.Errorf("Cant interpret value of config key [%s]", key)
-			}
-		}
-	}
-	return c
+func loadConfig(c config.PluginConfig) (pluginConfig ,error) {
+	var cfg pluginConfig
+	cfg.Long_format = `2006-01-02 MST 15:04:05.00`
+	cfg.Short_format = `15:04:05`
+	cfg.Interval = 500
+	return cfg, c.GetConfig(&cfg)
 }
 
 func (p *plugin) GetTimeEvent(t time.Time, format string) uber.Update {
 	var ev uber.Update
 	ev.FullText = t.Format(format)
-	ev.ShortText = t.Format(p.cfg.short_format)
+	ev.ShortText = t.Format(p.cfg.Short_format)
 	return ev
 }

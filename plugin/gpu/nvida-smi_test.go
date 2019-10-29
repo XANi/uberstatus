@@ -1,7 +1,13 @@
-Example output from `nvidia-smi -q -i 0 -x`
+package gpu
 
-```xml
+import (
+	"fmt"
+	"testing"
+)
+import . "github.com/smartystreets/goconvey/convey"
 
+// nvidia-smi -q -i 0 -x
+var testSmiQ = []byte(`
 <?xml version="1.0" ?>
 <!DOCTYPE nvidia_smi_log SYSTEM "nvsmi_device_v10.dtd">
 <nvidia_smi_log>
@@ -236,5 +242,14 @@ Example output from `nvidia-smi -q -i 0 -x`
 	</gpu>
 
 </nvidia_smi_log>
+`)
 
-```
+func TestParseSmiQuery(t *testing.T) {
+	data, err := parseSmiQuery(testSmiQ)
+	Convey("Total", t, func() {
+		fmt.Printf("%+v", data)
+		So(err, ShouldBeNil)
+		So(data,ShouldNotBeNil)
+		So(len(data.GPUs[0].ProductName),ShouldBeGreaterThan,0)
+	})
+}

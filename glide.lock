@@ -1,35 +1,35 @@
-hash: 24c7c60ece01857c246e3d38375134853d08400f28c1e29e2d08010570ec1026
-updated: 2018-08-24T08:36:08.299052169+02:00
+hash: d53482d43269b44b7bf7951bac3f10cb0716ab939c7344f7b06a5fb64e59c780
+updated: 2019-10-30T00:03:50.690476175+01:00
 imports:
 - name: github.com/efigence/go-libs
   version: 5b2936a0c2a1acec53f31426a548eff605b92aa9
   subpackages:
   - ewma
 - name: github.com/efigence/go-mon
-  version: 189bbb211c9a76ff7a7887dd71dfadb0a86ac9af
+  version: 81889c49974f13d263a17980bf10ef72389c1bb4
 - name: github.com/op/go-logging
   version: 970db520ece77730c7e4724c61121037378659d9
 - name: github.com/VividCortex/ewma
-  version: 43880d236f695d39c62cf7aa4ebd4508c258e6c0
+  version: 5c04cd146b30136f1fde792effc2453a0b1c311e
 - name: github.com/XANi/go-yamlcfg
-  version: b0cc432c2ad93ba5fe250b5afa9f8f99171fcdd2
+  version: 57ba6124f8373c3dbc213c2387fc99ae615c28b1
 - name: github.com/XANi/golibs
   version: 439a8243526ae2b3d675b1c3e11ae33716a13c3c
   subpackages:
   - ewma
-- name: gopkg.in/unrolled/render.v1
-  version: 1442182abc1e7397c8c0c862829bd00e9b670a96
 - name: gopkg.in/yaml.v1
   version: 9f9df34309c04878acc86042b16630b0f696e1de
+- name: gopkg.in/yaml.v3
+  version: 0b21df46bc1d83409da069ba73978e31b1f1c323
 testImports:
 - name: github.com/gopherjs/gopherjs
-  version: dc374d32704510cb387457180ca9d5193978b555
+  version: 444abdf920945de5d4a977b572bcc6c674d1e4eb
   subpackages:
   - js
 - name: github.com/jtolds/gls
   version: 77f18212c9c7edc9bd6a33d383a7b545ce62f064
 - name: github.com/smartystreets/assertions
-  version: 4ea54c1f28ad3ae597e76607dea3871fa177e263
+  version: 0b37b35ec7434b77e77a4bb29b79677cced992ea
   subpackages:
   - internal/go-render/render
   - internal/oglematchers

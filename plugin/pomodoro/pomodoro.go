@@ -1,6 +1,7 @@
 package pomodoro
 
 import (
+	"github.com/XANi/uberstatus/config"
 	"github.com/XANi/uberstatus/uber"
 	"github.com/XANi/uberstatus/util"
 	//	"gopkg.in/yaml.v1"
@@ -14,23 +15,23 @@ import (
 
 var log = logging.MustGetLogger("main")
 
-// set up a config struct
-type config struct {
-	prefix   string
-	pomodoroTime int
-	shortBreakTime int
-	longBreakTime int
+// set up a pluginConfig struct
+type pluginConfig struct {
+	Prefix         string
+	PomodoroTime   int
+	ShortBreakTime int
+	LongBreakTime  int
 }
 
 
 
 type plugin struct {
-	cfg config
+	cfg         pluginConfig
 	pomodoroEnd time.Time
-	breakEnd time.Time
-	nextTs time.Time
-	state int
-	pomodoros int
+	breakEnd    time.Time
+	nextTs      time.Time
+	state       int
+	pomodoros   int
 }
 
 const (
@@ -42,12 +43,11 @@ const (
 	inBreakEnd
 )
 
-func New(cfg uber.PluginConfig) (uber.Plugin, error) {
+func New(cfg uber.PluginConfig) (z uber.Plugin, err error) {
 	p := &plugin{}
-	p.cfg = loadConfig(cfg.Config)
+	p.cfg, err = loadConfig(cfg.Config)
 	return  p, nil
 }
-
 func (p *plugin) Init() error {
 	return nil
 }
@@ -68,7 +68,7 @@ func (p *plugin) UpdatePeriodic() uber.Update {
 	p.nextStateFromTime()
 	switch p.state {
 	case stopped:
-		p.pomodoroEnd = time.Now().Add(time.Duration(p.cfg.pomodoroTime) * time.Minute)
+		p.pomodoroEnd = time.Now().Add(time.Duration(p.cfg.PomodoroTime) * time.Minute)
 		update.FullText = "stop, click to start"
 		update.Color = `#cccc66`
 	case inPomodor:
@@ -127,18 +127,18 @@ func (p *plugin) nextStateFromClick() {
 	switch p.state {
 	case stopped:
 		p.state = inPomodor
-		p.pomodoroEnd = time.Now().Add(time.Duration(p.cfg.pomodoroTime) * time.Minute)
+		p.pomodoroEnd = time.Now().Add(time.Duration(p.cfg.PomodoroTime) * time.Minute)
 	case inPomodor:
 	case inBreakStart:
 		if (p.pomodoros % 4) == 3 {
-			p.breakEnd = time.Now().Add(time.Duration(p.cfg.longBreakTime) * time.Minute)
+			p.breakEnd = time.Now().Add(time.Duration(p.cfg.LongBreakTime) * time.Minute)
 			p.state = inLongBreak
 		} else {
-			p.breakEnd = time.Now().Add(time.Duration(p.cfg.shortBreakTime)* time.Minute)
+			p.breakEnd = time.Now().Add(time.Duration(p.cfg.ShortBreakTime)* time.Minute)
 			p.state = inShortBreak
 		}
 	case inBreakEnd:
-		p.pomodoroEnd = time.Now().Add(time.Duration(p.cfg.pomodoroTime) * time.Minute)
+		p.pomodoroEnd = time.Now().Add(time.Duration(p.cfg.PomodoroTime) * time.Minute)
 		p.state=inPomodor
 	case inShortBreak:
 	case inLongBreak:
@@ -165,40 +165,12 @@ func (p *plugin) nextStateFromTime() {
 		}
 	}
 }
-// parse received structure into config
-func loadConfig(c map[string]interface{}) config {
-	var cfg config
-	cfg.prefix = "ex: "
-	cfg.pomodoroTime = 25
-	cfg.shortBreakTime = 5
-	cfg.longBreakTime = 15
-	for key, value := range c {
-		converted, ok := value.(string)
-		if ok {
-			switch {
-			case key == `prefix`:
-				cfg.prefix = converted
-			default:
-				log.Warningf("unknown config key: [%s]", key)
-
-			}
-		} else {
-			converted, ok := value.(int)
-			if ok {
-				switch {
-				case key == `pomodoro_interval`:
-					cfg.pomodoroTime = converted
-				case key == `short_break_interval`:
-					cfg.shortBreakTime = converted
-				case key == `long_break_interval`:
-					cfg.longBreakTime = converted
-				default:
-					log.Warningf("unknown config key: [%s]", key)
-				}
-			} else {
-				log.Errorf("Cant interpret value of config key [%s]", key)
-			}
-		}
-	}
-	return cfg
+// parse received structure into pluginConfig
+func loadConfig(c config.PluginConfig) (pluginConfig,error) {
+	var cfg pluginConfig
+	cfg.Prefix = "ex: "
+	cfg.PomodoroTime = 25
+	cfg.ShortBreakTime = 5
+	cfg.LongBreakTime = 15
+	return cfg, c.GetConfig(&cfg)
 }

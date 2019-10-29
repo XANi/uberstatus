@@ -1,6 +1,7 @@
 package gpu
 
 import (
+	"github.com/XANi/uberstatus/config"
 	"github.com/XANi/uberstatus/uber"
 	"github.com/XANi/uberstatus/util"
 	//	"gopkg.in/yaml.v1"
@@ -13,31 +14,33 @@ import (
 
 var log = logging.MustGetLogger("main")
 
-// set up a config struct
-type config struct {
-	prefix   string
-	interval int
+// set up a pluginConfig struct
+type pluginConfig struct {
+	// some tools allow selecting by pci ID or UUID of device so it is not a number
+	GpuID    string
+	Prefix   string
+	Interval int
 }
 
 type plugin struct {
-	cfg config
-	cnt int
-	ev  int
+	cfg    pluginConfig
+	cnt    int
+	ev     int
 	nextTs time.Time
 }
-
-func New(cfg uber.PluginConfig) (uber.Plugin, error) {
+func New(cfg uber.PluginConfig) (z uber.Plugin, err error) {
 	p := &plugin{}
-	p.cfg = loadConfig(cfg.Config)
+	p.cfg, err = loadConfig(cfg.Config)
 	return  p, nil
 }
+
 
 func (p *plugin) Init() error {
 	return nil
 }
 
 func (p *plugin) GetUpdateInterval() int {
-	return p.cfg.interval
+	return p.cfg.Interval
 }
 func (p *plugin) UpdatePeriodic() uber.Update {
 	var update uber.Update
@@ -66,35 +69,11 @@ func (p *plugin) UpdateFromEvent(e uber.Event) uber.Update {
 	p.nextTs = time.Now().Add(time.Second * 3)
 	return update
 }
+// parse received structure into pluginConfig
+func loadConfig(c config.PluginConfig) (pluginConfig,error) {
+	var cfg pluginConfig
+	cfg.Interval = 60 * 1000 - 50
+	cfg.Prefix = "u:"
 
-// parse received structure into config
-func loadConfig(c map[string]interface{}) config {
-	var cfg config
-	cfg.interval = 10000
-	cfg.prefix = "ex: "
-	for key, value := range c {
-		converted, ok := value.(string)
-		if ok {
-			switch {
-			case key == `prefix`:
-				cfg.prefix = converted
-			default:
-				log.Warningf("unknown config key: [%s]", key)
-
-			}
-		} else {
-			converted, ok := value.(int)
-			if ok {
-				switch {
-				case key == `interval`:
-					cfg.interval = converted
-				default:
-					log.Warningf("unknown config key: [%s]", key)
-				}
-			} else {
-				log.Errorf("Cant interpret value of config key [%s]", key)
-			}
-		}
-	}
-	return cfg
+	return cfg, c.GetConfig(&cfg)
 }

@@ -2,6 +2,7 @@ package config
 
 import (
 	"github.com/op/go-logging"
+	"gopkg.in/yaml.v3"
 )
 
 
@@ -15,10 +16,15 @@ var log = logging.MustGetLogger("main")
 
 
 type PluginConfig struct {
-	Name string
-	Instance string
-	Plugin string
-	Config map[string]interface{}
+	Name string `yaml:"name"`
+	Instance string `yaml:"instance"`
+	Plugin string `yaml:"plugin"`
+	Config yaml.Node `yaml:"config"`
+}
+// pass your config struct to this function, it will fill it
+func (p *PluginConfig) GetConfig(i interface{}) error{
+	return p.Config.Decode(i)
+
 }
 
 

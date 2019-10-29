@@ -1,6 +1,7 @@
 package pipe
 
 import (
+	"github.com/XANi/uberstatus/config"
 	"github.com/XANi/uberstatus/uber"
 	"github.com/XANi/uberstatus/util"
 	//	"gopkg.in/yaml.v1"
@@ -18,8 +19,8 @@ import (
 
 var log = logging.MustGetLogger("main")
 
-// set up a config struct
-type config struct {
+// set up a pluginConfig struct
+type pluginConfig struct {
 	prefix   string
 	interval int
 	pipePath string
@@ -29,22 +30,19 @@ type config struct {
 
 type plugin struct {
 	sync.Mutex
-	cfg config
-	cnt int
-	ev  int
-	nextTs time.Time
-	text string
+	cfg      pluginConfig
+	cnt      int
+	ev       int
+	nextTs   time.Time
+	text     string
 	updateCh chan uber.Update
 }
 
-func New(cfg uber.PluginConfig) (uber.Plugin, error) {
+func New(cfg uber.PluginConfig) (z uber.Plugin,err error) {
 	p := &plugin{}
-	p.cfg = loadConfig(cfg.Config)
-	if len(p.cfg.pipePath) == 0 {
-		return p, fmt.Errorf("pipe: path can't be empty")
-	}
+	p.cfg, err = loadConfig(cfg.Config)
 	p.updateCh = cfg.Update
-	return  p, nil
+	return  p, err
 }
 
 func (p *plugin) Init() error {
@@ -89,43 +87,13 @@ func (p *plugin) UpdateFromEvent(e uber.Event) uber.Update {
 	return p.UpdatePeriodic()
 }
 
-// parse received structure into config
-func loadConfig(c map[string]interface{}) config {
-	var cfg config
+// parse received structure into pluginConfig
+func loadConfig(c config.PluginConfig) (pluginConfig,error) {
+	var cfg pluginConfig
 	cfg.interval = 10000
 	cfg.prefix = "ex: "
 	cfg.markup = true
-	for key, value := range c {
-		switch converted := value.(type) {
-		case string:
-			switch {
-			case key == `path`:
-				cfg.pipePath = converted
-			default:
-				log.Warningf("unknown config key: [%s]", key)
-
-			}
-		case int:
-				switch {
-				case key == `interval`:
-					cfg.interval = converted
-				default:
-					log.Warningf("unknown config key: [%s]", key)
-				}
-		case bool:
-			switch key {
-			case "parse_template":
-				cfg.parseTemplate = converted
-			case "markup":
-				cfg.markup = converted
-			default:
-				log.Warningf("unknown config key: [%s]", key)
-			}
-		default:
-			log.Errorf("Cant interpret value of config key [%s] %+v", key, key)
-		}
-	}
-	return cfg
+	return cfg, c.GetConfig(&cfg)
 }
 
 func (p *plugin) startListener() {

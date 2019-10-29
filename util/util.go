@@ -97,7 +97,7 @@ func (t Template)ExecuteString(i interface{}) (string) {
 	t.buf.Reset()
 	err := t.Execute(t.buf,i)
 	if err != nil {
-		return fmt.Sprintf("tpl [%s] error: %s", err)
+		return fmt.Sprintf("tpl [%+v] error: %s",i, err)
 	} else {
 		return t.buf.String()
 	}

@@ -89,8 +89,8 @@ func (state *state) updateWeather() {
 	}
 	r, err := client.Get(fmt.Sprintf(
 		"http://api.openweathermap.org/data/2.5/weather?q=%s&appid=%s",
-		url.QueryEscape(state.cfg.openWeatherLocation),
-		state.cfg.openWeatherApiKey))
+		url.QueryEscape(state.cfg.OpenWeatherLocation),
+		state.cfg.OpenWeatherApiKey))
 	if err != nil {
 		log.Warningf("Weather get error: %s", err)
 		return
