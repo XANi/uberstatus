@@ -3,6 +3,7 @@ package plugin
 import (
 	"fmt"
 	"github.com/XANi/uberstatus/config"
+	"github.com/XANi/uberstatus/plugin/gpu"
 	"github.com/op/go-logging"
 	"gopkg.in/yaml.v1"
 	//
@@ -33,11 +34,12 @@ var plugins = map[string]func(uber.PluginConfig)(uber.Plugin,error){
 	"debug":    debug.New,
 	"df":       df.New,
 	"example":  example.New,
+	"gpu":      gpu.New,
 	"i3blocks": i3blocks.New,
 	"memory":   memory.New,
 	"network":  network.New,
-	"pipe":     pipe.New,
 	"ping":     ping.New,
+	"pipe":     pipe.New,
 	"pomodoro": pomodoro.New,
 	"uptime":   uptime.New,
 	"weather":  weather.New,
@@ -53,7 +55,7 @@ func NewPlugin(
 	trigger := make(chan uber.Trigger, 1)
 	log.Infof("Adding plugin %s, instance %s", config.Name, config.Instance)
 	str, _ := yaml.Marshal(config)
-	log.Warning(string(str))
+	log.Debug(string(str))
 	pluginCfg := uber.PluginConfig{
 		Config:   config,
 		Update:   update,
