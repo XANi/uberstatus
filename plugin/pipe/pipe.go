@@ -97,7 +97,10 @@ func loadConfig(c config.PluginConfig) (pluginConfig,error) {
 }
 
 func (p *plugin) startListener() {
-	syscall.Mkfifo(p.cfg.pipePath, 0640)
+	err := syscall.Mkfifo(p.cfg.pipePath, 0640)
+	if err != nil {
+		log.Errorf("can't make pipe in %s:%s", p.cfg.pipePath, err)
+	}
 	// pipe needs to be reopened after each writer "disconnects" (EOF)
 	for {
 		pipe, err := os.OpenFile(p.cfg.pipePath, os.O_RDONLY, 0640)
