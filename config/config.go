@@ -23,7 +23,12 @@ type PluginConfig struct {
 }
 // pass your config struct to this function, it will fill it
 func (p *PluginConfig) GetConfig(i interface{}) error{
-	return p.Config.Decode(i)
+	if p.Config.Kind != 0 {
+		return p.Config.Decode(i)
+	} else {
+		return nil
+	}
+
 
 }
 
