@@ -118,6 +118,7 @@ func eventReaderLoop(events chan uber.Event) {
 	for {
 		m := NewEvent()
 		line, _ := stdin.ReadBytes('\n')
+		if len(line) == 0 {continue}
 		json.Unmarshal( FilterRawEvent(line), &m)
 		if(m.Button == 0) { continue } // Button is always >0, if it isnt present we got crap. TODO This should probably be logged if it shows up too often
 		// This conversion is a lil bit of a waste but thanks to that there is no need to "taint" main uber.Event with any json tags

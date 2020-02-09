@@ -1,0 +1,17 @@
+github.com/VividCortex/ewma v0.0.0-20191025014947-5c04cd146b30 h1:dXY9RUt1bnbJDtGDQJfBh5H0NeARQIZ/xtmdaiVRELs=
+github.com/VividCortex/ewma v0.0.0-20191025014947-5c04cd146b30/go.mod h1:2Tkkvm3sRDVXaiyucHiACn4cqf7DpdyLvmxzcbUokwA=
+github.com/XANi/go-yamlcfg v0.1.0 h1:lV/zN7aLwkzEvKxn2ks/hTik/zCePzIde0KkVyG3JmY=
+github.com/XANi/go-yamlcfg v0.1.0/go.mod h1:fIGI+gWgcNNsD8Lxn8ezLj/fOqh1OlRua26/7TqqMLI=
+github.com/XANi/golibs v0.0.0-20161127144916-439a8243526a h1:0B8hVUU9DiLLvminoeuakRo0J1zFhMg60qkP3ah8Ues=
+github.com/XANi/golibs v0.0.0-20161127144916-439a8243526a/go.mod h1:ohINhcKGunQum39/YjXH0D3R1zzeSE+NRle/HHo/QZ4=
+github.com/efigence/go-libs v0.0.0-20171115061947-5b2936a0c2a1 h1:WJE5x8KYmcAW9U77NYb8WZBYvjjm9pjb7vS5TOePt7M=
+github.com/efigence/go-libs v0.0.0-20171115061947-5b2936a0c2a1/go.mod h1:+L8bBUFAIfgv+GWyTdOiHNUw9M1jh/7KxzmYXK2pUQA=
+github.com/efigence/go-mon v0.1.1 h1:PqkjJatL9gslvh5kfuop9vG0VwTBcwIL8epRzfLQJwY=
+github.com/efigence/go-mon v0.1.1/go.mod h1:9RsOdOwCzexnFq0gqgi32gzj0jL3sfmz5gzU+lbhXx8=
+github.com/op/go-logging v0.0.0-20160315200505-970db520ece7 h1:lDH9UUVJtmYCjyT0CI4q8xvlXPxeZ0gYCVvWbmPlp88=
+github.com/op/go-logging v0.0.0-20160315200505-970db520ece7/go.mod h1:HzydrMdWErDVzsI23lYNej1Htcns9BCg93Dk0bBINWk=
+gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
+gopkg.in/yaml.v1 v1.0.0-20140924161607-9f9df34309c0 h1:POO/ycCATvegFmVuPpQzZFJ+pGZeX22Ufu6fibxDVjU=
+gopkg.in/yaml.v1 v1.0.0-20140924161607-9f9df34309c0/go.mod h1:WDnlLJ4WF5VGsH/HVa3CI79GS0ol3YnhVnKP89i0kNg=
+gopkg.in/yaml.v3 v3.0.0-20191026110619-0b21df46bc1d h1:LCPbGQ34PMrwad11aMZ+dbz5SAsq/0ySjRwQ8I9Qwd8=
+gopkg.in/yaml.v3 v3.0.0-20191026110619-0b21df46bc1d/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=

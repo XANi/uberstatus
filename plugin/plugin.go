@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"github.com/XANi/uberstatus/config"
 	"github.com/XANi/uberstatus/plugin/gpu"
+	"github.com/XANi/uberstatus/plugin/syncthing"
+
 	"github.com/op/go-logging"
 	"gopkg.in/yaml.v1"
 	//
@@ -28,21 +30,22 @@ import (
 var log = logging.MustGetLogger("main")
 
 var plugins = map[string]func(uber.PluginConfig)(uber.Plugin,error){
-	"clock":    clock.New,
-	"cpu":      cpu.New,
-	"cpufreq":  cpufreq.New,
-	"debug":    debug.New,
-	"df":       df.New,
-	"example":  example.New,
-	"gpu":      gpu.New,
-	"i3blocks": i3blocks.New,
-	"memory":   memory.New,
-	"network":  network.New,
-	"ping":     ping.New,
-	"pipe":     pipe.New,
-	"pomodoro": pomodoro.New,
-	"uptime":   uptime.New,
-	"weather":  weather.New,
+	"clock":     clock.New,
+	"cpu":       cpu.New,
+	"cpufreq":   cpufreq.New,
+	"debug":     debug.New,
+	"df":        df.New,
+	"example":   example.New,
+	"gpu":       gpu.New,
+	"i3blocks":  i3blocks.New,
+	"memory":    memory.New,
+	"network":   network.New,
+	"ping":      ping.New,
+	"pipe":      pipe.New,
+	"pomodoro":  pomodoro.New,
+	"syncthing": syncthing.New,
+	"uptime":    uptime.New,
+	"weather":   weather.New,
 }
 
 
