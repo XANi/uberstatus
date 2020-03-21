@@ -60,6 +60,7 @@ func (p *plugin) Init() (err error) {
 			return err
 		}
 	}
+	AddZygoFuncs(p.zl)
 
 	p.m, err = libmqtt.NewClient(
 		//libmqtt.WithVersion(libmqtt.V5,true),

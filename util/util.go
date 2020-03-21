@@ -2,6 +2,7 @@ package util
 
 import (
 	"fmt"
+	"strconv"
 	"text/template"
 	"bytes"
 	"time"
@@ -49,6 +50,16 @@ func GetBarChar(pct int) string {
 	return ` `
 }
 
+// return int, 0 if nonparsable
+func IntOrZero(s string) int {
+	i, err := strconv.Atoi(s)
+	if err != nil {
+		return 0
+	}
+	return i
+}
+
+
 // generate color from percentage (0 - good/green 100 - bad/red)
 func GetColorPct(pct int) string {
 	switch {
@@ -81,6 +92,7 @@ func NewTemplate(name string, tpl string) (*Template, error) {
 		"percentToColor": GetColorPct,
 		"percentToBar": GetBarChar,
 		"formatBytes": FormatUnitBytes,
+		"intOr0": IntOrZero,
 		"formatDuration": FormatDuration,
 		"formatDurationPadded": FormatDurationPadded,
 		"escape": html.EscapeString,
