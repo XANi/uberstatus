@@ -1,13 +1,43 @@
 package util
 
 import (
+	"bytes"
 	"fmt"
+	"html"
 	"strconv"
 	"text/template"
-	"bytes"
 	"time"
-	"html"
 )
+
+
+func NewTemplate(name string, tpl string) (*Template, error) {
+	funcMap := template.FuncMap{
+		"percentToColor": GetColorPct,
+		"percentToBar": GetBarChar,
+		"formatBytes": FormatUnitBytes,
+		"intOr0": IntOrZero,
+		"sub100": Sub100,
+		"formatDuration": FormatDuration,
+		"formatDurationPadded": FormatDurationPadded,
+		"escape": html.EscapeString,
+		"color": func (color string, text string) string{
+			return `<span color="` + color + `">` + text + `</span>`
+		},
+
+	}
+	t, err := template.New(name).Funcs(funcMap).Parse(tpl)
+	return &Template{t, new(bytes.Buffer)}, err
+}
+
+func (t Template)ExecuteString(i interface{}) (string) {
+	t.buf.Reset()
+	err := t.Execute(t.buf,i)
+	if err != nil {
+		return fmt.Sprintf("tpl [%+v] error: %s",i, err)
+	} else {
+		return t.buf.String()
+	}
+}
 
 // calculate divider and unit for bytes
 func GetUnitBytes(bytes int64) (divider int, unit string) {
@@ -38,16 +68,22 @@ func GetBarChar(pct int) string {
 		return `▇`
 	case pct > 70:
 		return `▆`
-	case pct > 60:
+	case pct > 55:
 		return `▅`
-	case pct > 40:
+	case pct > 30:
 		return `▄`
-	case pct > 20:
+	case pct > 15:
 		return `▂`
 	case pct > 10:
 		return `▁`
+	case pct > 5:
+		return `_`
 	}
 	return ` `
+}
+
+func Sub100(i int) int {
+	return 100 - i
 }
 
 // return int, 0 if nonparsable
@@ -87,33 +123,7 @@ type Template struct{
 }
 
 
-func NewTemplate(name string, tpl string) (*Template, error) {
-	funcMap := template.FuncMap{
-		"percentToColor": GetColorPct,
-		"percentToBar": GetBarChar,
-		"formatBytes": FormatUnitBytes,
-		"intOr0": IntOrZero,
-		"formatDuration": FormatDuration,
-		"formatDurationPadded": FormatDurationPadded,
-		"escape": html.EscapeString,
-		"color": func (color string, text string) string{
-			return `<span color="` + color + `">` + text + `</span>`
-		},
 
-	}
-	t, err := template.New(name).Funcs(funcMap).Parse(tpl)
-	return &Template{t, new(bytes.Buffer)}, err
-}
-
-func (t Template)ExecuteString(i interface{}) (string) {
-	t.buf.Reset()
-	err := t.Execute(t.buf,i)
-	if err != nil {
-		return fmt.Sprintf("tpl [%+v] error: %s",i, err)
-	} else {
-		return t.buf.String()
-	}
-}
 // Formats duration. Does not go over 7 characters till 9999+h
 func FormatDuration(t time.Duration) string {
 	if t.Hours() > 1 {

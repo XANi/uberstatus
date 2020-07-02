@@ -33,4 +33,5 @@ func BarFunc(env *zygo.Zlisp, name string, args []zygo.Sexp) (zygo.Sexp, error) 
 	}
 
 	return &zygo.SexpStr{S:util.GetBarChar(pct)}, nil
+	env.Run()
 }

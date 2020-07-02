@@ -25,7 +25,8 @@ type pluginConfig struct {
 	Interval int
 	Address string
 	LispFilter string `yaml:"lisp_filter"`
-	Template string
+	Template string `yaml:"template"`
+	TemplateOnClick string `yaml:"template_on_click"`
 	Subscribe string
 }
 
@@ -48,6 +49,10 @@ func New(cfg uber.PluginConfig) (z uber.Plugin, err error) {
 	return  p, err
 }
 
+type Event struct {
+	Msg string
+	TS  time.Time
+}
 
 
 
@@ -115,26 +120,26 @@ func (p *plugin) Init() (err error) {
 		}...)
 
 		// publish some topic message(s)
-		go func() {
-			for {
-				p.m.Publish([]*libmqtt.PublishPacket{
-					{
-						TopicName: "foo",
-						Payload:   []byte("bar"),
-						Qos:       libmqtt.Qos0,
-						Props: &libmqtt.PublishProps{
-							RespTopic: "bar",
-							UserProps: map[string][]string{
-								"testprop1": []string{"testprop1-val"},
-							},
-							SubIDs:      nil,
-							ContentType: "application/json",
-						},
-					},
-				}...)
-				time.Sleep(time.Second)
-			}
-		} ()
+		// go func() {
+		// 	for {
+		// 		p.m.Publish([]*libmqtt.PublishPacket{
+		// 			{
+		// 				TopicName: "foo",
+		// 				Payload:   []byte("bar"),
+		// 				Qos:       libmqtt.Qos0,
+		// 				Props: &libmqtt.PublishProps{
+		// 					RespTopic: "bar",
+		// 					UserProps: map[string][]string{
+		// 						"testprop1": []string{"testprop1-val"},
+		// 					},
+		// 					SubIDs:      nil,
+		// 					ContentType: "application/json",
+		// 				},
+		// 			},
+		// 		}...)
+		// 		time.Sleep(time.Second)
+		// 	}
+		// } ()
 	}))
 	mqttOpts = append(mqttOpts,libmqtt.WithSubHandleFunc(func(client libmqtt.Client, topics []*libmqtt.Topic, err error) {
 		log.Infof("[mqtt] subscription:")
@@ -167,25 +172,34 @@ func (p *plugin) GetUpdateInterval() int {
 func (p *plugin) UpdatePeriodic() uber.Update {
 	var update uber.Update
 	// TODO precompile and preallcate
-	tpl, _ := util.NewTemplate("uberEvent",p.cfg.Template)
+	tpl, _ := util.NewTemplate("uberEvent", p.cfg.Template)
 	// example on how to allow UpdateFromEvent to display for some time
 	// without being overwritten by periodic updates.
 	// We set up ts in our plugin, update it in UpdateFromEvent() and just wait if it is in future via helper function
 	util.WaitForTs(&p.nextTs)
-	update.FullText =  tpl.ExecuteString(p.lastMessage)
-	update.Markup = `pango`
-	update.ShortText = p.lastMessage
-	update.Color = `#66cc66`
-	p.cnt++
+	update.FullText = tpl.ExecuteString(Event{
+		Msg: p.lastMessage,
+		TS:  p.lastMQTTUpdate,
+	})
+	update.Markup = "pango"
+	update.Color = util.GetColorPct(
+		int(
+			(time.Now().Sub(p.lastMQTTUpdate)/(time.Minute/3))))
 	return update
 }
 
 func (p *plugin) UpdateFromEvent(e uber.Event) uber.Update {
 	var update uber.Update
-	tpl, _ := util.NewTemplate("uberEvent",`last update: {{printf "%+v" .}}`)
-	update.FullText =  tpl.ExecuteString(p.lastMQTTUpdate)
-	update.ShortText = `upd`
-	update.Color = `#cccc66`
+	tpl, _ := util.NewTemplate("uberEvent",p.cfg.TemplateOnClick)
+	update.FullText = tpl.ExecuteString(Event{
+		Msg: p.lastMessage,
+		TS:  p.lastMQTTUpdate,
+	})
+	update.Markup = "pango"
+	update.Color = "pango"
+	update.Color = util.GetColorPct(
+		int(
+			(time.Now().Sub(p.lastMQTTUpdate)/(time.Minute/3))))
 	p.ev++
 	// set next TS updatePeriodic will wait to.
 	p.nextTs = time.Now().Add(time.Second * 3)
@@ -202,7 +216,6 @@ func loadConfig(c config.PluginConfig) (pluginConfig,error) {
 }
 
 func (p *plugin) UpdateFromMQTT(v string) {
-	log.Errorf("%s", v)
 	p.zl.AddGlobal("x", &zygo.SexpStr{S: v})
 	err := p.zl.LoadString(p.cfg.LispFilter)
 	if err != nil {
