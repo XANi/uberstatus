@@ -13,6 +13,7 @@ var HBarChar = []string{
 }
 var VBarChar = []string{
 	` `,
+	`_`,
 	`▁`,
 	`▂`,
 	`▃`,

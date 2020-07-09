@@ -54,7 +54,7 @@ func main() {
 	logBackendFormatter := logging.NewBackendFormatter(logBackend, logFormat)
 	_ = logBackendFormatter
 	logBackendLeveled := logging.AddModuleLevel(logBackendFormatter)
-	logBackendLeveled.SetLevel(logging.NOTICE, "")
+	logBackendLeveled.SetLevel(logging.INFO, "")
 	logging.SetBackend(logBackendLeveled)
 	var cfg config.Config
 	var err error
@@ -99,7 +99,7 @@ func main() {
 		plugins.slots[idx] = i3bar.NewMsg()
 		plugins.plugins[pluginCfg.Name][pluginCfg.Instance], err = plugin.NewPlugin(pluginCfg, updates)
 		if err != nil {
-			log.Panicf("Can't initialize plugin: [%+v]", err)
+			log.Panicf("Can't initialize plugin [%s]: [%+v]", pluginCfg.Name, pluginCfg.Instance, err)
 		}
 	}
 
@@ -113,7 +113,7 @@ func main() {
 		case upd := <-updates:
 			plugins.parseUpdate(upd)
 		case <-time.After(time.Second * 1):
-			log.Info("Time passed")
+			//log.Info("Time passed")
 		}
 		out := `[`
 		for idx, msg := range plugins.slots {

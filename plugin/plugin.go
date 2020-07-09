@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/XANi/uberstatus/config"
 	"github.com/XANi/uberstatus/plugin/gpu"
+	"github.com/XANi/uberstatus/plugin/mqtt"
 	"github.com/XANi/uberstatus/plugin/syncthing"
 
 	"github.com/op/go-logging"
@@ -39,6 +40,7 @@ var plugins = map[string]func(uber.PluginConfig)(uber.Plugin,error){
 	"gpu":       gpu.New,
 	"i3blocks":  i3blocks.New,
 	"memory":    memory.New,
+	"mqtt":      mqtt.New,
 	"network":   network.New,
 	"ping":      ping.New,
 	"pipe":      pipe.New,

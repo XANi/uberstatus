@@ -28,8 +28,6 @@ func (p *PluginConfig) GetConfig(i interface{}) error{
 	} else {
 		return nil
 	}
-
-
 }
 
 
