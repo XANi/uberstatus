@@ -99,12 +99,12 @@ func (p *plugin) Init() (err error) {
 	mqttOpts = append(mqttOpts,libmqtt.WithConnHandleFunc(func(client libmqtt.Client, server string, code byte, err error) {
 		if err != nil {
 			// failed
-			panic(fmt.Sprintf("failed to connect:", err))
+			panic(fmt.Sprintf("failed to connect: %s", err))
 		}
 
 		if code != libmqtt.CodeSuccess {
 			// server rejected or in error
-			panic(fmt.Sprintf("server rejected with %s", libmqtt.ReasonString(code)))
+			panic(fmt.Sprintf("server rejected with %s", ReasonString(code)))
 		}
 
 		// success
@@ -238,6 +238,6 @@ func (p *plugin) UpdateFromMQTT(v string) {
 		p.lastMessage = out.S
 		p.lastMQTTUpdate = time.Now()
 	default:
-		p.lastMessage = fmt.Sprintf("LISP retval should be string: %+v",out,err)
+		p.lastMessage = fmt.Sprintf("LISP retval should be string: %+v %s",out,err)
 	}
 }

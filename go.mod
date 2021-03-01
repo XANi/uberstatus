@@ -13,15 +13,18 @@ require (
 	github.com/glycerine/greenpack v5.1.1+incompatible // indirect
 	github.com/glycerine/liner v0.0.0-20160121172638-72909af234e0 // indirect
 	github.com/glycerine/zygomys v5.1.2+incompatible
-	github.com/goiiot/libmqtt v0.9.5
+	github.com/goiiot/libmqtt v0.9.6
+	github.com/klauspost/compress v1.11.9 // indirect
 	github.com/op/go-logging v0.0.0-20160315200505-970db520ece7
 	github.com/philhofer/fwd v1.0.0 // indirect
 	github.com/shurcooL/go v0.0.0-20191216061654-b114cc39af9f // indirect
 	github.com/shurcooL/go-goon v0.0.0-20170922171312-37c2f522c041 // indirect
+	github.com/smartystreets/goconvey v1.6.4
 	github.com/tinylib/msgp v1.1.2 // indirect
-	github.com/ugorji/go v1.1.7 // indirect
+	go.uber.org/atomic v1.4.0 // indirect
+	go.uber.org/multierr v1.1.0 // indirect
 	gopkg.in/yaml.v1 v1.0.0-20140924161607-9f9df34309c0
-	gopkg.in/yaml.v3 v3.0.0-20191026110619-0b21df46bc1d
+	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c
 )
 
-replace github.com/goiiot/libmqtt => /home/xani/src/os/libmqtt
+//replace github.com/goiiot/libmqtt => /home/xani/src/os/libmqtt
