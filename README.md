@@ -12,23 +12,23 @@ Goals:
 
 # Installation
 
-Needs go >= 1.7 installed in OS
+If you have go set up already then *usually* just `go get github.com/XANi/uberstatus` (if any of upstream deps didn't break) if not, get the repo and:
 
-If you have go set up already then *usually* just `go get github.com/XANi/uberstatus` (if any of upstream deps didn't break) if not:
-
-Install with stable deps:
-
-    export GOPATH="/tmp/src/go" # skip if you have go already set up
-    export PATH="$PATH:$GOPATH/bin" # skip if you have go already set up
-    go get github.com/Masterminds/glide # go dep manager
-    go get github.com/XANi/uberstatus
-    cd $GOPATH/src/github.com/XANi/uberstatus
     make # will make binary in application root
     mkdir -p ~/.config/uberstatus
 
 Binaries will be made in current directory. If you dont have config already, copy one:
 
-    cp $GOPATH/src/github.com/XANi/uberstatus/cfg/uberstatus.default.conf ~/.config/uberstatus/uberstatus.conf # copy default config
+    cp cfg/uberstatus.default.conf ~/.config/uberstatus/uberstatus.conf # copy default config
+    
+Then just put it in i3 config in section defining bars
+
+    bar {
+        ...
+        status_command path/to/uberstatus/uberstatus
+        ...
+    }
+
 
 # Operation
 
@@ -75,9 +75,49 @@ Parameters:
 
 `prefix` will be added at beginning of the status bar. name and instance are just to distinguish between different instances
 
+## GPU
+
+Gets stats from GPU. So far only NVIDIA is supported via `nvidia-smi` which needs to be installed prior to running the plugin.
+
+```yaml
+    - name: gpu
+      plugin: gpu
+      config:
+        id: 0
+        type: nvidia
+```
+
 ## Memory
 
 Click to get detailed stats
+
+## MQTT
+
+Subscribe to MQTT queue
+
+```yaml
+    - name: mqtt
+      plugin: mqtt
+      config:
+        # password included in URL
+        address: tcp://mqtt:mqtt@192.168.1.4:1883
+        lisp_filter: (aget (split (aget (split x ":" ) 1) ".") 0)
+        template: "P: {{ color ( intOr0 .Msg | sub100 | percentToColor ) (intOr0 .Msg | percentToBar) }}  {{ color ( intOr0 .Msg | sub100 | percentToColor ) \"%\"}}"
+        template_on_click: "P: {{ color ( intOr0 .Msg | percentToColor )  .Msg }} %"
+        subscribe: collectd/some-data/phone/power-battery
+```
+`lisp_filter` is [zygo](https://github.com/glycerine/zygomys) lisp code ran on the data read from `subscribe` channel.
+Main use is for formatting data received from the topic defined in `subscribe`
+
+`template` is Go template string working on struct:
+
+```
+Event{
+		Msg: p.lastMessage,
+		TS:  p.lastMQTTUpdate,
+	})
+```
+
 
 ## Network
 
