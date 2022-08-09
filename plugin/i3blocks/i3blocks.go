@@ -12,7 +12,6 @@ import (
 	"strings"
 	//
 	"github.com/XANi/uberstatus/uber"
-
 )
 
 var log = logging.MustGetLogger("main")
@@ -25,9 +24,10 @@ type pluginConfig struct {
 	name     string
 	instance string
 }
+
 func New(cfg uber.PluginConfig) (uber.Plugin, error) {
 	p, err := loadConfig(cfg.Config)
-	return  &p, err
+	return &p, err
 }
 func (c *pluginConfig) Init() error {
 	return nil
@@ -83,7 +83,7 @@ func (cfg *pluginConfig) Update(ev uber.Event) uber.Update {
 	err := cmd.Run()
 
 	if err != nil {
-		log.Errorf("Error running %s: %s",cfg.Command,err)
+		log.Errorf("Error running %s: %s", cfg.Command, err)
 	}
 	s := out.String()
 

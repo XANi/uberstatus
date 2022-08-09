@@ -7,8 +7,6 @@ import (
 	"time"
 )
 
-
-
 //	{
 //  "version": 29,
 //  "folders": [
@@ -24,29 +22,24 @@ import (
 //}
 //
 
-
 type STFolderConfig struct {
-	Id string `json:"id"`
-	Label string `json:"label"`
+	Id     string `json:"id"`
+	Label  string `json:"label"`
 	Paused bool
 }
 
 type STConfig struct {
 	Folders []STFolderConfig `json:"folders"`
 }
-type FolderStatusId  int
-
-
-
-
+type FolderStatusId int
 
 const (
-	StatusUnknown  FolderStatusId = iota  //
-	StatusIdle                            // idle
-	StatusScanning                        // scanning
-	StatusScanWaiting                     // scan-waiting
-	StatusSyncing                         // syncing
-	StatusSynPreparing                    // sync-preparing
+	StatusUnknown      FolderStatusId = iota //
+	StatusIdle                               // idle
+	StatusScanning                           // scanning
+	StatusScanWaiting                        // scan-waiting
+	StatusSyncing                            // syncing
+	StatusSynPreparing                       // sync-preparing
 
 )
 
@@ -82,33 +75,34 @@ const (
 //       "version": 22004
 //     }
 
-
 type STFolderStats struct {
-	State string `json:"state"`
+	State        string    `json:"state"`
 	StateChanged time.Time `json:"stateChanged"`
-	OOSBytes int `json:"needBytes"`
-	OOSItems int `json:"needItems"`
-	Sequence int `json:"sequence"`
+	OOSBytes     int       `json:"needBytes"`
+	OOSItems     int       `json:"needItems"`
+	Sequence     int       `json:"sequence"`
 }
+
 var apiClient = http.Client{
-	Timeout:       time.Second * 5,
+	Timeout: time.Second * 5,
 }
 
 var eventClient = http.Client{
-	Timeout:       time.Second * 120,
+	Timeout: time.Second * 120,
 }
 
-func (p *plugin)req (method, url string, body io.Reader) (*http.Request) {
-	api, err := http.NewRequest(method, p.cfg.ServerAddr + url, body)
-	if err != nil {log.Panicf("error creating http request: %s",err)}
-	api.Header.Add("X-API-Key",p.cfg.ApiKey)
+func (p *plugin) req(method, url string, body io.Reader) *http.Request {
+	api, err := http.NewRequest(method, p.cfg.ServerAddr+url, body)
+	if err != nil {
+		log.Panicf("error creating http request: %s", err)
+	}
+	api.Header.Add("X-API-Key", p.cfg.ApiKey)
 	return api
 }
 
-
 func (p *plugin) updateSyncthingFolders() {
 
-	dirListR := p.req(http.MethodGet,"/rest/system/config",nil)
+	dirListR := p.req(http.MethodGet, "/rest/system/config", nil)
 	res, err := apiClient.Do(dirListR)
 	if err != nil {
 		log.Errorf("error getting folder list: %s", err)
@@ -121,12 +115,12 @@ func (p *plugin) updateSyncthingFolders() {
 		return
 	}
 
-	idToName := make(map[string]string,len(list.Folders))
-	for _,f :=  range list.Folders {
+	idToName := make(map[string]string, len(list.Folders))
+	for _, f := range list.Folders {
 		if len(f.Label) > 0 {
-			idToName[f.Id]=f.Label
+			idToName[f.Id] = f.Label
 		} else {
-			idToName[f.Id]=f.Id
+			idToName[f.Id] = f.Id
 		}
 	}
 	p.Lock()

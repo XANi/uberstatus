@@ -1,20 +1,18 @@
 package uptime
 
 import (
-	"os"
 	"bufio"
+	"os"
 	"strings"
-	"time"
 	"sync"
+	"time"
 )
 
 type uptimeReader struct {
-	uptimeFile *os.File
+	uptimeFile        *os.File
 	uptimeFileScanner *bufio.Scanner
 	sync.Mutex
 }
-
-
 
 func (p *plugin) getUptime() time.Duration {
 	r := &p.uptimeReader
@@ -22,7 +20,7 @@ func (p *plugin) getUptime() time.Duration {
 		file, err := os.Open("/proc/uptime")
 		if err != nil {
 			log.Warningf("Can't open /proc/uptime: %s", err)
-			return (time.Second* (60 * 66 + 6))
+			return (time.Second * (60*66 + 6))
 		} else {
 			r.Lock()
 			r.uptimeFile = file
@@ -33,12 +31,12 @@ func (p *plugin) getUptime() time.Duration {
 	_, err := r.uptimeFile.Seek(0, 0)
 	if err != nil {
 		log.Errorf("/proc/uptime seek failed: %s", err)
-		return (time.Second* (60 * 55 + 5))
+		return (time.Second * (60*55 + 5))
 	}
 	r.uptimeFileScanner.Scan()
 	fields := strings.Fields(r.uptimeFileScanner.Text())
-	duration, err := time.ParseDuration(fields[0]+"s")
-	_  = err
+	duration, err := time.ParseDuration(fields[0] + "s")
+	_ = err
 	return duration
 
 }

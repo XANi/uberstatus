@@ -6,26 +6,26 @@ import (
 	"strconv"
 	"time"
 )
-  //"id": 2038,
-  //  "globalID": 4589,
-  //  "time": "2020-02-09T00:07:05.243068465+01:00",
-  //  "type": "FolderCompletion",
-  //  "data": {
-  //    "completion": 100,
-  //    "device": "zzzzzzz-yyyyyyy-zzzzzzz-yyyyyyy-zzzzzzz-yyyyyyy-zzzzzzz-yyyyyyy",
-  //    "folder": "t9jyl-ecmyd",
-  //    "globalBytes": 639373,
-  //    "needBytes": 0,
-  //    "needDeletes": 0,
-  //    "needItems": 0
-  //  }
-  //}
 
+//"id": 2038,
+//  "globalID": 4589,
+//  "time": "2020-02-09T00:07:05.243068465+01:00",
+//  "type": "FolderCompletion",
+//  "data": {
+//    "completion": 100,
+//    "device": "zzzzzzz-yyyyyyy-zzzzzzz-yyyyyyy-zzzzzzz-yyyyyyy-zzzzzzz-yyyyyyy",
+//    "folder": "t9jyl-ecmyd",
+//    "globalBytes": 639373,
+//    "needBytes": 0,
+//    "needDeletes": 0,
+//    "needItems": 0
+//  }
+//}
 
 type STEvent struct {
-	Id int `json:"id"`
+	Id   int       `json:"id"`
 	Time time.Time `json:"time"`
-	Type string `json:"type"`
+	Type string    `json:"type"`
 	Data json.RawMessage
 }
 
@@ -38,34 +38,28 @@ type STEvents []STEvent
 
 type STEventStateChanged struct {
 	Duration float32 `json:"duration"`
-	FolderId string `json:"folder"`
-	From string `json:"from"`
-	To string `json:"to"`
+	FolderId string  `json:"folder"`
+	From     string  `json:"from"`
+	To       string  `json:"to"`
 }
 
- //   "completion": 31.28736597109183,
- //   "device": "zzzzzzz-yyyyyyy-zzzzzzz-yyyyyyy-zzzzzzz-yyyyyyy-zzzzzzz-yyyyyyy",
- //   "folder": "pdomp-znvc9",
- //   "globalBytes": 152603086,
- //   "needBytes": 104857600,
- //   "needDeletes": 1,
- //   "needItems": 1
-
+//   "completion": 31.28736597109183,
+//   "device": "zzzzzzz-yyyyyyy-zzzzzzz-yyyyyyy-zzzzzzz-yyyyyyy-zzzzzzz-yyyyyyy",
+//   "folder": "pdomp-znvc9",
+//   "globalBytes": 152603086,
+//   "needBytes": 104857600,
+//   "needDeletes": 1,
+//   "needItems": 1
 
 type STEventFolderCompletion struct {
 	Completion float32 `json:"completion"`
-	FolderId string `json:"folder"`
+	FolderId   string  `json:"folder"`
 }
 
-
-
-
-
- type STEventFolderSummary struct {
-	Folder string `json:"folder"`
+type STEventFolderSummary struct {
+	Folder  string        `json:"folder"`
 	Summary STFolderStats `json:"summary"`
 }
-
 
 func (p *plugin) updateSynctingEvents() {
 	eventId := 1
@@ -92,9 +86,12 @@ func (p *plugin) updateSynctingEvents() {
 			}
 			eventId = ev.Id
 			switch ev.Type {
-			case "StateChanged": p.handleEventStateChanged(ev.Data)
-			case "FolderCompletion": p.handleEventFolderCompletion(ev.Data)
-			case "FolderSummary":p.handleEventFolderSummary(ev.Data)
+			case "StateChanged":
+				p.handleEventStateChanged(ev.Data)
+			case "FolderCompletion":
+				p.handleEventFolderCompletion(ev.Data)
+			case "FolderSummary":
+				p.handleEventFolderSummary(ev.Data)
 			default:
 				//log.Debugf("event: %s\n %s",ev.Type,string(ev.Data))
 			}
@@ -104,7 +101,7 @@ func (p *plugin) updateSynctingEvents() {
 
 func (p *plugin) handleEventStateChanged(m json.RawMessage) {
 	var event STEventStateChanged
-	err := json.Unmarshal(m,&event)
+	err := json.Unmarshal(m, &event)
 	if err != nil {
 		log.Warningf("could not unmarshal event: %s", err)
 		return
@@ -116,7 +113,7 @@ func (p *plugin) handleEventStateChanged(m json.RawMessage) {
 }
 func (p *plugin) handleEventFolderCompletion(m json.RawMessage) {
 	var event STEventFolderCompletion
-	err := json.Unmarshal(m,&event)
+	err := json.Unmarshal(m, &event)
 	if err != nil {
 		log.Warningf("could not unmarshal event: %s", err)
 		return

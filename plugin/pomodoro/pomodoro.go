@@ -5,9 +5,9 @@ import (
 	"github.com/XANi/uberstatus/uber"
 	"github.com/XANi/uberstatus/util"
 	//	"gopkg.in/yaml.v1"
+	"fmt"
 	"github.com/op/go-logging"
 	"time"
-	"fmt"
 )
 
 // Example plugin for uberstatus
@@ -22,8 +22,6 @@ type pluginConfig struct {
 	ShortBreakTime int
 	LongBreakTime  int
 }
-
-
 
 type plugin struct {
 	cfg         pluginConfig
@@ -46,7 +44,7 @@ const (
 func New(cfg uber.PluginConfig) (z uber.Plugin, err error) {
 	p := &plugin{}
 	p.cfg, err = loadConfig(cfg.Config)
-	return  p, nil
+	return p, nil
 }
 func (p *plugin) Init() error {
 	return nil
@@ -134,12 +132,12 @@ func (p *plugin) nextStateFromClick() {
 			p.breakEnd = time.Now().Add(time.Duration(p.cfg.LongBreakTime) * time.Minute)
 			p.state = inLongBreak
 		} else {
-			p.breakEnd = time.Now().Add(time.Duration(p.cfg.ShortBreakTime)* time.Minute)
+			p.breakEnd = time.Now().Add(time.Duration(p.cfg.ShortBreakTime) * time.Minute)
 			p.state = inShortBreak
 		}
 	case inBreakEnd:
 		p.pomodoroEnd = time.Now().Add(time.Duration(p.cfg.PomodoroTime) * time.Minute)
-		p.state=inPomodor
+		p.state = inPomodor
 	case inShortBreak:
 	case inLongBreak:
 	default:
@@ -157,16 +155,17 @@ func (p *plugin) nextStateFromTime() {
 		}
 	case inShortBreak:
 		if time.Now().After(p.breakEnd) {
-			p.state=inBreakEnd
+			p.state = inBreakEnd
 		}
 	case inLongBreak:
 		if time.Now().After(p.breakEnd) {
-			p.state=inBreakEnd
+			p.state = inBreakEnd
 		}
 	}
 }
+
 // parse received structure into pluginConfig
-func loadConfig(c config.PluginConfig) (pluginConfig,error) {
+func loadConfig(c config.PluginConfig) (pluginConfig, error) {
 	var cfg pluginConfig
 	cfg.Prefix = "ex: "
 	cfg.PomodoroTime = 25
