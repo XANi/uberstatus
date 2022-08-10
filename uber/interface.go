@@ -1,6 +1,9 @@
 package uber
 
-import "github.com/XANi/uberstatus/config"
+import (
+	"github.com/XANi/uberstatus/config"
+	"go.uber.org/zap"
+)
 
 // event passed from X/status bar manager
 type Event struct {
@@ -38,5 +41,6 @@ type TaggedUpdate struct {
 
 type PluginConfig struct {
 	Config config.PluginConfig
-	Update   chan Update // chan to send panel updates
+	Update chan Update // chan to send panel updates
+	Logger *zap.SugaredLogger
 }

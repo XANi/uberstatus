@@ -1,20 +1,18 @@
 package uptime
 
 import (
+	"bufio"
+	"fmt"
 	"github.com/XANi/uberstatus/config"
 	"github.com/XANi/uberstatus/uber"
 	"github.com/XANi/uberstatus/util"
-	//	"gopkg.in/yaml.v1"
-	"github.com/op/go-logging"
+	"go.uber.org/zap"
+
 	"time"
-	"bufio"
-	"fmt"
 )
 
 // Example plugin for uberstatus
 // plugins are wrapped in go() when loading
-
-var log = logging.MustGetLogger("main")
 
 // set up a pluginConfig struct
 type pluginConfig struct {
@@ -23,6 +21,7 @@ type pluginConfig struct {
 }
 
 type plugin struct {
+	l                 *zap.SugaredLogger
 	cfg               pluginConfig
 	uptimeReader      uptimeReader
 	uptimeFileScanner *bufio.Scanner
@@ -33,21 +32,25 @@ type plugin struct {
 }
 
 type uptimeTpl struct {
-	Prefix string
-	Uptime string
+	Prefix      string
+	Uptime      string
 	UptimeShort string
 }
 
 func New(cfg uber.PluginConfig) (z uber.Plugin, err error) {
-	p := &plugin{}
+	p := &plugin{
+		l: cfg.Logger,
+	}
 	p.cfg, err = loadConfig(cfg.Config)
-	return  p, nil
+	return p, nil
 }
 
 func (p *plugin) Init() (err error) {
-	p.uptimeTpl, err = util.NewTemplate("uptime",`{{printf "%s %s" .Prefix .Uptime}}`)
-	if err != nil { return }
-	p.uptimeTplShort, err = util.NewTemplate("uptimeShort",`u:{{.UptimeShort}}`)
+	p.uptimeTpl, err = util.NewTemplate("uptime", `{{printf "%s %s" .Prefix .Uptime}}`)
+	if err != nil {
+		return
+	}
+	p.uptimeTplShort, err = util.NewTemplate("uptimeShort", `u:{{.UptimeShort}}`)
 	return
 }
 
@@ -57,12 +60,12 @@ func (p *plugin) GetUpdateInterval() int {
 func (p *plugin) UpdatePeriodic() uber.Update {
 	var update uber.Update
 	uptime := p.getUptime()
-	uptimeValue :=  uptimeTpl {
-		Prefix: p.cfg.Prefix,
-		Uptime: fmt.Sprintf("%7s", util.FormatDuration(uptime)),
+	uptimeValue := uptimeTpl{
+		Prefix:      p.cfg.Prefix,
+		Uptime:      fmt.Sprintf("%7s", util.FormatDuration(uptime)),
 		UptimeShort: util.FormatDuration(uptime),
 	}
-	update.FullText =  p.uptimeTpl.ExecuteString(&uptimeValue)
+	update.FullText = p.uptimeTpl.ExecuteString(&uptimeValue)
 	update.ShortText = p.uptimeTplShort.ExecuteString(&uptimeValue)
 	update.Markup = `pango`
 	update.Color = `#66cc66`
@@ -81,9 +84,9 @@ func (p *plugin) UpdateFromEvent(e uber.Event) uber.Update {
 }
 
 // parse received structure into pluginConfig
-func loadConfig(c config.PluginConfig) (pluginConfig,error) {
+func loadConfig(c config.PluginConfig) (pluginConfig, error) {
 	var cfg pluginConfig
-	cfg.Interval = 60 * 1000 - 50
+	cfg.Interval = 60*1000 - 50
 	cfg.Prefix = "u:"
 
 	return cfg, c.GetConfig(&cfg)

@@ -4,16 +4,15 @@ import (
 	"github.com/XANi/uberstatus/config"
 	"github.com/XANi/uberstatus/uber"
 	"github.com/XANi/uberstatus/util"
+	"go.uber.org/zap"
+
 	//	"gopkg.in/yaml.v1"
 	"fmt"
-	"github.com/op/go-logging"
 	"time"
 )
 
 // Example plugin for uberstatus
 // plugins are wrapped in go() when loading
-
-var log = logging.MustGetLogger("main")
 
 // set up a config struct
 type pluginConfig struct {
@@ -22,20 +21,23 @@ type pluginConfig struct {
 }
 
 type state struct {
-	cfg pluginConfig
-	nextTs time.Time
+	l               *zap.SugaredLogger
+	cfg             pluginConfig
+	nextTs          time.Time
 	hasMemAvailable bool //only newer kernels have it
 }
 
 func New(cfg uber.PluginConfig) (u uber.Plugin, err error) {
-	s := &state{}
+	s := &state{
+		l: cfg.Logger,
+	}
 	s.cfg, err = loadConfig(cfg.Config)
-	return  s, err
+	return s, err
 }
 func (state *state) Init() error {
 	mem := getMemInfo()
 	if mem.HasAvailable {
-		log.Notice(`has MemAvailable in /proc/meminfo, using that as source for "free" memory`)
+		state.l.Info(`has MemAvailable in /proc/meminfo, using that as source for "free" memory`)
 	}
 	return nil
 }

@@ -6,7 +6,7 @@ import (
 	"github.com/XANi/uberstatus/config"
 	"github.com/XANi/uberstatus/uber"
 	"github.com/XANi/uberstatus/util"
-	"github.com/op/go-logging"
+	"go.uber.org/zap"
 	"io/ioutil"
 	"net"
 	"strconv"
@@ -14,25 +14,24 @@ import (
 	"time"
 )
 
-var log = logging.MustGetLogger("main")
-
 type pluginConfig struct {
 	Iface    string
 	Interval int
 }
 
 type netStats struct {
-	ip     string
-	tx     uint64
-	rx     uint64
-	oldTx  uint64
-	oldRx  uint64
-	ewmaTx ewma.MovingAverage
-	ewmaRx ewma.MovingAverage
-	oldTs  time.Time
-	ts     time.Time
-	nextTs time.Time
-	iface string
+	l        *zap.SugaredLogger
+	ip       string
+	tx       uint64
+	rx       uint64
+	oldTx    uint64
+	oldRx    uint64
+	ewmaTx   ewma.MovingAverage
+	ewmaRx   ewma.MovingAverage
+	oldTs    time.Time
+	ts       time.Time
+	nextTs   time.Time
+	iface    string
 	interval int
 }
 
@@ -40,11 +39,14 @@ const ShowFirstAddr = 0
 const ShowSecondAddr = 1
 const ShowAllAddr = -1
 
-
 func New(c uber.PluginConfig) (uber.Plugin, error) {
-	stats := &netStats{}
-	cfg,err := loadConfig(c.Config)
-	if err != nil {return nil,err}
+	stats := &netStats{
+		l: c.Logger,
+	}
+	cfg, err := loadConfig(c.Config)
+	if err != nil {
+		return nil, err
+	}
 	stats.ewmaRx = ewma.NewMovingAverage(5)
 	stats.ewmaTx = ewma.NewMovingAverage(5)
 	stats.oldTs = time.Now()
@@ -52,10 +54,10 @@ func New(c uber.PluginConfig) (uber.Plugin, error) {
 	stats.iface = cfg.Iface
 	stats.interval = cfg.Interval
 
-	return  stats, nil
+	return stats, nil
 }
 
-func (s *netStats) Init() error {return nil}
+func (s *netStats) Init() error { return nil }
 
 func (s *netStats) GetUpdateInterval() int {
 	return s.interval
@@ -76,11 +78,11 @@ func (n *netStats) UpdateFromEvent(ev uber.Event) uber.Update {
 		return n.UpdateAddr(ShowAllAddr)
 	}
 }
-func loadConfig(c config.PluginConfig) (pluginConfig,error) {
+func loadConfig(c config.PluginConfig) (pluginConfig, error) {
 	var cfg pluginConfig
 	cfg.Iface = `lo`
 	cfg.Interval = 1000
-		return cfg, c.GetConfig(&cfg)
+	return cfg, c.GetConfig(&cfg)
 }
 
 func (stats *netStats) UpdateAddr(addr_id int) (ev uber.Update) {
@@ -154,7 +156,7 @@ func (stats *netStats) Update() (ev uber.Update, ok bool) {
 	tsDiff := float64(stats.ts.UnixNano() - stats.oldTs.UnixNano())
 	tsDiff = tsDiff / 1000000000 //float64(time.Duration(time.Second).Nanoseconds()) // normalize
 	if tsDiff < 0.01 {
-		return ev,false // quicker probing doesnt make sense, no div by 0, should probably return an error...
+		return ev, false // quicker probing doesnt make sense, no div by 0, should probably return an error...
 	}
 	rxBw := float64(rxDiff) / tsDiff
 	txBw := float64(txDiff) / tsDiff
@@ -181,7 +183,7 @@ func (stats *netStats) Update() (ev uber.Update, ok bool) {
 		unit,
 	)
 	ev.ShortText = fmt.Sprintf(`-%s-`, stats.iface)
-	return ev,true
+	return ev, true
 }
 
 func getStats(iface string) (uint64, uint64) {

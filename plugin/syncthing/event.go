@@ -77,7 +77,7 @@ func (p *plugin) updateSynctingEvents() {
 		var events STEvents
 		err = json.NewDecoder(res.Body).Decode(&events)
 		if err != nil {
-			log.Warningf("Error decoding event: %s", err)
+			p.l.Warnf("Error decoding event: %s", err)
 			continue
 		}
 		for _, ev := range events {
@@ -93,7 +93,7 @@ func (p *plugin) updateSynctingEvents() {
 			case "FolderSummary":
 				p.handleEventFolderSummary(ev.Data)
 			default:
-				//log.Debugf("event: %s\n %s",ev.Type,string(ev.Data))
+				//p.l.Debugf("event: %s\n %s",ev.Type,string(ev.Data))
 			}
 		}
 	}
@@ -103,7 +103,7 @@ func (p *plugin) handleEventStateChanged(m json.RawMessage) {
 	var event STEventStateChanged
 	err := json.Unmarshal(m, &event)
 	if err != nil {
-		log.Warningf("could not unmarshal event: %s", err)
+		p.l.Warnf("could not unmarshal event: %s", err)
 		return
 	}
 	state := statusToStatusId(event.To)
@@ -115,7 +115,7 @@ func (p *plugin) handleEventFolderCompletion(m json.RawMessage) {
 	var event STEventFolderCompletion
 	err := json.Unmarshal(m, &event)
 	if err != nil {
-		log.Warningf("could not unmarshal event: %s", err)
+		p.l.Warnf("could not unmarshal event: %s", err)
 		return
 	}
 
@@ -129,7 +129,7 @@ func (p *plugin) handleEventFolderSummary(m json.RawMessage) {
 	var event STEventFolderSummary
 	err := json.Unmarshal(m, &event)
 	if err != nil {
-		log.Warningf("could not unmarshal event: %s", err)
+		p.l.Warnf("could not unmarshal event: %s", err)
 		return
 	}
 	stateId := statusToStatusId(event.Summary.State)

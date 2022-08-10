@@ -6,20 +6,17 @@ import (
 	"github.com/XANi/uberstatus/config"
 	"github.com/XANi/uberstatus/uber"
 	"github.com/XANi/uberstatus/util"
+	"go.uber.org/zap"
 	"os/exec"
 	"strconv"
 	"strings"
 	"sync"
 
-	//	"gopkg.in/yaml.v1"
-	"github.com/op/go-logging"
 	"time"
 )
 
 // Example plugin for uberstatus
 // plugins are wrapped in go() when loading
-
-var log = logging.MustGetLogger("main")
 
 // set up a pluginConfig struct
 type pluginConfig struct {
@@ -41,6 +38,7 @@ type gpuInfo struct {
 }
 
 type plugin struct {
+	l          *zap.SugaredLogger
 	cfg        pluginConfig
 	cnt        int
 	ev         int
@@ -59,7 +57,9 @@ type csvColumn struct {
 }
 
 func New(cfg uber.PluginConfig) (z uber.Plugin, err error) {
-	p := &plugin{}
+	p := &plugin{
+		l: cfg.Logger,
+	}
 	p.cfg, err = loadConfig(cfg.Config)
 	if p.cfg.Type != "nvidia" {
 		return nil, fmt.Errorf(`only "nvidia" gpu type is supported`)
@@ -123,16 +123,16 @@ func (p *plugin) Init() (err error) {
 		)
 		pipe, err := cmd.StdoutPipe()
 		if err != nil {
-			log.Errorf("could not connect input pipe to nvidia-smi:%s", err)
+			p.l.Errorf("could not connect input pipe to nvidia-smi:%s", err)
 		}
 		err = cmd.Start()
 		if err != nil {
-			log.Errorf("could not start nvidia-smi:%s", err)
+			p.l.Errorf("could not start nvidia-smi:%s", err)
 		}
 
 		scanner := bufio.NewScanner(pipe)
 		for scanner.Scan() {
-			//log.Errorf("--- %s", scanner.Text())
+			//p.l.Errorf("--- %s", scanner.Text())
 			ssv := strings.Split(scanner.Text(), ",")
 			p.Lock()
 			for idx, column := range csvColumns {
@@ -140,7 +140,7 @@ func (p *plugin) Init() (err error) {
 				if column.IntPtr != nil {
 					i, err := strconv.Atoi(val)
 					if err != nil {
-						log.Warningf("Error converting [%s] to int; %s", val, err)
+						p.l.Warnf("Error converting [%s] to int; %s", val, err)
 					} else {
 						*column.IntPtr = i
 					}
@@ -148,7 +148,7 @@ func (p *plugin) Init() (err error) {
 				if column.FloatPtr != nil {
 					f, err := strconv.ParseFloat(val, 32)
 					if err != nil {
-						log.Warningf("Error converting [%s] to float; %s", val, err)
+						p.l.Warnf("Error converting [%s] to float; %s", val, err)
 					} else {
 						*column.FloatPtr = float32(f)
 					}

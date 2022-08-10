@@ -92,14 +92,14 @@ func (state *state) updateWeather() {
 		url.QueryEscape(state.cfg.OpenWeatherLocation),
 		state.cfg.OpenWeatherApiKey))
 	if err != nil {
-		log.Warningf("Weather get error: %s", err)
+		state.l.Warnf("Weather get error: %s", err)
 		return
 	}
 	defer r.Body.Close()
 	var weather openweatherCurrentWeather
 	err = json.NewDecoder(r.Body).Decode(&weather)
 	if err != nil {
-		log.Warningf("Weather JSON decode error: %s", err)
+		state.l.Warnf("Weather JSON decode error: %s", err)
 	}
 	state.currentWeather = &weather
 	state.lastWeatherUpdate = time.Now()
@@ -137,7 +137,7 @@ func (state *state) getOpenweatherPrognosis() uber.Update {
 	} else {
 		update.FullText = "data update failed"
 	}
-	log.Error(update.FullText)
+	state.l.Error(update.FullText)
 	return update
 }
 

@@ -6,16 +6,14 @@ import (
 	"github.com/XANi/uberstatus/config"
 	"github.com/XANi/uberstatus/uber"
 	"github.com/XANi/uberstatus/util"
-	//	"gopkg.in/yaml.v1"
-	"github.com/op/go-logging"
+	"go.uber.org/zap"
+
 	"sync"
 	"time"
 )
 
 // Example plugin for uberstatus
 // plugins are wrapped in go() when loading
-
-var log = logging.MustGetLogger("main")
 
 // set up a pluginConfig struct
 type pluginConfig struct {
@@ -28,6 +26,7 @@ type pluginConfig struct {
 }
 
 type state struct {
+	l              *zap.SugaredLogger
 	cfg            pluginConfig
 	dropRate       *ewma.Ewma
 	pingAvg        *ewma.Ewma
@@ -71,6 +70,7 @@ func New(cfg uber.PluginConfig) (z uber.Plugin, err error) {
 	st.pingAvg = ewma.NewEwma(time.Duration(60 * time.Second))
 	st.rollingPingAvg = ewma.NewEwma(time.Duration(5 * time.Second))
 	st.stats = &pingStat{}
+	st.l = cfg.Logger
 	switch st.cfg.AddrType {
 	case "tcp":
 		st.ping = tcpPing
@@ -87,11 +87,9 @@ func (st *state) Init() error {
 		for {
 			pingUpdCh := make(chan bool, 1)
 			go func() {
-				log.Warningf("started ping %+v", st.cfg.Addr)
 				upd := st.ping(st.cfg.Addr)
 				st.updateState(&upd)
 				st.rollingPingAvg.UpdateNow(float64(upd.Duration.Nanoseconds()))
-				log.Warningf("ping %+v", upd)
 				pingUpdCh <- true
 			}()
 			done := false
@@ -108,7 +106,6 @@ func (st *state) Init() error {
 				if done || i > 20 {
 					break
 				}
-				log.Errorf("still in loop %+v", st.rollingPingAvg)
 			}
 
 			if st.cfg.PingInterval > 0 {

@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/XANi/uberstatus/config"
-	"github.com/op/go-logging"
+	"go.uber.org/zap"
 	"os"
 	"os/exec"
 	"strconv"
@@ -14,9 +14,8 @@ import (
 	"github.com/XANi/uberstatus/uber"
 )
 
-var log = logging.MustGetLogger("main")
-
 type pluginConfig struct {
+	l        *zap.SugaredLogger
 	prefix   string
 	Command  string
 	Interval int
@@ -27,6 +26,7 @@ type pluginConfig struct {
 
 func New(cfg uber.PluginConfig) (uber.Plugin, error) {
 	p, err := loadConfig(cfg.Config)
+	p.l = cfg.Logger
 	return &p, err
 }
 func (c *pluginConfig) Init() error {
@@ -77,13 +77,13 @@ func (cfg *pluginConfig) Update(ev uber.Event) uber.Update {
 		os.Setenv("BLOCK_Y", strconv.Itoa(ev.Y))
 	}
 	cmd := exec.Command(cfg.Command)
-	log.Debug(cfg.Command)
+	cfg.l.Debug(cfg.Command)
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	err := cmd.Run()
 
 	if err != nil {
-		log.Errorf("Error running %s: %s", cfg.Command, err)
+		cfg.l.Errorf("Error running %s: %s", cfg.Command, err)
 	}
 	s := out.String()
 
@@ -103,7 +103,7 @@ func (cfg *pluginConfig) Update(ev uber.Event) uber.Update {
 	}
 	// len of 1 means there was nothing to split, no \n probably means invalid input
 	if st_len <= 1 {
-		log.Warningf("Command %s returned nothing", cfg.Command)
+		cfg.l.Warnf("Command %s returned nothing", cfg.Command)
 		return upd
 	} else {
 		upd.FullText = fmt.Sprint(cfg.prefix, st[0])

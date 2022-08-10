@@ -7,30 +7,27 @@ import (
 	"github.com/XANi/uberstatus/plugin/mqtt"
 	"github.com/XANi/uberstatus/plugin/syncthing"
 
-	"github.com/op/go-logging"
 	"gopkg.in/yaml.v1"
 	//
 	"github.com/XANi/uberstatus/plugin/clock"
 	"github.com/XANi/uberstatus/plugin/cpu"
 	"github.com/XANi/uberstatus/plugin/cpufreq"
+	"github.com/XANi/uberstatus/plugin/debug"
+	"github.com/XANi/uberstatus/plugin/df"
 	"github.com/XANi/uberstatus/plugin/example"
 	"github.com/XANi/uberstatus/plugin/i3blocks"
 	"github.com/XANi/uberstatus/plugin/memory"
 	"github.com/XANi/uberstatus/plugin/network"
 	"github.com/XANi/uberstatus/plugin/ping"
+	"github.com/XANi/uberstatus/plugin/pipe"
 	"github.com/XANi/uberstatus/plugin/pomodoro"
-        "github.com/XANi/uberstatus/plugin/uptime"
+	"github.com/XANi/uberstatus/plugin/uptime"
 	"github.com/XANi/uberstatus/plugin/weather"
 	"github.com/XANi/uberstatus/uber"
 	"time"
-	"github.com/XANi/uberstatus/plugin/df"
-	"github.com/XANi/uberstatus/plugin/debug"
-	"github.com/XANi/uberstatus/plugin/pipe"
 )
 
-var log = logging.MustGetLogger("main")
-
-var plugins = map[string]func(uber.PluginConfig)(uber.Plugin,error){
+var plugins = map[string]func(uber.PluginConfig) (uber.Plugin, error){
 	"clock":     clock.New,
 	"cpu":       cpu.New,
 	"cpufreq":   cpufreq.New,
@@ -50,20 +47,20 @@ var plugins = map[string]func(uber.PluginConfig)(uber.Plugin,error){
 	"weather":   weather.New,
 }
 
-
 func NewPlugin(
 	config config.PluginConfig,
 	update_filtered chan uber.Update, // Update channel
-) (uber.Plugin,error) {
+) (uber.Plugin, error) {
 	events := make(chan uber.Event, 1)
 	update := make(chan uber.Update, 1)
 	trigger := make(chan uber.Trigger, 1)
-	log.Infof("Adding plugin %s, instance %s", config.Name, config.Instance)
+	config.Logger.Infof("Adding plugin %s, instance %s", config.Name, config.Instance)
 	str, _ := yaml.Marshal(config)
-	log.Debug(string(str))
+	config.Logger.Debug(string(str))
 	pluginCfg := uber.PluginConfig{
-		Config:   config,
-		Update:   update,
+		Config: config,
+		Update: update,
+		Logger: config.Logger,
 	}
 	// TODO make it global somehow
 	// interval := 1000

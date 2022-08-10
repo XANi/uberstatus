@@ -4,17 +4,15 @@ import (
 	"github.com/XANi/uberstatus/config"
 	"github.com/XANi/uberstatus/uber"
 	"github.com/XANi/uberstatus/util"
+	"go.uber.org/zap"
+
 	//	"gopkg.in/yaml.v1"
 	"fmt"
-	"github.com/op/go-logging"
 	"time"
 )
 
 // Example plugin for uberstatus
 // plugins are wrapped in go() when loading
-
-var log = logging.MustGetLogger("main")
-
 
 // set up a pluginConfig struct
 type pluginConfig struct {
@@ -28,19 +26,23 @@ type state struct {
 	cnt           int
 	ev            int
 	nextTs        time.Time
+	l             *zap.SugaredLogger
 	previousTicks []cpuTicks
 	ticksDiff     []cpuTicks
 }
 
 // pregenerate lookup table at start
 var ltColor, ltBar = util.GenerateColorBarLookupTable()
-func New(cfg uber.PluginConfig) (z uber.Plugin,err error) {
-	p := &state{}
+
+func New(cfg uber.PluginConfig) (z uber.Plugin, err error) {
+	p := &state{
+		l: cfg.Logger,
+	}
 	p.cfg, err = loadConfig(cfg.Config)
-	return  p, err
+	return p, err
 }
 
-func (st *state)Init() error {
+func (st *state) Init() error {
 	st.previousTicks, _ = GetCpuTicks()
 	st.ticksDiff, _ = GetCpuTicks()
 	return nil
@@ -96,7 +98,7 @@ func generateLookupTables() {
 }
 
 // parse received structure into pluginConfig
-func loadConfig(c config.PluginConfig) (pluginConfig,error) {
+func loadConfig(c config.PluginConfig) (pluginConfig, error) {
 
 	var cfg pluginConfig
 	cfg.Interval = 1000

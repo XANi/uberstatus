@@ -3,15 +3,13 @@ package weather
 import (
 	"github.com/XANi/uberstatus/config"
 	"github.com/XANi/uberstatus/uber"
-	//	"gopkg.in/yaml.v1"
-	"github.com/op/go-logging"
+	"go.uber.org/zap"
+
 	"time"
 )
 
 // Example plugin for uberstatus
 // plugins are wrapped in go() when loading
-
-var log = logging.MustGetLogger("main")
 
 // set up a pluginConfig struct
 type pluginConfig struct {
@@ -22,21 +20,23 @@ type pluginConfig struct {
 }
 
 type state struct {
+	l                 *zap.SugaredLogger
 	cfg               pluginConfig
 	cnt               int
 	ev                int
 	currentWeather    *openweatherCurrentWeather
 	lastWeatherUpdate time.Time
-
 }
 
 type OpenWeatherMapWeather struct {
 }
 
 func New(cfg uber.PluginConfig) (z uber.Plugin, err error) {
-	p := &state{}
+	p := &state{
+		l: cfg.Logger,
+	}
 	p.cfg, err = loadConfig(cfg.Config)
-	return  p, nil
+	return p, nil
 }
 
 func (state *state) Init() error {
@@ -56,9 +56,9 @@ func (state *state) UpdateFromEvent(e uber.Event) uber.Update {
 }
 
 // parse received structure into pluginConfig
-func loadConfig(c config.PluginConfig) (pluginConfig,error) {
+func loadConfig(c config.PluginConfig) (pluginConfig, error) {
 	var cfg pluginConfig
-	cfg.Interval = 60 * 1000 - 50
+	cfg.Interval = 60*1000 - 50
 	cfg.Prefix = "u:"
 
 	return cfg, c.GetConfig(&cfg)

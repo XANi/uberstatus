@@ -3,7 +3,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/op/go-logging"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"gopkg.in/yaml.v3"
 	//	"runtime"
 	//	"io/ioutil"
@@ -22,18 +23,62 @@ import (
 	"github.com/XANi/uberstatus/uber"
 )
 
-type Config struct {
-	Plugins *map[string]map[string]interface{}
-}
-
+var log *zap.SugaredLogger
 var debug = flag.Bool("d", false, "enable debug server on port 6060[pprof]")
 var configFile = flag.String("config", "", "path to config file")
 
 var version string
-var log = logging.MustGetLogger("main")
-var logFormat = logging.MustStringFormatter(
-	"%{color}%{time:15:04:05.000} %{shortpkg}↛%{shortfunc}: %{level:.4s} %{id:03x} %{color:reset}%{message}",
-)
+
+func init() {
+	consoleEncoderConfig := zap.NewDevelopmentEncoderConfig()
+	// naive systemd detection. Drop timestamp if running under it
+	if os.Getenv("INVOCATION_ID") != "" || os.Getenv("JOURNAL_STREAM") != "" {
+		consoleEncoderConfig.TimeKey = ""
+	}
+	consoleEncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+	consoleEncoder := zapcore.NewConsoleEncoder(consoleEncoderConfig)
+	consoleStderr := zapcore.Lock(os.Stderr)
+	_ = consoleStderr
+	logLevel := zapcore.InfoLevel
+	if *debug {
+		logLevel = zapcore.DebugLevel
+	} else {
+	}
+
+	// if needed point differnt priority log to different place
+	highPriority := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
+		return lvl >= logLevel
+	})
+	lowPriority := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
+		if *debug {
+			return lvl < logLevel
+		} else {
+			return false
+		}
+	})
+	core := zapcore.NewTee(
+		zapcore.NewCore(consoleEncoder, os.Stderr, lowPriority),
+		zapcore.NewCore(consoleEncoder, os.Stderr, highPriority),
+	)
+	logger := zap.New(core)
+	if *debug {
+		logger = logger.WithOptions(
+			zap.Development(),
+			zap.AddCaller(),
+			zap.AddStacktrace(highPriority),
+		)
+	} else {
+		logger = logger.WithOptions(
+			zap.AddCaller(),
+		)
+	}
+	log = logger.Sugar()
+
+}
+
+type Config struct {
+	Plugins *map[string]map[string]interface{}
+}
 
 type pluginMap struct {
 	// channels used to send events to plugin
@@ -50,12 +95,6 @@ func main() {
 			log.Errorf("%+v", http.ListenAndServe("127.0.0.1:6060", nil))
 		}()
 	}
-	logBackend := logging.NewLogBackend(os.Stderr, "", 0)
-	logBackendFormatter := logging.NewBackendFormatter(logBackend, logFormat)
-	_ = logBackendFormatter
-	logBackendLeveled := logging.AddModuleLevel(logBackendFormatter)
-	logBackendLeveled.SetLevel(logging.INFO, "")
-	logging.SetBackend(logBackendLeveled)
 	var cfg config.Config
 	var err error
 	if len(*configFile) > 0 {
@@ -89,6 +128,7 @@ func main() {
 		plugins: make(map[string]map[string]uber.Plugin),
 	}
 	for idx, pluginCfg := range cfg.Plugins {
+		pluginCfg.Logger = log.Named(pluginCfg.Name)
 		log.Infof("Loading plugin %s into slot %d: %+v", pluginCfg.Plugin, idx, pluginCfg)
 		if plugins.slotMap[pluginCfg.Name] == nil {
 			plugins.slotMap[pluginCfg.Name] = make(map[string]int)
@@ -126,7 +166,7 @@ func main() {
 		select {
 		case ow <- out:
 		default:
-			log.Warning("output channel full, discarding output!")
+			log.Warn("output channel full, discarding output!")
 		}
 	}
 }
@@ -141,7 +181,7 @@ func (plugins *pluginMap) parseUpdate(update uber.Update) {
 	if val, ok := plugins.slotMap[update.Name][update.Instance]; ok {
 		plugins.slots[val] = i3bar.CreateMsg(update)
 	} else {
-		log.Warningf("Got msg from unknown place, name: %s, instance: %s", update.Name, update.Instance)
+		log.Warnf("Got msg from unknown place, name: %s, instance: %s", update.Name, update.Instance)
 	}
 }
 

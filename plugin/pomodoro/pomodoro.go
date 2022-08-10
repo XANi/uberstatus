@@ -4,16 +4,15 @@ import (
 	"github.com/XANi/uberstatus/config"
 	"github.com/XANi/uberstatus/uber"
 	"github.com/XANi/uberstatus/util"
+	"go.uber.org/zap"
+
 	//	"gopkg.in/yaml.v1"
 	"fmt"
-	"github.com/op/go-logging"
 	"time"
 )
 
 // Example plugin for uberstatus
 // plugins are wrapped in go() when loading
-
-var log = logging.MustGetLogger("main")
 
 // set up a pluginConfig struct
 type pluginConfig struct {
@@ -24,6 +23,7 @@ type pluginConfig struct {
 }
 
 type plugin struct {
+	l           *zap.SugaredLogger
 	cfg         pluginConfig
 	pomodoroEnd time.Time
 	breakEnd    time.Time
@@ -42,7 +42,9 @@ const (
 )
 
 func New(cfg uber.PluginConfig) (z uber.Plugin, err error) {
-	p := &plugin{}
+	p := &plugin{
+		l: cfg.Logger,
+	}
 	p.cfg, err = loadConfig(cfg.Config)
 	return p, nil
 }
@@ -141,7 +143,7 @@ func (p *plugin) nextStateFromClick() {
 	case inShortBreak:
 	case inLongBreak:
 	default:
-		log.Warningf("out of state machine: %d", p.state)
+		p.l.Warnf("out of state machine: %d", p.state)
 		p.state = stopped
 	}
 }

@@ -1,34 +1,33 @@
 package pipe
 
 import (
+	"bufio"
+	"fmt"
 	"github.com/XANi/uberstatus/config"
 	"github.com/XANi/uberstatus/uber"
 	"github.com/XANi/uberstatus/util"
-	//	"gopkg.in/yaml.v1"
-	"github.com/op/go-logging"
-	"time"
+	"go.uber.org/zap"
+
 	"os"
-	"bufio"
 	"sync"
-	"fmt"
 	"syscall"
+	"time"
 )
 
 // Example plugin for uberstatus
 // plugins are wrapped in go() when loading
 
-var log = logging.MustGetLogger("main")
-
 // set up a pluginConfig struct
 type pluginConfig struct {
-	prefix   string
-	interval int
-	pipePath string
+	prefix        string
+	interval      int
+	pipePath      string
 	parseTemplate bool
-	markup bool
+	markup        bool
 }
 
 type plugin struct {
+	l *zap.SugaredLogger
 	sync.Mutex
 	cfg      pluginConfig
 	cnt      int
@@ -38,11 +37,13 @@ type plugin struct {
 	updateCh chan uber.Update
 }
 
-func New(cfg uber.PluginConfig) (z uber.Plugin,err error) {
-	p := &plugin{}
+func New(cfg uber.PluginConfig) (z uber.Plugin, err error) {
+	p := &plugin{
+		l: cfg.Logger,
+	}
 	p.cfg, err = loadConfig(cfg.Config)
 	p.updateCh = cfg.Update
-	return  p, err
+	return p, err
 }
 
 func (p *plugin) Init() error {
@@ -63,11 +64,11 @@ func (p *plugin) UpdatePeriodic() (update uber.Update) {
 	p.Lock()
 	defer p.Unlock()
 	defer func() {
-        if r := recover(); r != nil {
-			p.text = fmt.Sprintf("panic in template from pipe [%s]", p.cfg.pipePath )
+		if r := recover(); r != nil {
+			p.text = fmt.Sprintf("panic in template from pipe [%s]", p.cfg.pipePath)
 			update.FullText = p.text
 			p.updateCh <- update
-        }
+		}
 	}()
 	if p.cfg.parseTemplate {
 		tpl, _ := util.NewTemplate("pipe", p.text)
@@ -88,7 +89,7 @@ func (p *plugin) UpdateFromEvent(e uber.Event) uber.Update {
 }
 
 // parse received structure into pluginConfig
-func loadConfig(c config.PluginConfig) (pluginConfig,error) {
+func loadConfig(c config.PluginConfig) (pluginConfig, error) {
 	var cfg pluginConfig
 	cfg.interval = 10000
 	cfg.prefix = "ex: "
@@ -99,13 +100,13 @@ func loadConfig(c config.PluginConfig) (pluginConfig,error) {
 func (p *plugin) startListener() {
 	err := syscall.Mkfifo(p.cfg.pipePath, 0640)
 	if err != nil {
-		log.Errorf("can't make pipe in %s:%s", p.cfg.pipePath, err)
+		p.l.Errorf("can't make pipe in %s:%s", p.cfg.pipePath, err)
 	}
 	// pipe needs to be reopened after each writer "disconnects" (EOF)
 	for {
 		pipe, err := os.OpenFile(p.cfg.pipePath, os.O_RDONLY, 0640)
 		if err != nil {
-			log.Errorf("Error opening pipe [%s]:%s", p.cfg.pipePath, err)
+			p.l.Errorf("Error opening pipe [%s]:%s", p.cfg.pipePath, err)
 			return
 		}
 		scanner := bufio.NewScanner(pipe)

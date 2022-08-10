@@ -4,16 +4,15 @@ import (
 	"github.com/XANi/uberstatus/config"
 	"github.com/XANi/uberstatus/uber"
 	"github.com/XANi/uberstatus/util"
+	"go.uber.org/zap"
+
 	//	"gopkg.in/yaml.v1"
 	"fmt"
-	"github.com/op/go-logging"
 	"syscall"
 )
 
 // Example plugin for uberstatus
 // plugins are wrapped in go() when loading
-
-var log = logging.MustGetLogger("main")
 
 // set up a config struct
 type pluginConfig struct {
@@ -27,14 +26,18 @@ type pluginConfig struct {
 }
 
 type state struct {
+	l   *zap.SugaredLogger
 	cfg pluginConfig
 }
+
 func New(cfg uber.PluginConfig) (z uber.Plugin, err error) {
-	p := &state{}
+	p := &state{
+		l: cfg.Logger,
+	}
 	p.cfg, err = loadConfig(cfg.Config)
-	return  p, nil
+	return p, nil
 }
-func (st *state)Init() error {
+func (st *state) Init() error {
 	return nil
 }
 func (st *state) GetUpdateInterval() int {
@@ -47,7 +50,7 @@ func (state *state) UpdatePeriodic() uber.Update {
 	for _, part := range state.cfg.Mounts {
 		diskFree, diskTotal := getDiskStats(part)
 		if diskTotal == 0 {
-			update.FullText = update.FullText + fmt.Sprintf(`<span color="#ffcccc">%s:NaN</span>`,part)
+			update.FullText = update.FullText + fmt.Sprintf(`<span color="#ffcccc">%s:NaN</span>`, part)
 			continue
 		}
 		diskFreePercent := (diskFree * 100) / diskTotal

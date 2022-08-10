@@ -1,15 +1,15 @@
 package ping
 
 import (
-	"time"
 	"net/http"
+	"time"
 )
 
 var pingHttpClient = http.Client{
 	Transport:     nil,
 	CheckRedirect: nil,
 	Jar:           nil,
-	Timeout:       120000,
+	Timeout:       time.Second * 12,
 }
 
 func httpPing(addr string) pingResult {

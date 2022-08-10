@@ -1,19 +1,17 @@
 package debug
 
 import (
+	"github.com/XANi/uberstatus/config"
 	"github.com/XANi/uberstatus/uber"
 	"github.com/XANi/uberstatus/util"
-	"github.com/XANi/uberstatus/config"
-	//	"gopkg.in/yaml.v1"
-	"github.com/op/go-logging"
-	"time"
 	"github.com/efigence/go-mon"
+	"go.uber.org/zap"
+
+	"time"
 )
 
 // Example plugin for uberstatus
 // plugins are wrapped in go() when loading
-
-var log = logging.MustGetLogger("main")
 
 // set up a config struct
 type pluginConfig struct {
@@ -22,16 +20,20 @@ type pluginConfig struct {
 }
 
 type plugin struct {
-	cfg pluginConfig
-	cnt int
-	ev  int
+	l      *zap.SugaredLogger
+	cfg    pluginConfig
+	cnt    int
+	ev     int
 	nextTs time.Time
 }
 
-func New(cfg uber.PluginConfig) (z uber.Plugin,err error) {
-	p := &plugin{}
+func New(cfg uber.PluginConfig) (z uber.Plugin, err error) {
+	p := &plugin{
+		l: cfg.Logger,
+	}
+
 	p.cfg, err = loadConfig(cfg.Config)
-	return  p, err
+	return p, err
 }
 
 func (p *plugin) Init() error {
@@ -45,12 +47,12 @@ func (p *plugin) GetUpdateInterval() int {
 func (p *plugin) UpdatePeriodic() uber.Update {
 	var update uber.Update
 	// TODO precompile and preallcate
-	tpl, _ := util.NewTemplate("uberEvent",`{{color "#00aa00" "Example plugin"}}{{.}}`)
+	tpl, _ := util.NewTemplate("uberEvent", `{{color "#00aa00" "Example plugin"}}{{.}}`)
 	// example on how to allow UpdateFromEvent to display for some time
 	// without being overwritten by periodic updates.
 	// We set up ts in our plugin, update it in UpdateFromEvent() and just wait if it is in future via helper function
 	util.WaitForTs(&p.nextTs)
-	update.FullText =  tpl.ExecuteString(p.cnt)
+	update.FullText = tpl.ExecuteString(p.cnt)
 	update.Markup = `pango`
 	update.ShortText = `nope`
 	update.Color = `#66cc66`
@@ -60,8 +62,8 @@ func (p *plugin) UpdatePeriodic() uber.Update {
 
 func (p *plugin) UpdateFromEvent(e uber.Event) uber.Update {
 	var update uber.Update
-	tpl, _ := util.NewTemplate("uberEvent",`{{printf "%+v" .}}`)
-	update.FullText =  tpl.ExecuteString(e)
+	tpl, _ := util.NewTemplate("uberEvent", `{{printf "%+v" .}}`)
+	update.FullText = tpl.ExecuteString(e)
 	update.ShortText = `upd`
 	update.Color = `#cccc66`
 	p.ev++
@@ -71,7 +73,7 @@ func (p *plugin) UpdateFromEvent(e uber.Event) uber.Update {
 }
 
 // parse received structure into config
-func loadConfig(c config.PluginConfig) (pluginConfig,error) {
+func loadConfig(c config.PluginConfig) (pluginConfig, error) {
 	var cfg pluginConfig
 	cfg.Interval = 10000
 	cfg.Prefix = "ex: "

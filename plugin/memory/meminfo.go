@@ -2,6 +2,7 @@ package memory
 
 import (
 	"bufio"
+	"fmt"
 	"os"
 	"regexp"
 	"strconv"
@@ -20,15 +21,15 @@ import (
 // ...
 // struct has all in (or converted to) bytes
 type memInfo struct {
-	Total      int64
-	Free       int64
-	Buffers    int64
-	Cached     int64
-	Available  int64 // since 3.14
+	Total        int64
+	Free         int64
+	Buffers      int64
+	Cached       int64
+	Available    int64 // since 3.14
 	HasAvailable bool
-	SwapTotal  int64
-	SwapFree   int64
-	SwapCached int64
+	SwapTotal    int64
+	SwapFree     int64
+	SwapCached   int64
 }
 
 var memRegex = regexp.MustCompile(`^(\S+)\:\s+(\d+)\skB`)
@@ -36,7 +37,7 @@ var memRegex = regexp.MustCompile(`^(\S+)\:\s+(\d+)\skB`)
 func getMemInfo() (mem memInfo) {
 	file, err := os.Open("/proc/meminfo")
 	if err != nil {
-		log.Fatal(err)
+		panic(fmt.Sprintf("can't open /proc/meminfo: %s", err))
 	}
 	defer file.Close()
 
@@ -49,7 +50,7 @@ func getMemInfo() (mem memInfo) {
 		}
 		i, err := strconv.ParseInt(match[2], 10, 64)
 		if err != nil {
-			log.Warning(`cant convert %s from match %s to int`, match[2], match[1])
+			fmt.Fprintf(os.Stderr, `cant convert %s from match %s to int`, match[2], match[1])
 		}
 		i = i * 1024
 		switch {

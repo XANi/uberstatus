@@ -4,16 +4,15 @@ import (
 	"github.com/XANi/uberstatus/config"
 	"github.com/XANi/uberstatus/uber"
 	"github.com/XANi/uberstatus/util"
-	//	"gopkg.in/yaml.v1"
-	"github.com/op/go-logging"
+	"go.uber.org/zap"
+
 	"time"
 	//	"fmt"
 )
 
-var log = logging.MustGetLogger("main")
-
 type plugin struct {
-	cfg pluginConfig
+	l      *zap.SugaredLogger
+	cfg    pluginConfig
 	nextTs time.Time
 }
 
@@ -24,11 +23,12 @@ type pluginConfig struct {
 }
 
 func New(cfg uber.PluginConfig) (z uber.Plugin, err error) {
-	p := &plugin{}
+	p := &plugin{
+		l: cfg.Logger,
+	}
 	p.cfg, err = loadConfig(cfg.Config)
-	return  p, nil
+	return p, nil
 }
-
 
 func (p *plugin) Init() error {
 	return nil
@@ -40,7 +40,7 @@ func (p *plugin) GetUpdateInterval() int {
 
 func (p *plugin) UpdatePeriodic() uber.Update {
 	t := time.Now()
-	var	ev uber.Update
+	var ev uber.Update
 	util.WaitForTs(&p.nextTs)
 	ev = p.GetTimeEvent(t.Local(), p.cfg.Long_format)
 	t = time.Now().Local()
@@ -52,15 +52,15 @@ func (p *plugin) UpdateFromEvent(ev uber.Event) uber.Update {
 	var upd uber.Update
 	t := time.Now()
 	if ev.Button == 3 {
-		upd = p.GetTimeEvent(t.Local(),"2006-01-02")
+		upd = p.GetTimeEvent(t.Local(), "2006-01-02")
 	} else {
-		upd = p.GetTimeEvent(t.Local(),"Mon Jan MST")
+		upd = p.GetTimeEvent(t.Local(), "Mon Jan MST")
 	}
 	p.nextTs = t.Add(time.Second * 3)
 	return upd
 }
 
-func loadConfig(c config.PluginConfig) (pluginConfig ,error) {
+func loadConfig(c config.PluginConfig) (pluginConfig, error) {
 	var cfg pluginConfig
 	cfg.Long_format = `2006-01-02 MST 15:04:05.00`
 	cfg.Short_format = `15:04:05`

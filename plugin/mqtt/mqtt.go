@@ -7,54 +7,50 @@ import (
 	"github.com/XANi/uberstatus/util"
 	"github.com/glycerine/zygomys/zygo"
 	"github.com/goiiot/libmqtt"
+	"go.uber.org/zap"
 	"net/url"
 
-	//	"gopkg.in/yaml.v1"
-	"github.com/op/go-logging"
 	"time"
 )
 
 // Example plugin for uberstatus
 // plugins are wrapped in go() when loading
 
-var log = logging.MustGetLogger("main")
-
 // set up a pluginConfig struct
 type pluginConfig struct {
-	Prefix   string
-	Interval int
-	Address string
-	LispFilter string `yaml:"lisp_filter"`
-	Template string `yaml:"template"`
+	Prefix          string
+	Interval        int
+	Address         string
+	LispFilter      string `yaml:"lisp_filter"`
+	Template        string `yaml:"template"`
 	TemplateOnClick string `yaml:"template_on_click"`
-	Subscribe string
+	Subscribe       string
 }
 
 type plugin struct {
-	cfg    pluginConfig
-	cnt    int
-	ev     int
-	nextTs time.Time
-	m libmqtt.Client
-	zl *zygo.Zlisp
+	l              *zap.SugaredLogger
+	cfg            pluginConfig
+	cnt            int
+	ev             int
+	nextTs         time.Time
+	m              libmqtt.Client
+	zl             *zygo.Zlisp
 	lastMQTTUpdate time.Time
-	lastMessage string
-
-
+	lastMessage    string
 }
 
 func New(cfg uber.PluginConfig) (z uber.Plugin, err error) {
-	p := &plugin{}
+	p := &plugin{
+		l: cfg.Logger,
+	}
 	p.cfg, err = loadConfig(cfg.Config)
-	return  p, err
+	return p, err
 }
 
 type Event struct {
 	Msg string
 	TS  time.Time
 }
-
-
 
 func (p *plugin) Init() (err error) {
 	//p.zl = zygo.NewZlispSandbox()
@@ -84,19 +80,17 @@ func (p *plugin) Init() (err error) {
 	}
 	switch mqttUrl.Scheme {
 	case "tcp":
-		mqttOpts = append (mqttOpts,libmqtt.WithCustomTLS(nil))
+		mqttOpts = append(mqttOpts, libmqtt.WithCustomTLS(nil))
 	case "tls":
 	default:
-		return fmt.Errorf("MQTT protocol [%s] not supported",mqttUrl)
+		return fmt.Errorf("MQTT protocol [%s] not supported", mqttUrl)
 	}
 	if mqttUrl.User != nil {
 		pass, _ := mqttUrl.User.Password()
-		mqttOpts = append(mqttOpts,libmqtt.WithIdentity(mqttUrl.User.Username(), pass))
+		mqttOpts = append(mqttOpts, libmqtt.WithIdentity(mqttUrl.User.Username(), pass))
 	}
 
-
-
-	mqttOpts = append(mqttOpts,libmqtt.WithConnHandleFunc(func(client libmqtt.Client, server string, code byte, err error) {
+	mqttOpts = append(mqttOpts, libmqtt.WithConnHandleFunc(func(client libmqtt.Client, server string, code byte, err error) {
 		if err != nil {
 			// failed
 			panic(fmt.Sprintf("failed to connect: %s", err))
@@ -141,19 +135,18 @@ func (p *plugin) Init() (err error) {
 		// 	}
 		// } ()
 	}))
-	mqttOpts = append(mqttOpts,libmqtt.WithSubHandleFunc(func(client libmqtt.Client, topics []*libmqtt.Topic, err error) {
-		log.Infof("[mqtt] subscription:")
-		for _ , t :=  range topics {
-			log.Infof("[mqtt] subscribed to %s", t.Name)
+	mqttOpts = append(mqttOpts, libmqtt.WithSubHandleFunc(func(client libmqtt.Client, topics []*libmqtt.Topic, err error) {
+		p.l.Infof("[mqtt] subscription:")
+		for _, t := range topics {
+			p.l.Infof("[mqtt] subscribed to %s", t.Name)
 		}
 	}))
 
-
-	err = p.m.ConnectServer(mqttUrl.Host,mqttOpts...)
+	err = p.m.ConnectServer(mqttUrl.Host, mqttOpts...)
 	if len(p.cfg.LispFilter) == 0 {
 		p.m.HandleTopic(".*", func(client libmqtt.Client, topic string, qos libmqtt.QosLevel, msg []byte) {
-			p.lastMessage=string(msg)
-			p.lastMQTTUpdate=time.Now()
+			p.lastMessage = string(msg)
+			p.lastMQTTUpdate = time.Now()
 		})
 	} else {
 		p.m.HandleTopic(".*", func(client libmqtt.Client, topic string, qos libmqtt.QosLevel, msg []byte) {
@@ -161,10 +154,8 @@ func (p *plugin) Init() (err error) {
 		})
 	}
 
-
 	return err
 }
-
 
 func (p *plugin) GetUpdateInterval() int {
 	return p.cfg.Interval
@@ -184,13 +175,13 @@ func (p *plugin) UpdatePeriodic() uber.Update {
 	update.Markup = "pango"
 	update.Color = util.GetColorPct(
 		int(
-			(time.Now().Sub(p.lastMQTTUpdate)/(time.Minute/3))))
+			(time.Now().Sub(p.lastMQTTUpdate) / (time.Minute / 3))))
 	return update
 }
 
 func (p *plugin) UpdateFromEvent(e uber.Event) uber.Update {
 	var update uber.Update
-	tpl, _ := util.NewTemplate("uberEvent",p.cfg.TemplateOnClick)
+	tpl, _ := util.NewTemplate("uberEvent", p.cfg.TemplateOnClick)
 	update.FullText = tpl.ExecuteString(Event{
 		Msg: p.lastMessage,
 		TS:  p.lastMQTTUpdate,
@@ -199,7 +190,7 @@ func (p *plugin) UpdateFromEvent(e uber.Event) uber.Update {
 	update.Color = "pango"
 	update.Color = util.GetColorPct(
 		int(
-			(time.Now().Sub(p.lastMQTTUpdate)/(time.Minute/3))))
+			(time.Now().Sub(p.lastMQTTUpdate) / (time.Minute / 3))))
 	p.ev++
 	// set next TS updatePeriodic will wait to.
 	p.nextTs = time.Now().Add(time.Second * 3)
@@ -207,7 +198,7 @@ func (p *plugin) UpdateFromEvent(e uber.Event) uber.Update {
 }
 
 // parse received structure into pluginConfig
-func loadConfig(c config.PluginConfig) (pluginConfig,error) {
+func loadConfig(c config.PluginConfig) (pluginConfig, error) {
 	var cfg pluginConfig
 	cfg.Interval = 10000
 	cfg.Prefix = "ex: "
@@ -221,15 +212,15 @@ func (p *plugin) UpdateFromMQTT(v string) {
 	if err != nil {
 		// this should not happen as we check same string in init but oh well
 		// maybe live editing will be there someday
-		log.Errorf("error parsing expression: %s", err)
+		p.l.Errorf("error parsing expression: %s", err)
 		return
 	}
 
 	sexp, err := p.zl.Run()
 	defer p.zl.Clear()
 	if err != nil {
-		log.Errorf("error: %s", err)
-		p.lastMessage = fmt.Sprintf("LISP run err: %s on %s",err,v)
+		p.l.Errorf("error: %s", err)
+		p.lastMessage = fmt.Sprintf("LISP run err: %s on %s", err, v)
 		return
 	}
 
@@ -238,6 +229,6 @@ func (p *plugin) UpdateFromMQTT(v string) {
 		p.lastMessage = out.S
 		p.lastMQTTUpdate = time.Now()
 	default:
-		p.lastMessage = fmt.Sprintf("LISP retval should be string: %+v %s",out,err)
+		p.lastMessage = fmt.Sprintf("LISP retval should be string: %+v %s", out, err)
 	}
 }

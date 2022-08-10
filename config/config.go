@@ -1,28 +1,27 @@
 package config
 
 import (
-	"github.com/op/go-logging"
+	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
 )
 
-
-var CfgFiles =[]string{
+var CfgFiles = []string{
 	"$HOME/.config/uberstatus/uberstatus.conf",
 	"./cfg/uberstatus.conf",
 	"./cfg/uberstatus.default.conf",
 	"/usr/share/doc/uberstatus/uberstatus.example.conf",
 }
-var log = logging.MustGetLogger("main")
-
 
 type PluginConfig struct {
-	Name string `yaml:"name"`
-	Instance string `yaml:"instance"`
-	Plugin string `yaml:"plugin"`
-	Config yaml.Node `yaml:"config"`
+	Name     string             `yaml:"name"`
+	Instance string             `yaml:"instance"`
+	Plugin   string             `yaml:"plugin"`
+	Config   yaml.Node          `yaml:"config"`
+	Logger   *zap.SugaredLogger `yaml:"-"`
 }
+
 // pass your config struct to this function, it will fill it
-func (p *PluginConfig) GetConfig(i interface{}) error{
+func (p *PluginConfig) GetConfig(i interface{}) error {
 	if p.Config.Kind != 0 {
 		return p.Config.Decode(i)
 	} else {
@@ -30,12 +29,13 @@ func (p *PluginConfig) GetConfig(i interface{}) error{
 	}
 }
 
-
 type Config struct {
 	Plugins []PluginConfig
+	Logger  *zap.SugaredLogger `yaml:"-"`
 }
+
 func (c *Config) SetConfig(s string) {
-	log.Infof("Loaded config file from %s",s)
+	c.Logger.Infof("Loaded config file from %s", s)
 }
 func (c *Config) GetDefaultConfig() string {
 	return exampleConfig

@@ -94,7 +94,7 @@ var eventClient = http.Client{
 func (p *plugin) req(method, url string, body io.Reader) *http.Request {
 	api, err := http.NewRequest(method, p.cfg.ServerAddr+url, body)
 	if err != nil {
-		log.Panicf("error creating http request: %s", err)
+		p.l.Panicf("error creating http request: %s", err)
 	}
 	api.Header.Add("X-API-Key", p.cfg.ApiKey)
 	return api
@@ -105,13 +105,13 @@ func (p *plugin) updateSyncthingFolders() {
 	dirListR := p.req(http.MethodGet, "/rest/system/config", nil)
 	res, err := apiClient.Do(dirListR)
 	if err != nil {
-		log.Errorf("error getting folder list: %s", err)
+		p.l.Errorf("error getting folder list: %s", err)
 		return
 	}
 	var list STConfig
 	err = json.NewDecoder(res.Body).Decode(&list)
 	if err != nil {
-		log.Errorf("error decoding folder list json: %s", err)
+		p.l.Errorf("error decoding folder list json: %s", err)
 		return
 	}
 
@@ -136,22 +136,22 @@ func (p *plugin) updateSyncthingFolders() {
 		if err != nil {
 			// syncthing timeouts on that endpoint happen when sync is in progress, just ignore after first to not spam
 			if !alerted {
-				log.Warningf("error getting folder [%s] info: %s", id, err)
+				p.l.Warnf("error getting folder [%s] info: %s", id, err)
 				alerted = true
 			} else {
-				log.Debugf("error getting folder [%s] info: %s", id, err)
+				p.l.Debugf("error getting folder [%s] info: %s", id, err)
 			}
 			continue
 		} else {
 			var folderStats STFolderStats
 			err = json.NewDecoder(res.Body).Decode(&folderStats)
 			if err != nil {
-				log.Warningf("error decoding folder [%s] info: %s", id, err)
+				p.l.Warnf("error decoding folder [%s] info: %s", id, err)
 			} else {
 				p.Lock()
 				statusId := statusToStatusId(folderStats.State)
 				if statusId == StatusUnknown {
-					log.Warningf("unknown state on folder %s: %s", id, folderStats.State)
+					p.l.Warnf("unknown state on folder %s: %s", id, folderStats.State)
 				}
 				p.folderStatus[id] = statusId
 				p.Unlock()
