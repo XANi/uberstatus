@@ -1,8 +1,8 @@
 package ping
 
 import (
-	"time"
 	"net"
+	"time"
 )
 
 func tcpPing(addr string) pingResult {

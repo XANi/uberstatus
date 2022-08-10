@@ -249,7 +249,7 @@ func TestParseSmiQuery(t *testing.T) {
 	Convey("Total", t, func() {
 		fmt.Printf("%+v", data)
 		So(err, ShouldBeNil)
-		So(data,ShouldNotBeNil)
-		So(len(data.GPUs[0].ProductName),ShouldBeGreaterThan,0)
+		So(data, ShouldNotBeNil)
+		So(len(data.GPUs[0].ProductName), ShouldBeGreaterThan, 0)
 	})
 }

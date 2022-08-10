@@ -9,31 +9,29 @@ import (
 	"time"
 )
 
-
 func NewTemplate(name string, tpl string) (*Template, error) {
 	funcMap := template.FuncMap{
-		"percentToColor": GetColorPct,
-		"percentToBar": GetBarChar,
-		"formatBytes": FormatUnitBytes,
-		"intOr0": IntOrZero,
-		"sub100": Sub100,
-		"formatDuration": FormatDuration,
+		"percentToColor":       GetColorPct,
+		"percentToBar":         GetBarChar,
+		"formatBytes":          FormatUnitBytes,
+		"intOr0":               IntOrZero,
+		"sub100":               Sub100,
+		"formatDuration":       FormatDuration,
 		"formatDurationPadded": FormatDurationPadded,
-		"escape": html.EscapeString,
-		"color": func (color string, text string) string{
+		"escape":               html.EscapeString,
+		"color": func(color string, text string) string {
 			return `<span color="` + color + `">` + text + `</span>`
 		},
-
 	}
 	t, err := template.New(name).Funcs(funcMap).Parse(tpl)
 	return &Template{t, new(bytes.Buffer)}, err
 }
 
-func (t Template)ExecuteString(i interface{}) (string) {
+func (t Template) ExecuteString(i interface{}) string {
 	t.buf.Reset()
-	err := t.Execute(t.buf,i)
+	err := t.Execute(t.buf, i)
 	if err != nil {
-		return fmt.Sprintf("tpl [%+v] error: %s",i, err)
+		return fmt.Sprintf("tpl [%+v] error: %s", i, err)
 	} else {
 		return t.buf.String()
 	}
@@ -95,7 +93,6 @@ func IntOrZero(s string) int {
 	return i
 }
 
-
 // generate color from percentage (0 - good/green 100 - bad/red)
 func GetColorPct(pct int) string {
 	switch {
@@ -117,48 +114,46 @@ func GetColorPct(pct int) string {
 	return `#667766`
 }
 
-type Template struct{
+type Template struct {
 	*template.Template
 	buf *bytes.Buffer
 }
-
-
 
 // Formats duration. Does not go over 7 characters till 9999+h
 func FormatDuration(t time.Duration) string {
 	if t.Hours() > 1 {
 		hours := int(t.Hours())
-		minutes := int( int(t.Minutes()) - (hours * 60) )
-		return fmt.Sprintf("%dh%0.2dm",hours,minutes)
+		minutes := int(int(t.Minutes()) - (hours * 60))
+		return fmt.Sprintf("%dh%0.2dm", hours, minutes)
 	}
 	if t.Hours() == 1 {
-		return fmt.Sprintf("%5.0fm",t.Minutes())
+		return fmt.Sprintf("%5.0fm", t.Minutes())
 	}
 	if t.Minutes() > 1 {
-		return fmt.Sprintf("%5.1fm",t.Minutes())
+		return fmt.Sprintf("%5.1fm", t.Minutes())
 	}
 	if t.Seconds() > 4 {
-		return fmt.Sprintf("%5.2fs",t.Seconds())
+		return fmt.Sprintf("%5.2fs", t.Seconds())
 	}
 	if t.Seconds() >= 1 {
-		return fmt.Sprintf("%5.0fms",t.Seconds() * 1000)
+		return fmt.Sprintf("%5.0fms", t.Seconds()*1000)
 	}
 	if t.Seconds() >= 0.1 {
-		return fmt.Sprintf("%5.1fms",t.Seconds() * 1000)
+		return fmt.Sprintf("%5.1fms", t.Seconds()*1000)
 	}
 	if t.Seconds() > 0.001 {
-		return fmt.Sprintf("%5.2fms",t.Seconds() * 1000)
+		return fmt.Sprintf("%5.2fms", t.Seconds()*1000)
 	}
 	if t.Nanoseconds() >= 100000 { //100us
-		return fmt.Sprintf("%5.1fµs",float64(t.Nanoseconds())/1000)
+		return fmt.Sprintf("%5.1fµs", float64(t.Nanoseconds())/1000)
 	}
 	if t.Nanoseconds() >= 10000 { // 10us
-		return fmt.Sprintf("%5.2fµs",float64(t.Nanoseconds())/1000)
+		return fmt.Sprintf("%5.2fµs", float64(t.Nanoseconds())/1000)
 	}
 	if t.Nanoseconds() >= 1000 { // 1us
-		return fmt.Sprintf("%5.2fµs",float64(t.Nanoseconds())/1000)
+		return fmt.Sprintf("%5.2fµs", float64(t.Nanoseconds())/1000)
 	} else {
-		return fmt.Sprintf("%5dns",t.Nanoseconds())
+		return fmt.Sprintf("%5dns", t.Nanoseconds())
 	}
 }
 
@@ -170,9 +165,9 @@ func FormatDurationPadded(t time.Duration) string {
 func WaitForTs(nextTs *time.Time) {
 	t := time.Now()
 	for nextTs.After(t) {
-		diff :=nextTs.Sub(t)
+		diff := nextTs.Sub(t)
 		// cap sleeping at 10s in case date changes between ticks
-		if diff > time.Second * 10  {
+		if diff > time.Second*10 {
 			time.Sleep(time.Second * 10)
 		} else {
 			time.Sleep(diff)

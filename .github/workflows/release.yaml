@@ -1,0 +1,44 @@
+---
+name: Release
+
+on:
+  push:
+    tags:
+    - 'v*'
+jobs:
+    test:
+      runs-on: ubuntu-22.04
+      steps:
+      - uses: actions/setup-go@v3
+        with:
+          go-version: 1.18
+      - uses: actions/checkout@v3
+      - run: go test -v ./...
+    build:
+      runs-on: ubuntu-22.04
+      steps:
+      - uses: actions/setup-go@v3
+        with:
+          go-version: 1.18
+      - uses: actions/checkout@v3
+      - run: make arch
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+      - name: Upload Release amd64
+        id: upload-release-amd64
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: bin/uberstatus.amd64
+          asset_name: uberstatus.amd64
+          asset_content_type: application/x-executable

@@ -7,7 +7,6 @@ import (
 	"strconv"
 )
 
-
 func AddZygoFuncs(z *zygo.Zlisp) {
 	z.AddFunction("bar", BarFunc)
 }
@@ -32,5 +31,5 @@ func BarFunc(env *zygo.Zlisp, name string, args []zygo.Sexp) (zygo.Sexp, error) 
 		return nil, fmt.Errorf("%s does not handle %+v type", name, args[0])
 	}
 
-	return &zygo.SexpStr{S:util.GetBarChar(pct)}, nil
+	return &zygo.SexpStr{S: util.GetBarChar(pct)}, nil
 }
