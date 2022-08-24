@@ -7,6 +7,7 @@ import (
 	"github.com/XANi/uberstatus/uber"
 	"github.com/XANi/uberstatus/util"
 	"go.uber.org/zap"
+	"net/url"
 
 	"sync"
 	"time"
@@ -20,8 +21,7 @@ type pluginConfig struct {
 	Prefix       string
 	Interval     int
 	PingInterval int
-	AddrType     string
-	Addr         string
+	Address      string
 	Inflight     int
 }
 
@@ -31,10 +31,11 @@ type state struct {
 	dropRate       *ewma.Ewma
 	pingAvg        *ewma.Ewma
 	rollingPingAvg *ewma.Ewma
+	addr           *url.URL
 	stats          *pingStat
 	cnt            int
 	ev             int
-	ping           func(addr string) pingResult
+	ping           func(addr *url.URL) pingResult
 	nextTs         time.Time
 	tpl            *util.Template
 }
@@ -66,18 +67,24 @@ func New(cfg uber.PluginConfig) (z uber.Plugin, err error) {
 	if err != nil {
 		return nil, err
 	}
+	pingURL, err := url.Parse(st.cfg.Address)
+	if err != nil {
+		return nil, fmt.Errorf("need Address in form of (tcp|http|https)://addr[:port]")
+	}
+	st.addr = pingURL
 	st.dropRate = ewma.NewEwma(time.Duration(15 * time.Second))
 	st.pingAvg = ewma.NewEwma(time.Duration(60 * time.Second))
 	st.rollingPingAvg = ewma.NewEwma(time.Duration(5 * time.Second))
 	st.stats = &pingStat{}
 	st.l = cfg.Logger
-	switch st.cfg.AddrType {
+
+	switch st.addr.Scheme {
 	case "tcp":
 		st.ping = tcpPing
-	case "http":
+	case "http", "https":
 		st.ping = httpPing
 	default:
-		return &st, fmt.Errorf("ping: protocol %s not supported", st.cfg.AddrType)
+		return &st, fmt.Errorf("ping: protocol %s not supported", st.addr.Scheme)
 	}
 	st.tpl, err = util.NewTemplate("uberEvent", `{{if not .Ok}}{{color "#aa0000" "png!"}}{{ else }}ping{{end}}: {{formatDurationPadded .LastPing}} {{printf "%2.2f" .DropRate}}%`)
 	return &st, err
@@ -87,7 +94,7 @@ func (st *state) Init() error {
 		for {
 			pingUpdCh := make(chan bool, 1)
 			go func() {
-				upd := st.ping(st.cfg.Addr)
+				upd := st.ping(st.addr)
 				st.updateState(&upd)
 				st.rollingPingAvg.UpdateNow(float64(upd.Duration.Nanoseconds()))
 				pingUpdCh <- true
@@ -182,8 +189,6 @@ func (state *state) updateState(p *pingResult) {
 func loadConfig(c config.PluginConfig) (pluginConfig, error) {
 	var cfg pluginConfig
 	cfg.Interval = 1000
-	cfg.AddrType = "tcp"
-	cfg.Addr = "localhost:22"
 	cfg.Inflight = 10
 	return cfg, c.GetConfig(&cfg)
 }

@@ -2,6 +2,7 @@ package ping
 
 import (
 	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -12,10 +13,10 @@ var pingHttpClient = http.Client{
 	Timeout:       time.Second * 12,
 }
 
-func httpPing(addr string) pingResult {
+func httpPing(addr *url.URL) pingResult {
 	var ping pingResult
 	timeStart := time.Now()
-	_, err := pingHttpClient.Head(addr)
+	_, err := pingHttpClient.Head(addr.String())
 	timeEnd := time.Now()
 	if err == nil {
 		ping.Duration = timeEnd.Sub(timeStart)

@@ -7,7 +7,7 @@ import (
 	"github.com/XANi/uberstatus/plugin/mqtt"
 	"github.com/XANi/uberstatus/plugin/syncthing"
 
-	"gopkg.in/yaml.v1"
+	"gopkg.in/yaml.v3"
 	//
 	"github.com/XANi/uberstatus/plugin/clock"
 	"github.com/XANi/uberstatus/plugin/cpu"

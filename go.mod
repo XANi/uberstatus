@@ -11,7 +11,6 @@ require (
 	github.com/goiiot/libmqtt v0.9.6
 	github.com/smartystreets/goconvey v1.6.4
 	go.uber.org/zap v1.22.0
-	gopkg.in/yaml.v1 v1.0.0-20140924161607-9f9df34309c0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
