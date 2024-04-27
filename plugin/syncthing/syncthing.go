@@ -76,7 +76,7 @@ func (p *plugin) UpdatePeriodic() uber.Update {
 
 	p.RLock()
 	var list []string
-	for id, _ := range p.folderIdToFolder {
+	for id := range p.folderIdToFolder {
 		list = append(list, id)
 	}
 	sort.Slice(list, func(i, j int) bool { return p.folderIdToFolder[list[i]] < p.folderIdToFolder[list[j]] })

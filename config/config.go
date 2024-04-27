@@ -30,8 +30,9 @@ func (p *PluginConfig) GetConfig(i interface{}) error {
 }
 
 type Config struct {
-	Plugins []PluginConfig
-	Logger  *zap.SugaredLogger `yaml:"-"`
+	Plugins          []PluginConfig
+	PanicOnBadPlugin bool               `yaml:"panic_on_bad_plugin"`
+	Logger           *zap.SugaredLogger `yaml:"-"`
 }
 
 func (c *Config) SetConfig(s string) {

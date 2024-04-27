@@ -43,7 +43,6 @@ func (p *plugin) GetUpdateInterval() int {
 }
 func (p *plugin) UpdatePeriodic() uber.Update {
 	var update uber.Update
-	// TODO precompile and preallcate
 	tpl, _ := util.NewTemplate("uberEvent", `{{color "#00aa00" "Example plugin"}}{{.}}`)
 	// example on how to allow UpdateFromEvent to display for some time
 	// without being overwritten by periodic updates.

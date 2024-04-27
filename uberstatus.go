@@ -139,8 +139,15 @@ func main() {
 		plugins.slots[idx] = i3bar.NewMsg()
 		plugins.plugins[pluginCfg.Name][pluginCfg.Instance], err = plugin.NewPlugin(pluginCfg, updates)
 		if err != nil {
-			log.Panicf("Can't initialize plugin [%s]: [%+v]", pluginCfg.Name, pluginCfg.Instance, err)
+			plugins.slots[idx].FullText = fmt.Sprintf("can't init plugin instance %s: %s", pluginCfg.Instance, err)
+			plugins.slots[idx].ShortText = fmt.Sprintf("%s[%s] failed", pluginCfg.Instance, pluginCfg.Name)
+			if cfg.PanicOnBadPlugin {
+				log.Panicf("Can't initialize plugin [%s:%s]: [%+v]", pluginCfg.Name, pluginCfg.Instance, err)
+			}
+			pluginCfg.Logger.Errorf("Can't initialize plugin [%s:%s]: [%+v]", pluginCfg.Name, pluginCfg.Instance, err)
+
 		}
+
 	}
 
 	fmt.Println(`[`)

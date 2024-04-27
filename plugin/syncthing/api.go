@@ -127,7 +127,7 @@ func (p *plugin) updateSyncthingFolders() {
 	p.folderIdToFolder = idToName
 	p.Unlock()
 	var alerted bool
-	for id, _ := range idToName {
+	for id := range idToName {
 		folderR := p.req(http.MethodGet, "/rest/db/status", nil)
 		q := folderR.URL.Query()
 		q.Add("folder", id)
