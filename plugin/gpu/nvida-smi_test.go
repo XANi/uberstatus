@@ -1,10 +1,9 @@
 package gpu
 
 import (
-	"fmt"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
-import . "github.com/smartystreets/goconvey/convey"
 
 // nvidia-smi -q -i 0 -x
 var testSmiQ = []byte(`
@@ -246,10 +245,7 @@ var testSmiQ = []byte(`
 
 func TestParseSmiQuery(t *testing.T) {
 	data, err := parseSmiQuery(testSmiQ)
-	Convey("Total", t, func() {
-		fmt.Printf("%+v", data)
-		So(err, ShouldBeNil)
-		So(data, ShouldNotBeNil)
-		So(len(data.GPUs[0].ProductName), ShouldBeGreaterThan, 0)
-	})
+	assert.NoError(t, err)
+	assert.NotNil(t, data)
+	assert.Greater(t, len(data.GPUs[0].ProductName), 0)
 }

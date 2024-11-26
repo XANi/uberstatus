@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/XANi/uberstatus/config"
 	"github.com/XANi/uberstatus/uber"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v3"
 	"testing"
 )
@@ -30,10 +30,8 @@ plugins:
 		Config: cfg.Plugins[0],
 	}
 	out, err := New(ucfg)
+	assert.NoError(t, err)
+	assert.NoError(t, out.Init())
+	assert.Equal(t, out.GetUpdateInterval(), 1234)
 
-	Convey("create", t, func() {
-		So(err, ShouldBeNil)
-		So(out.Init(), ShouldBeNil)
-		So(out.GetUpdateInterval(), ShouldEqual, 1234)
-	})
 }

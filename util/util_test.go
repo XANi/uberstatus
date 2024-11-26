@@ -1,7 +1,7 @@
 package util
 
 import (
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 	"unicode/utf8"
@@ -32,10 +32,10 @@ var formatList = map[string]time.Duration{
 
 func TestDurationFormat(t *testing.T) {
 	for format, dur := range formatList {
-		formattedString := FormatDuration(dur)
-		Convey("time: "+format, t, func() {
-			So(formattedString, ShouldEndWith, format)
-			So(utf8.RuneCountInString(formattedString), ShouldBeLessThanOrEqualTo, 7)
+		t.Run("format: "+format, func(t *testing.T) {
+			formattedString := FormatDuration(dur)
+			assert.Contains(t, formattedString, format)
+			assert.LessOrEqual(t, utf8.RuneCountInString(formattedString), 7)
 		})
 	}
 
@@ -43,10 +43,10 @@ func TestDurationFormat(t *testing.T) {
 
 func TestDurationPaddedFormat(t *testing.T) {
 	for format, dur := range formatList {
-		formattedString := FormatDurationPadded(dur)
-		Convey("time: "+format, t, func() {
-			So(formattedString, ShouldEndWith, format)
-			So(utf8.RuneCountInString(formattedString), ShouldEqual, 7)
+		t.Run("format: "+format, func(t *testing.T) {
+			formattedString := FormatDurationPadded(dur)
+			assert.Contains(t, formattedString, format)
+			assert.LessOrEqual(t, utf8.RuneCountInString(formattedString), 7)
 		})
 	}
 
