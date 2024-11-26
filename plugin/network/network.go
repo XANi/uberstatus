@@ -2,7 +2,7 @@ package network
 
 import (
 	"fmt"
-	"github.com/VividCortex/ewma"
+	"github.com/XANi/golibs/ewma"
 	"github.com/XANi/uberstatus/config"
 	"github.com/XANi/uberstatus/uber"
 	"github.com/XANi/uberstatus/util"
@@ -26,8 +26,8 @@ type netStats struct {
 	rx       uint64
 	oldTx    uint64
 	oldRx    uint64
-	ewmaTx   ewma.MovingAverage
-	ewmaRx   ewma.MovingAverage
+	ewmaTx   *ewma.Ewma
+	ewmaRx   *ewma.Ewma
 	oldTs    time.Time
 	ts       time.Time
 	nextTs   time.Time
@@ -47,8 +47,8 @@ func New(c uber.PluginConfig) (uber.Plugin, error) {
 	if err != nil {
 		return nil, err
 	}
-	stats.ewmaRx = ewma.NewMovingAverage(5)
-	stats.ewmaTx = ewma.NewMovingAverage(5)
+	stats.ewmaRx = ewma.NewEwma(time.Duration(3*cfg.Interval) * time.Millisecond)
+	stats.ewmaTx = ewma.NewEwma(time.Duration(3*cfg.Interval) * time.Millisecond)
 	stats.oldTs = time.Now()
 	stats.ts = time.Now()
 	stats.iface = cfg.Iface
@@ -160,10 +160,10 @@ func (stats *netStats) Update() (ev uber.Update, ok bool) {
 	}
 	rxBw := float64(rxDiff) / tsDiff
 	txBw := float64(txDiff) / tsDiff
-	stats.ewmaRx.Add(rxBw)
-	stats.ewmaTx.Add(txBw)
-	rxAvg := stats.ewmaRx.Value()
-	txAvg := stats.ewmaTx.Value()
+	stats.ewmaRx.UpdateNow(rxBw)
+	stats.ewmaTx.UpdateNow(txBw)
+	rxAvg := stats.ewmaRx.Current
+	txAvg := stats.ewmaTx.Current
 	divider, unit := getUnit(rxAvg + txAvg)
 	// if speed is very low alias it to 0
 	if rxAvg < 0.1 {
