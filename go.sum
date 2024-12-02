@@ -10,6 +10,8 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/eclipse/paho.mqtt.golang v1.2.0 h1:1F8mhG9+aO5/xpdtFkW4SxOJB67ukuDC3t2y2qayIX0=
 github.com/eclipse/paho.mqtt.golang v1.2.0/go.mod h1:H9keYFcgq3Qr5OUJm/JZI/i6U7joQ8SYLhZwfeOo6Ts=
+github.com/efigence/go-icinga2 v0.2.0 h1:2TAQTBGnte3BG1I0oSoUm0g/THBRBUCxz1zG90u6pIs=
+github.com/efigence/go-icinga2 v0.2.0/go.mod h1:4+KJI7Lq/21EpyyPr0kjkF9cxozpCSNWPh4GuPYKCxA=
 github.com/efigence/go-libs v0.0.0-20171115061947-5b2936a0c2a1 h1:WJE5x8KYmcAW9U77NYb8WZBYvjjm9pjb7vS5TOePt7M=
 github.com/efigence/go-libs v0.0.0-20171115061947-5b2936a0c2a1/go.mod h1:+L8bBUFAIfgv+GWyTdOiHNUw9M1jh/7KxzmYXK2pUQA=
 github.com/efigence/go-libs v0.0.3 h1:lkvZAKB+bFWHYtvMm9nwbV8PBwBNQoRuoAbA1M8YPq0=
@@ -18,6 +20,8 @@ github.com/efigence/go-mon v0.1.1 h1:PqkjJatL9gslvh5kfuop9vG0VwTBcwIL8epRzfLQJwY
 github.com/efigence/go-mon v0.1.1/go.mod h1:9RsOdOwCzexnFq0gqgi32gzj0jL3sfmz5gzU+lbhXx8=
 github.com/efigence/go-mon v1.4.2 h1:oT9TBMfHS16drXOpkI6G0jIpjKTemO1BG4GVMqv7yWI=
 github.com/efigence/go-mon v1.4.2/go.mod h1:7TP/HsWPDcoFOOPcEXwiknwAzSMGTGp0bvEuCH7froE=
+github.com/efigence/go-monitoring v0.0.3 h1:HGROU4tGdtBgC7dP/As/x/Trb3cWMpiNiZrmKnE1wxo=
+github.com/efigence/go-monitoring v0.0.3/go.mod h1:exrbNBDMWKiFIbppSFH4q+B+2dNYhDY0l+WxukXXOPY=
 github.com/gin-contrib/sse v0.1.0 h1:Y/yl/+YNO8GZSjAhjMsSuLt29uWRFHdHYUb5lYOV9qE=
 github.com/gin-contrib/sse v0.1.0/go.mod h1:RHrZQHXnP2xjPF+u1gW/2HnVO7nvIa9PG3Gm+fLHvGI=
 github.com/gin-gonic/gin v1.6.3 h1:ahKqKTFpO5KTPHxWZjEdPScmYaGtLo8Y4DMHoEsnp14=
