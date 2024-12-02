@@ -170,6 +170,22 @@ Example:
         command: /path/to/i3blocks/volume
 ```
 
+## Icinga
+
+Icinga2 plugin. Icinga2 must have API enabled and served on given URL
+
+Parameters:
+```yaml
+    - name: icinga
+      plugin: icinga
+      config:
+        url: https://icinga/plugin/url
+        user: uber
+        pass: status_pass
+        # host_filter: icinga2 filter for hosts
+        # service_filter: icinga2 filter for services
+```
+
 ## Uptime
 
 System uptime. Parameters:

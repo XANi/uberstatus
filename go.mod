@@ -15,7 +15,9 @@ require (
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/efigence/go-icinga2 v0.2.0 // indirect
 	github.com/efigence/go-libs v0.0.3 // indirect
+	github.com/efigence/go-monitoring v0.0.3 // indirect
 	github.com/glycerine/blake2b v0.0.0-20151022103502-3c8c640cd7be // indirect
 	github.com/glycerine/goconvey v0.0.0-20190410193231-58a59202ab31 // indirect
 	github.com/glycerine/greenpack v5.1.1+incompatible // indirect
