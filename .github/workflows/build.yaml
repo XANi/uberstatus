@@ -25,7 +25,7 @@ jobs:
       - uses: actions/checkout@v3
       - run: make
       - name: dpp
-        uses: actions/upload-artifact@v3.1.0
+        uses: actions/upload-artifact@v4.6.1
         with:
           # Artifact name
           name: uberstatus
