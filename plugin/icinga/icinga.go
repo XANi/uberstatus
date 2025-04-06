@@ -27,14 +27,15 @@ type pluginConfig struct {
 }
 
 type plugin struct {
-	l                *zap.SugaredLogger
-	i                *icinga2.API
-	cfg              pluginConfig
-	hostStatusMap    map[string]int
-	serviceStatusMap map[string]int
-	servicesDown     []string
-	lastErr          error
-	nextTs           time.Time
+	l                  *zap.SugaredLogger
+	i                  *icinga2.API
+	cfg                pluginConfig
+	hostStatusMap      map[string]int
+	serviceStatusMap   map[string]int
+	serviceHardnessMap map[string]int
+	servicesDown       []string
+	lastErr            error
+	nextTs             time.Time
 	sync.Mutex
 }
 
@@ -108,16 +109,17 @@ func (p *plugin) UpdatePeriodic() uber.Update {
 		}
 		update.FullText = tpl.ExecuteString(p.serviceStatusMap)
 		update.ShortText = tpl.ExecuteString(p.serviceStatusMap)
-		if p.serviceStatusMap["critical"] > 0 {
+		if p.serviceHardnessMap["critical"] > 0 {
 			update.Color = `#ff6666`
-		} else if p.serviceStatusMap["warning"] > 0 {
+		} else if p.serviceHardnessMap["warning"] > 0 {
 			update.Color = `#cccc66`
-		} else if p.serviceStatusMap["unknown"] > 0 {
+		} else if p.serviceHardnessMap["unknown"] > 0 {
 			update.Color = `#6666cc`
 		} else {
 			update.Color = `#66cc66`
 		}
 	}
+	fmt.Printf("\n\n=== hardness: %+v\n", p.serviceHardnessMap)
 	return update
 }
 
@@ -142,8 +144,12 @@ func (p *plugin) update() {
 
 	services, err2 := p.i.GetServicesByFilter(p.cfg.ServiceFilter)
 	statusCtr = map[uint8]int{}
+	hardCtr := map[uint8]int{}
 	servicesNotOk := []string{}
 	for _, s := range services {
+		if s.StateHard {
+			hardCtr[s.State]++
+		}
 		statusCtr[s.State]++
 		if s.State != uint8(mon.StateOk) {
 			servicesNotOk = append(servicesNotOk, fmt.Sprintf("%s:%s", s.Host, s.Service))
@@ -157,8 +163,16 @@ func (p *plugin) update() {
 		"critical": statusCtr[uint8(mon.StateCritical)],
 		"unknown":  statusCtr[uint8(mon.StateUnknown)],
 	}
+	hardMap := map[string]int{
+		"invalid":  hardCtr[uint8(mon.StateInvalid)],
+		"ok":       hardCtr[uint8(mon.StateOk)],
+		"warning":  hardCtr[uint8(mon.StateWarning)],
+		"critical": hardCtr[uint8(mon.StateCritical)],
+		"unknown":  hardCtr[uint8(mon.StateUnknown)],
+	}
 	p.Lock()
 	p.serviceStatusMap = statusMap
+	p.serviceHardnessMap = hardMap
 	p.servicesDown = servicesNotOk
 	if err != nil {
 		p.lastErr = err
