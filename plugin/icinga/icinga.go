@@ -119,7 +119,6 @@ func (p *plugin) UpdatePeriodic() uber.Update {
 			update.Color = `#66cc66`
 		}
 	}
-	fmt.Printf("\n\n=== hardness: %+v\n", p.serviceHardnessMap)
 	return update
 }
 
