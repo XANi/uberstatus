@@ -151,5 +151,5 @@ func colorizeTemperature(temperature float64) string {
 		temperatureColor = "#aa00aa"
 		break
 	}
-	return fmt.Sprintf(`<span color="%s">%2.2f</span>`, temperatureColor, temperature)
+	return fmt.Sprintf(`<span color="%s">%2.1f</span>`, temperatureColor, temperature)
 }
