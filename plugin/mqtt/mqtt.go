@@ -73,6 +73,9 @@ func (p *plugin) Init() (err error) {
 		// will use TextRouter, which will match full text
 		libmqtt.WithRouter(libmqtt.NewRegexRouter()),
 	)
+	if err != nil {
+		return err
+	}
 	var mqttOpts = []libmqtt.Option{}
 	mqttUrl, err := url.Parse(p.cfg.Address)
 	if err != nil {
@@ -91,15 +94,17 @@ func (p *plugin) Init() (err error) {
 	}
 
 	mqttOpts = append(mqttOpts, libmqtt.WithConnHandleFunc(func(client libmqtt.Client, server string, code byte, err error) {
+		// do not die on connection errors, libmqtt will retry with backoff
 		if err != nil {
-			// failed
-			panic(fmt.Sprintf("failed to connect: %s", err))
+			p.l.Errorf("[mqtt] failed to connect to %s, will retry: %s", server, err)
+			return
 		}
 
 		if code != libmqtt.CodeSuccess {
-			// server rejected or in error
-			panic(fmt.Sprintf("server rejected with %s", ReasonString(code)))
+			p.l.Errorf("[mqtt] server %s rejected connection with %s, will retry", server, ReasonString(code))
+			return
 		}
+		p.l.Infof("[mqtt] connected to %s", server)
 
 		// success
 		// you are now connected to the `server`
@@ -135,7 +140,14 @@ func (p *plugin) Init() (err error) {
 		// 	}
 		// } ()
 	}))
+	mqttOpts = append(mqttOpts, libmqtt.WithNetHandleFunc(func(client libmqtt.Client, server string, err error) {
+		p.l.Warnf("[mqtt] connection to %s lost, reconnecting: %s", server, err)
+	}))
 	mqttOpts = append(mqttOpts, libmqtt.WithSubHandleFunc(func(client libmqtt.Client, topics []*libmqtt.Topic, err error) {
+		if err != nil {
+			p.l.Errorf("[mqtt] subscription failed: %s", err)
+			return
+		}
 		p.l.Infof("[mqtt] subscription:")
 		for _, t := range topics {
 			p.l.Infof("[mqtt] subscribed to %s", t.Name)
